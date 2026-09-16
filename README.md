@@ -3,7 +3,7 @@
 Kotlin Multiplatform application with shared business logic and native presentation layers:
 
 - `sharedLogic`: shared domain, data, networking, persistence and dependency injection.
-- `androidApp` / `sharedUI`: Android entry point and Jetpack Compose UI.
+- `androidApp`: Android entry point, native Jetpack Compose UI and design system.
 - `iosApp`: native SwiftUI application consuming `SharedLogic`.
 
 The Android production application keeps the published package name `com.ih.osm`.

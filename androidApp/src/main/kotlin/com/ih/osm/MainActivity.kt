@@ -5,7 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import com.ih.osm.designsystem.preview.PreviewScreen
+import com.ih.osm.designsystem.theme.OneSmartMateTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,13 +14,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            App()
+            OneSmartMateTheme {
+                OneSmartMateApp()
+            }
         }
     }
 }
 
-@Preview
+@PreviewScreen
 @Composable
 fun AppAndroidPreview() {
-    App()
+    OneSmartMateTheme {
+        OneSmartMateApp()
+    }
 }
