@@ -1,0 +1,12 @@
+# Android SDK path is machine-specific.
+sdk.dir=/path/to/Android/sdk
+
+# API configuration. These values are injected into BuildConfig and must not be committed.
+OSM_DEV_API_BASE_URL=https://api.dev.one-sm.com/
+OSM_PROD_API_BASE_URL=https://api.one-sm.com/
+
+# Existing Google Play signing identity. Keep the real values only in local.properties or CI secrets.
+OSM_KEYSTORE_FILE=/absolute/path/to/android-key
+OSM_KEYSTORE_PASSWORD=
+OSM_KEY_ALIAS=android-key
+OSM_KEY_PASSWORD=

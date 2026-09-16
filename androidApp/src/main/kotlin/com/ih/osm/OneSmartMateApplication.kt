@@ -1,0 +1,21 @@
+package com.ih.osm
+
+import android.app.Application
+import com.ih.osm.core.config.AppConfig
+import com.ih.osm.core.config.AppEnvironment
+import com.ih.osm.di.initKoinAndroid
+
+class OneSmartMateApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+
+        initKoinAndroid(
+            application = this,
+            config = AppConfig.create(
+                baseUrl = BuildConfig.API_BASE_URL,
+                environment = AppEnvironment.from(BuildConfig.APP_ENVIRONMENT),
+                enableNetworkLogging = BuildConfig.ENABLE_NETWORK_LOGGING,
+            ),
+        )
+    }
+}
