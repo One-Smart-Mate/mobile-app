@@ -9,11 +9,13 @@ import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.model.UserSite
 import com.ih.osm.features.auth.domain.repository.AuthRepository
 import com.ih.osm.features.auth.domain.session.SessionRepository
+import com.ih.osm.features.catalog.domain.repository.CatalogSyncRepository
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class AuthRepositoryImpl(
     private val apiService: AuthApiService,
     private val sessionRepository: SessionRepository,
+    private val catalogSyncRepository: CatalogSyncRepository,
 ) : AuthRepository {
     override suspend fun login(email: String, password: String): NetworkResult<AuthenticatedUser> =
         when (val response = apiService.login(email, password)) {
@@ -31,6 +33,7 @@ internal class AuthRepositoryImpl(
     ): NetworkResult<AuthenticatedUser> {
         val user = response.toDomain()
         return try {
+            catalogSyncRepository.invalidate(user.id)
             sessionRepository.establish(user, response.token)
             NetworkResult.Success(user, statusCode)
         } catch (cancellation: CancellationException) {

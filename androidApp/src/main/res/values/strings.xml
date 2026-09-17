@@ -33,4 +33,13 @@
     <string name="notes_title">Notas</string>
     <string name="settings_title">Ajustes</string>
     <string name="create_note_title">Nueva nota</string>
+    <string name="catalog_sync_title">Preparando contenido sin conexión</string>
+    <string name="catalog_sync_starting">Iniciando descarga…</string>
+    <string name="catalog_sync_waiting">Esperando conexión para continuar…</string>
+    <string name="catalog_sync_card_types">Descargando tipos de tarjeta…</string>
+    <string name="catalog_sync_preclassifiers">Descargando preclasificadores…</string>
+    <string name="catalog_sync_priorities">Descargando prioridades…</string>
+    <string name="catalog_sync_levels">Descargando niveles…</string>
+    <string name="catalog_sync_employees">Descargando usuarios…</string>
+    <string name="catalog_sync_failed">No se pudo descargar el contenido sin conexión.</string>
 </resources>

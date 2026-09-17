@@ -16,5 +16,5 @@ val authModule = module {
     single<AuthLocalDataSource> { AuthLocalDataSourceImpl(get()) }
     single<SessionRepository> { SessionRepositoryImpl(get(), get()) }
     single { AuthApiService(get(), get()) }
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
 }

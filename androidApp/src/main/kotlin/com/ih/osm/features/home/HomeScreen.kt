@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.QrCodeScanner
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.outlined.SignalCellularAlt
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -55,6 +58,7 @@ import com.ih.osm.R
 import com.ih.osm.core.network.NetworkConnectionStatus
 import com.ih.osm.core.network.NetworkStatusMonitor
 import com.ih.osm.designsystem.anatomy.AnatomyCard
+import com.ih.osm.designsystem.anatomy.AnatomyCardStyle
 import com.ih.osm.designsystem.anatomy.AnatomyDropdown
 import com.ih.osm.designsystem.anatomy.AnatomyImage
 import com.ih.osm.designsystem.anatomy.AnatomyImageSource
@@ -64,6 +68,9 @@ import com.ih.osm.designsystem.preview.PreviewScreen
 import com.ih.osm.designsystem.theme.OneSmartMateTheme
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.model.UserSite
+import com.ih.osm.features.catalog.domain.model.CatalogKind
+import com.ih.osm.features.catalog.sync.CatalogSyncScheduler
+import com.ih.osm.features.catalog.sync.CatalogSyncUiState
 import org.koin.compose.koinInject
 
 @Composable
@@ -73,8 +80,12 @@ fun HomeScreenRoute(
     onOpenNotes: () -> Unit,
     modifier: Modifier = Modifier,
     networkStatusMonitor: NetworkStatusMonitor = koinInject(),
+    catalogSyncScheduler: CatalogSyncScheduler = koinInject(),
 ) {
     val networkStatus by networkStatusMonitor.status.collectAsStateWithLifecycle()
+    val catalogSyncState by catalogSyncScheduler.observe(user).collectAsStateWithLifecycle(
+        initialValue = CatalogSyncUiState.Idle,
+    )
     var selectedSiteId by rememberSaveable(user.id) {
         mutableStateOf(user.sites.firstOrNull()?.id)
     }
@@ -83,6 +94,7 @@ fun HomeScreenRoute(
         if (user.sites.none { it.id == selectedSiteId }) {
             selectedSiteId = user.sites.firstOrNull()?.id
         }
+        catalogSyncScheduler.enqueueIfNeeded(user)
     }
 
     val selectedSite = user.sites.firstOrNull { it.id == selectedSiteId }
@@ -92,6 +104,7 @@ fun HomeScreenRoute(
         user = user,
         selectedSite = selectedSite,
         networkStatus = networkStatus,
+        catalogSyncState = catalogSyncState,
         onSiteSelected = { selectedSiteId = it.id },
         onCreateNote = onCreateNote,
         onOpenNotes = onOpenNotes,
@@ -104,6 +117,7 @@ fun HomeScreen(
     user: AuthenticatedUser,
     selectedSite: UserSite?,
     networkStatus: NetworkConnectionStatus,
+    catalogSyncState: CatalogSyncUiState,
     onSiteSelected: (UserSite) -> Unit,
     onCreateNote: () -> Unit,
     onOpenNotes: () -> Unit,
@@ -133,6 +147,11 @@ fun HomeScreen(
 
             NetworkStatusBadge(status = networkStatus)
 
+            if (catalogSyncState !is CatalogSyncUiState.Idle) {
+                Spacer(Modifier.height(12.dp))
+                CatalogSyncStatusCard(catalogSyncState)
+            }
+
             Spacer(Modifier.height(24.dp))
 
             AnatomyText(
@@ -149,6 +168,74 @@ fun HomeScreen(
             Spacer(Modifier.height(16.dp))
         }
     }
+}
+
+@Composable
+private fun CatalogSyncStatusCard(state: CatalogSyncUiState) {
+    val isFailure = state is CatalogSyncUiState.Failed
+    val title = when (state) {
+        CatalogSyncUiState.Idle -> ""
+        CatalogSyncUiState.WaitingForNetwork -> stringResource(R.string.catalog_sync_waiting)
+        is CatalogSyncUiState.Downloading -> state.catalog.catalogLabel()
+        is CatalogSyncUiState.Failed -> stringResource(R.string.catalog_sync_failed)
+    }
+
+    AnatomyCard(
+        style = AnatomyCardStyle.FILLED,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(11.dp),
+        ) {
+            Icon(
+                imageVector = if (isFailure) Icons.Outlined.CloudOff else Icons.Outlined.CloudDownload,
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+                tint = if (isFailure) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                AnatomyText(
+                    text = stringResource(R.string.catalog_sync_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    properties = AnatomyTextProperties(fontWeight = FontWeight.SemiBold),
+                )
+                Spacer(Modifier.height(2.dp))
+                AnatomyText(
+                    text = (state as? CatalogSyncUiState.Failed)?.message ?: title,
+                    style = MaterialTheme.typography.bodySmall,
+                    properties = AnatomyTextProperties(
+                        color = if (isFailure) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    ),
+                )
+                Spacer(Modifier.height(9.dp))
+                when (state) {
+                    CatalogSyncUiState.WaitingForNetwork -> LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    is CatalogSyncUiState.Downloading -> LinearProgressIndicator(
+                        progress = { state.progress },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    else -> Unit
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CatalogKind?.catalogLabel(): String = when (this) {
+    CatalogKind.CARD_TYPES -> stringResource(R.string.catalog_sync_card_types)
+    CatalogKind.PRECLASSIFIERS -> stringResource(R.string.catalog_sync_preclassifiers)
+    CatalogKind.PRIORITIES -> stringResource(R.string.catalog_sync_priorities)
+    CatalogKind.LEVELS -> stringResource(R.string.catalog_sync_levels)
+    CatalogKind.EMPLOYEES -> stringResource(R.string.catalog_sync_employees)
+    null -> stringResource(R.string.catalog_sync_starting)
 }
 
 @Composable
@@ -407,6 +494,7 @@ private fun HomeScreenPreview() {
             user = previewUser,
             selectedSite = previewUser.sites.first(),
             networkStatus = NetworkConnectionStatus.WIFI_CONNECTED,
+            catalogSyncState = CatalogSyncUiState.Downloading(0.45f, CatalogKind.LEVELS),
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},
@@ -422,6 +510,7 @@ private fun HomeScreenLandscapePreview() {
             user = previewUser,
             selectedSite = previewUser.sites.first(),
             networkStatus = NetworkConnectionStatus.CELLULAR_CONNECTED,
+            catalogSyncState = CatalogSyncUiState.Downloading(0.7f, CatalogKind.EMPLOYEES),
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},

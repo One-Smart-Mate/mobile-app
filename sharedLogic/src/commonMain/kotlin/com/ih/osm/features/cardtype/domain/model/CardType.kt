@@ -1,0 +1,27 @@
+package com.ih.osm.features.cardtype.domain.model
+
+data class CardType(
+    val id: String,
+    val methodology: String,
+    val name: String,
+    val description: String,
+    val color: String,
+    val owner: String?,
+    val status: String,
+    val quantityImagesCreate: Long?,
+    val quantityAudiosCreate: Long?,
+    val quantityVideosCreate: Long?,
+    val audiosDurationCreate: Long?,
+    val videosDurationCreate: Long?,
+    val quantityImagesClose: Long?,
+    val quantityAudiosClose: Long?,
+    val quantityVideosClose: Long?,
+    val audiosDurationClose: Long?,
+    val videosDurationClose: Long?,
+    val quantityImagesPs: Long?,
+    val quantityAudiosPs: Long?,
+    val quantityVideosPs: Long?,
+    val audiosDurationPs: Long?,
+    val videosDurationPs: Long?,
+    val cardTypeMethodology: String?,
+)

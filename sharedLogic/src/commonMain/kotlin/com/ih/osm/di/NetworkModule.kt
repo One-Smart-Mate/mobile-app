@@ -6,6 +6,7 @@ import com.ih.osm.core.network.createHttpClient
 import com.ih.osm.core.database.databaseModule
 import com.ih.osm.features.auth.di.authModule
 import com.ih.osm.features.auth.domain.session.SessionRepository
+import com.ih.osm.features.catalog.di.catalogModule
 import com.ih.osm.getPlatform
 import org.koin.dsl.module
 
@@ -26,5 +27,6 @@ fun networkModule(config: AppConfig) = module {
 fun sharedModules(config: AppConfig) = listOf(
     databaseModule,
     authModule,
+    catalogModule,
     networkModule(config),
 )

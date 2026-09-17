@@ -1,0 +1,72 @@
+CREATE TABLE CardTypeCatalog (
+    site_id INTEGER NOT NULL,
+    id TEXT NOT NULL,
+    methodology TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    color TEXT NOT NULL,
+    owner TEXT,
+    status TEXT NOT NULL,
+    quantity_images_create INTEGER,
+    quantity_audios_create INTEGER,
+    quantity_videos_create INTEGER,
+    audios_duration_create INTEGER,
+    videos_duration_create INTEGER,
+    quantity_images_close INTEGER,
+    quantity_audios_close INTEGER,
+    quantity_videos_close INTEGER,
+    audios_duration_close INTEGER,
+    videos_duration_close INTEGER,
+    quantity_images_ps INTEGER,
+    quantity_audios_ps INTEGER,
+    quantity_videos_ps INTEGER,
+    audios_duration_ps INTEGER,
+    videos_duration_ps INTEGER,
+    card_type_methodology TEXT,
+    PRIMARY KEY (site_id, id)
+);
+
+CREATE TABLE PreclassifierCatalog (
+    site_id INTEGER NOT NULL,
+    id TEXT NOT NULL,
+    code TEXT NOT NULL,
+    description TEXT NOT NULL,
+    card_type_id TEXT NOT NULL,
+    PRIMARY KEY (site_id, id)
+);
+
+CREATE TABLE PriorityCatalog (
+    site_id INTEGER NOT NULL,
+    id TEXT NOT NULL,
+    code TEXT NOT NULL,
+    description TEXT NOT NULL,
+    days INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    PRIMARY KEY (site_id, id)
+);
+
+CREATE TABLE LevelCatalog (
+    site_id INTEGER NOT NULL,
+    id TEXT NOT NULL,
+    owner_id TEXT,
+    owner_name TEXT,
+    superior_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    status TEXT NOT NULL,
+    PRIMARY KEY (site_id, id)
+);
+
+CREATE TABLE EmployeeCatalog (
+    site_id INTEGER NOT NULL,
+    id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    PRIMARY KEY (site_id, id)
+);
+
+CREATE TABLE CatalogSyncMetadata (
+    user_id INTEGER NOT NULL PRIMARY KEY,
+    site_scope TEXT NOT NULL,
+    completed_at_epoch_ms INTEGER NOT NULL
+);

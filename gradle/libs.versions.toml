@@ -23,6 +23,7 @@ ksafe = "3.1.0"
 navigation3 = "1.1.7"
 navigation3-lifecycle = "2.11.0"
 sqldelight = "2.3.2"
+work = "2.11.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -77,6 +78,7 @@ sqldelight-native-driver = { module = "app.cash.sqldelight:native-driver", versi
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 androidx-material-icons = { module = "androidx.compose.material:material-icons-extended", version.ref = "material-icons" }
+androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "work" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
