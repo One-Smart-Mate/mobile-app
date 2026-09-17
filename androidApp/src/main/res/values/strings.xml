@@ -15,6 +15,22 @@
     <string name="login_forgot_password">¿Olvidaste tu contraseña?</string>
     <string name="login_submit">Iniciar sesión</string>
     <string name="login_secure_access">Acceso seguro para tu equipo</string>
-    <string name="home_title">Home</string>
-    <string name="home_welcome">Sesión iniciada como %1$s</string>
+    <string name="home_greeting">Buenos días, %1$s</string>
+    <string name="home_quick_actions">Acciones rápidas</string>
+    <string name="home_action_new_note">Nueva nota</string>
+    <string name="home_action_scan_qr">Leer código QR</string>
+    <string name="home_action_fast_password">Fast password</string>
+    <string name="home_action_notes">Notas</string>
+    <string name="network_wifi_connected">Wi-Fi con internet</string>
+    <string name="network_wifi_no_internet">Wi-Fi sin internet</string>
+    <string name="network_mobile_connected">Datos móviles con internet</string>
+    <string name="network_mobile_no_internet">Datos móviles sin internet</string>
+    <string name="network_offline">Sin conexión</string>
+    <string name="navigation_home">Inicio</string>
+    <string name="navigation_notes">Notas</string>
+    <string name="navigation_settings">Ajustes</string>
+    <string name="navigation_back">Volver</string>
+    <string name="notes_title">Notas</string>
+    <string name="settings_title">Ajustes</string>
+    <string name="create_note_title">Nueva nota</string>
 </resources>

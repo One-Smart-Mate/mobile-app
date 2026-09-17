@@ -36,7 +36,37 @@ enum AppStrings {
     }
 
     enum Home {
-        static let title: LocalizedStringResource = "home.title"
-        static let welcome: LocalizedStringResource = "home.welcome"
+        static let greeting: LocalizedStringResource = "home.greeting"
+        static let quickActions: LocalizedStringResource = "home.quick_actions"
+        static let newNote: LocalizedStringResource = "home.action.new_note"
+        static let scanQR: LocalizedStringResource = "home.action.scan_qr"
+        static let fastPassword: LocalizedStringResource = "home.action.fast_password"
+        static let notes: LocalizedStringResource = "home.action.notes"
+    }
+
+    enum Network {
+        static let wifiConnected: LocalizedStringResource = "network.wifi.connected"
+        static let wifiNoInternet: LocalizedStringResource = "network.wifi.no_internet"
+        static let mobileConnected: LocalizedStringResource = "network.mobile.connected"
+        static let mobileNoInternet: LocalizedStringResource = "network.mobile.no_internet"
+        static let offline: LocalizedStringResource = "network.offline"
+    }
+
+    enum Navigation {
+        static let home: LocalizedStringResource = "navigation.home"
+        static let notes: LocalizedStringResource = "navigation.notes"
+        static let settings: LocalizedStringResource = "navigation.settings"
+    }
+
+    enum Notes {
+        static let title: LocalizedStringResource = "notes.title"
+    }
+
+    enum Settings {
+        static let title: LocalizedStringResource = "settings.title"
+    }
+
+    enum CreateNote {
+        static let title: LocalizedStringResource = "create_note.title"
     }
 }

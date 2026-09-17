@@ -141,6 +141,74 @@
         }
       }
     },
+    "create_note.title" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Nueva nota" } } }
+    },
+    "home.action.fast_password" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Fast password" } } }
+    },
+    "home.action.new_note" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Nueva nota" } } }
+    },
+    "home.action.notes" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Notas" } } }
+    },
+    "home.action.scan_qr" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Leer código QR" } } }
+    },
+    "home.greeting" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Buenos días, %@" } } }
+    },
+    "home.quick_actions" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Acciones rápidas" } } }
+    },
+    "navigation.home" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Inicio" } } }
+    },
+    "navigation.notes" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Notas" } } }
+    },
+    "navigation.settings" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Ajustes" } } }
+    },
+    "network.mobile.connected" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Datos móviles con internet" } } }
+    },
+    "network.mobile.no_internet" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Datos móviles sin internet" } } }
+    },
+    "network.offline" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Sin conexión" } } }
+    },
+    "network.wifi.connected" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Wi-Fi con internet" } } }
+    },
+    "network.wifi.no_internet" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Wi-Fi sin internet" } } }
+    },
+    "notes.title" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Notas" } } }
+    },
+    "settings.title" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Ajustes" } } }
+    },
     "home.welcome" : {
       "extractionState" : "manual",
       "localizations" : {
