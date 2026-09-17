@@ -203,6 +203,7 @@ struct LoginView: View {
     private var passwordSupportingText: String? {
         switch viewModel.passwordError {
         case .required: String(localized: AppStrings.Login.passwordRequired)
+        case .tooShort: String(localized: AppStrings.Login.passwordTooShort)
         case nil: nil
         }
     }

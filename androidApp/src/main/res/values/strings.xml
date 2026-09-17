@@ -11,7 +11,10 @@
     <string name="login_email_required">Ingresa tu correo electrónico</string>
     <string name="login_email_invalid">Ingresa un correo electrónico válido</string>
     <string name="login_password_required">Ingresa tu contraseña</string>
+    <string name="login_password_too_short">La contraseña debe tener al menos 8 caracteres</string>
     <string name="login_forgot_password">¿Olvidaste tu contraseña?</string>
     <string name="login_submit">Iniciar sesión</string>
     <string name="login_secure_access">Acceso seguro para tu equipo</string>
+    <string name="home_title">Home</string>
+    <string name="home_welcome">Sesión iniciada como %1$s</string>
 </resources>

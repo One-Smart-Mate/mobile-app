@@ -1,21 +1,23 @@
 import SwiftUI
 
 struct ContentView: View {
+    let dependencies: AppDependencies
+
     var body: some View {
-        LoginView()
+        OneSmartMateRoot(dependencies: dependencies)
     }
 }
 
 #Preview("App · Light") {
     OneSmartMateTheme {
-        ContentView()
+        ContentView(dependencies: .preview)
     }
     .preferredColorScheme(.light)
 }
 
 #Preview("App · Dark") {
     OneSmartMateTheme {
-        ContentView()
+        ContentView(dependencies: .preview)
     }
     .preferredColorScheme(.dark)
 }

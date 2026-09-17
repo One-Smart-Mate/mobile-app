@@ -57,20 +57,14 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun LoginScreenRoute(
     viewModel: LoginViewModel = koinViewModel(),
-    onLoginRequested: (email: String, password: String) -> Unit = { _, _ -> },
     onForgotPasswordClick: (email: String) -> Unit = {},
 ) {
     val uiState by viewModel.getStateFlow().collectAsStateWithLifecycle()
-    val currentOnLoginRequested by rememberUpdatedState(onLoginRequested)
     val currentOnForgotPasswordClick by rememberUpdatedState(onForgotPasswordClick)
 
     LaunchedEffect(viewModel) {
         viewModel.getEventFlow().collect { event ->
             when (event) {
-                is LoginViewModel.Event.LoginRequested -> {
-                    currentOnLoginRequested(event.email, event.password)
-                }
-
                 is LoginViewModel.Event.ForgotPasswordRequested -> {
                     currentOnForgotPasswordClick(event.email)
                 }
@@ -97,6 +91,7 @@ fun LoginScreen(
     }
     val passwordSupportingText = when (uiState.passwordError) {
         LoginViewModel.PasswordError.REQUIRED -> stringResource(R.string.login_password_required)
+        LoginViewModel.PasswordError.TOO_SHORT -> stringResource(R.string.login_password_too_short)
         null -> null
     }
 

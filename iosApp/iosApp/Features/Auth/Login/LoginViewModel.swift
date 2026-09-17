@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SharedLogic
 
 @MainActor
 @Observable
@@ -16,6 +17,7 @@ final class LoginViewModel {
 
     enum PasswordError {
         case required
+        case tooShort
     }
 
     typealias LoginHandler = @MainActor (Credentials) async throws -> Void
@@ -30,6 +32,7 @@ final class LoginViewModel {
 
     private let loginHandler: LoginHandler
     private let passwordResetHandler: PasswordResetHandler
+    private let emailValidator = EmailAddressValidator()
 
     init(
         email: String = "",
@@ -107,27 +110,27 @@ final class LoginViewModel {
     }
 
     private var normalizedEmail: String {
-        email.trimmingCharacters(in: .whitespacesAndNewlines)
+        emailValidator.normalize(value: email)
     }
 
     private func validate() -> Bool {
         if normalizedEmail.isEmpty {
             emailError = .required
-        } else if !isValidEmail(normalizedEmail) {
+        } else if !emailValidator.isValid(value: normalizedEmail) {
             emailError = .invalid
         } else {
             emailError = nil
         }
 
-        passwordError = password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? .required
-            : nil
+        if password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            passwordError = .required
+        } else if password.trimmingCharacters(in: .whitespacesAndNewlines).count < 8 {
+            passwordError = .tooShort
+        } else {
+            passwordError = nil
+        }
 
         return emailError == nil && passwordError == nil
     }
 
-    private func isValidEmail(_ value: String) -> Bool {
-        let pattern = "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$"
-        return value.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
-    }
 }

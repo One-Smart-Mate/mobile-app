@@ -11,6 +11,6 @@ fun initKoinAndroid(
 ) {
     startKoin {
         androidContext(application)
-        modules(sharedModules(config))
+        modules(sharedModules(config) + androidPlatformModule)
     }
 }

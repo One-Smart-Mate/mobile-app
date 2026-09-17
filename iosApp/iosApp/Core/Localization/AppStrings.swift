@@ -24,9 +24,19 @@ enum AppStrings {
         static let emailRequired: LocalizedStringResource = "login.email.error.required"
         static let emailInvalid: LocalizedStringResource = "login.email.error.invalid"
         static let passwordRequired: LocalizedStringResource = "login.password.error.required"
+        static let passwordTooShort: LocalizedStringResource = "login.password.error.too_short"
         static let forgotPassword: LocalizedStringResource = "login.forgot_password"
         static let submit: LocalizedStringResource = "login.submit"
         static let secureAccess: LocalizedStringResource = "login.secure_access"
         static let genericError: LocalizedStringResource = "login.error.generic"
+    }
+
+    enum Session {
+        static let loading: LocalizedStringResource = "session.loading"
+    }
+
+    enum Home {
+        static let title: LocalizedStringResource = "home.title"
+        static let welcome: LocalizedStringResource = "home.welcome"
     }
 }

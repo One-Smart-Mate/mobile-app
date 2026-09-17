@@ -2,9 +2,14 @@ package com.ih.osm.features.auth.login
 
 import androidx.lifecycle.viewModelScope
 import com.ih.osm.core.feature.viewmodel.GRViewModel
+import com.ih.osm.core.network.NetworkResult
+import com.ih.osm.core.validation.EmailAddressValidator
+import com.ih.osm.features.auth.domain.repository.AuthRepository
 import kotlinx.coroutines.launch
 
-class LoginViewModel : GRViewModel<
+class LoginViewModel(
+    private val authRepository: AuthRepository,
+) : GRViewModel<
     LoginViewModel.UiState,
     LoginViewModel.Action,
     LoginViewModel.Event,
@@ -26,6 +31,7 @@ class LoginViewModel : GRViewModel<
 
     enum class PasswordError {
         REQUIRED,
+        TOO_SHORT,
     }
 
     sealed interface Action {
@@ -37,11 +43,6 @@ class LoginViewModel : GRViewModel<
     }
 
     sealed interface Event {
-        data class LoginRequested(
-            val email: String,
-            val password: String,
-        ) : Event
-
         data class ForgotPasswordRequested(val email: String) : Event
     }
 
@@ -71,13 +72,17 @@ class LoginViewModel : GRViewModel<
 
     private fun validateAndRequestLogin() {
         val state = getStateValue()
-        val normalizedEmail = state.email.trim()
+        val normalizedEmail = EMAIL_VALIDATOR.normalize(state.email)
         val emailError = when {
             normalizedEmail.isEmpty() -> EmailError.REQUIRED
-            !normalizedEmail.matches(EMAIL_PATTERN) -> EmailError.INVALID
+            !EMAIL_VALIDATOR.isValid(normalizedEmail) -> EmailError.INVALID
             else -> null
         }
-        val passwordError = if (state.password.isBlank()) PasswordError.REQUIRED else null
+        val passwordError = when {
+            state.password.isBlank() -> PasswordError.REQUIRED
+            state.password.trim().length < MINIMUM_PASSWORD_LENGTH -> PasswordError.TOO_SHORT
+            else -> null
+        }
 
         if (emailError != null || passwordError != null) {
             setState {
@@ -90,22 +95,28 @@ class LoginViewModel : GRViewModel<
         }
 
         viewModelScope.launch {
-            sendNewEvent(
-                Event.LoginRequested(
-                    email = normalizedEmail,
-                    password = state.password,
-                ),
-            )
+            setState { copy(isLoading = true, bannerMessage = null) }
+            when (val result = authRepository.login(normalizedEmail, state.password)) {
+                is NetworkResult.Success -> setState { copy(isLoading = false) }
+                is NetworkResult.Failure -> setState {
+                    copy(isLoading = false, bannerMessage = result.error.message)
+                }
+            }
         }
     }
 
     private fun requestPasswordReset() {
         viewModelScope.launch {
-            sendNewEvent(Event.ForgotPasswordRequested(getStateValue().email.trim()))
+            sendNewEvent(
+                Event.ForgotPasswordRequested(
+                    EMAIL_VALIDATOR.normalize(getStateValue().email),
+                ),
+            )
         }
     }
 
     private companion object {
-        val EMAIL_PATTERN = Regex("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", RegexOption.IGNORE_CASE)
+        val EMAIL_VALIDATOR = EmailAddressValidator()
+        const val MINIMUM_PASSWORD_LENGTH = 8
     }
 }

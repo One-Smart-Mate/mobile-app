@@ -1,0 +1,49 @@
+CREATE TABLE UserSession (
+    user_id INTEGER NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    logo TEXT,
+    company_id INTEGER NOT NULL,
+    company_name TEXT NOT NULL,
+    app_history INTEGER NOT NULL,
+    due_date TEXT
+);
+
+CREATE TABLE UserRole (
+    name TEXT NOT NULL PRIMARY KEY
+);
+
+CREATE TABLE UserSite (
+    id INTEGER NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    logo TEXT
+);
+
+selectUser:
+SELECT * FROM UserSession LIMIT 1;
+
+selectRoles:
+SELECT name FROM UserRole ORDER BY name;
+
+selectSites:
+SELECT * FROM UserSite ORDER BY name;
+
+insertUser:
+INSERT OR REPLACE INTO UserSession(
+    user_id, name, email, logo, company_id, company_name, app_history, due_date
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+insertRole:
+INSERT OR REPLACE INTO UserRole(name) VALUES (?);
+
+insertSite:
+INSERT OR REPLACE INTO UserSite(id, name, logo) VALUES (?, ?, ?);
+
+deleteUser:
+DELETE FROM UserSession;
+
+deleteRoles:
+DELETE FROM UserRole;
+
+deleteSites:
+DELETE FROM UserSite;

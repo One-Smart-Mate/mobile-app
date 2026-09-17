@@ -3,6 +3,11 @@ package com.ih.osm.di
 import com.ih.osm.core.config.AppConfig
 import com.ih.osm.core.config.AppEnvironment
 import org.koin.core.context.startKoin
+import org.koin.mp.KoinPlatform
+import com.ih.osm.features.auth.IosAuthController
+import com.ih.osm.features.auth.IosSessionController
+import com.ih.osm.features.auth.domain.repository.AuthRepository
+import com.ih.osm.features.auth.domain.session.SessionRepository
 
 fun initKoinIos(
     baseUrl: String,
@@ -16,6 +21,14 @@ fun initKoinIos(
     )
 
     startKoin {
-        modules(sharedModules(config))
+        modules(sharedModules(config) + iosPlatformModule)
     }
 }
+
+fun createIosAuthController(): IosAuthController = IosAuthController(
+    authRepository = KoinPlatform.getKoin().get<AuthRepository>(),
+)
+
+fun createIosSessionController(): IosSessionController = IosSessionController(
+    sessionRepository = KoinPlatform.getKoin().get<SessionRepository>(),
+)

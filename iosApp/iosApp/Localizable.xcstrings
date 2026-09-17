@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "es",
   "strings" : {
+    "" : {
+
+    },
     "accessibility.banner.error" : {
       "comment" : "Nombre accesible para un banner de error.",
       "extractionState" : "manual",
@@ -96,6 +99,61 @@
           }
         }
       }
+    },
+    "Acción principal" : {
+
+    },
+    "Acción secundaria" : {
+
+    },
+    "Cargando" : {
+
+    },
+    "Contenido destacado sin perder contraste." : {
+
+    },
+    "Continuar" : {
+
+    },
+    "Contraseña" : {
+
+    },
+    "Correo electrónico" : {
+
+    },
+    "Deshabilitado" : {
+
+    },
+    "Eliminar" : {
+
+    },
+    "Empacadora · Línea 2" : {
+
+    },
+    "home.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        }
+      }
+    },
+    "home.welcome" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión iniciada como %@"
+          }
+        }
+      }
+    },
+    "Ingresa tu contraseña" : {
+
     },
     "login.brand.name" : {
       "extractionState" : "manual",
@@ -196,6 +254,17 @@
         }
       }
     },
+    "login.password.error.too_short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La contraseña debe tener al menos 8 caracteres"
+          }
+        }
+      }
+    },
     "login.password.label" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -261,6 +330,29 @@
           }
         }
       }
+    },
+    "Motor M-204" : {
+
+    },
+    "nombre@empresa.com" : {
+
+    },
+    "Reintentar" : {
+
+    },
+    "session.loading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurando sesión"
+          }
+        }
+      }
+    },
+    "Tarjeta seleccionada" : {
+
     }
   },
   "version" : "1.0"
