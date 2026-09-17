@@ -7,6 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import com.ih.osm.designsystem.preview.PreviewScreen
 import com.ih.osm.designsystem.theme.OneSmartMateTheme
+import com.ih.osm.features.auth.login.LoginScreen
+import com.ih.osm.features.auth.login.LoginViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,6 +27,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppAndroidPreview() {
     OneSmartMateTheme {
-        OneSmartMateApp()
+        LoginScreen(
+            uiState = LoginViewModel.UiState(),
+            onAction = {},
+        )
     }
 }

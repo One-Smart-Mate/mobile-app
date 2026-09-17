@@ -13,7 +13,7 @@ kotlin {
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "SharedLogic"
-            isStatic = true
+            isStatic = false
         }
     }
     
