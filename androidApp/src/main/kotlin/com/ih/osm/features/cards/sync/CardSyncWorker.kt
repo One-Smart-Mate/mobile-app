@@ -1,12 +1,15 @@
 package com.ih.osm.features.cards.sync
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.BackoffPolicy
@@ -139,6 +142,13 @@ private class CardSyncNotifications(private val context: Context) {
 
     fun success(count: Int) {
         runCatching {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
             manager.notify(
                 RESULT_NOTIFICATION_ID,
                 NotificationCompat.Builder(context, CHANNEL_ID)
@@ -153,6 +163,12 @@ private class CardSyncNotifications(private val context: Context) {
 
     fun failure(message: String?) {
         runCatching {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+            }
             manager.notify(
                 RESULT_NOTIFICATION_ID,
                 NotificationCompat.Builder(context, CHANNEL_ID)

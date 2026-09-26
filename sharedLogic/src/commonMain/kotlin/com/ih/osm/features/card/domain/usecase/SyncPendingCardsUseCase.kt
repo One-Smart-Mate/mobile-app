@@ -1,5 +1,6 @@
 package com.ih.osm.features.card.domain.usecase
 
+import co.touchlab.kermit.Logger
 import com.ih.osm.core.network.NetworkResult
 import com.ih.osm.features.card.domain.repository.CardRepository
 

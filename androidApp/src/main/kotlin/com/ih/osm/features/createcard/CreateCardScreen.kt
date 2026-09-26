@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +34,6 @@ import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Info
@@ -60,6 +60,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -241,6 +245,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.classificationContent
             value = state.selectedPriority?.let { "${it.code} · ${it.description}" },
             placeholder = stringResource(R.string.create_card_priority_placeholder),
             icon = Icons.Outlined.Flag,
+            enabled = state.selectedPreclassifier != null,
             onClick = { onAction(CreateCardViewModel.Action.OpenSheet(CreateCardSheet.PRIORITY)) },
         )
     }
@@ -306,16 +311,35 @@ private fun androidx.compose.foundation.lazy.LazyListScope.detailsContent(
         )
     }
     item {
-        AnatomyTextField(
-            value = state.description,
-            onValueChange = { onAction(CreateCardViewModel.Action.DescriptionChanged(it)) },
-            placeholder = stringResource(R.string.create_card_description_placeholder),
-            supportingText = stringResource(R.string.create_card_description_count, state.description.length, 200),
-            singleLine = false,
-            minLines = 5,
-            maxLines = 8,
-            leadingIcon = { Icon(Icons.Outlined.Description, contentDescription = null) },
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            AnatomyTextField(
+                value = state.description,
+                onValueChange = { onAction(CreateCardViewModel.Action.DescriptionChanged(it)) },
+                placeholder = stringResource(R.string.create_card_description_placeholder),
+                singleLine = false,
+                minLines = 4,
+                maxLines = 6,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    autoCorrectEnabled = true,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Default,
+                ),
+            )
+            AnatomyText(
+                text = stringResource(
+                    R.string.create_card_description_count,
+                    state.description.length,
+                    200,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodySmall,
+                properties = AnatomyTextProperties(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                ),
+            )
+        }
     }
 }
 
@@ -355,7 +379,7 @@ private fun CreateCardBottomActions(
         shadowElevation = 8.dp,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 35.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (state.step != CreateCardStep.CLASSIFICATION) {
@@ -664,13 +688,7 @@ private fun SelectionBottomSheet(
                         }
                         SheetItem(
                             item = localizedItem,
-                            selected = item.id in setOfNotNull(
-                                state.selectedCardType?.id,
-                                state.selectedCardTypeValue,
-                                state.selectedPreclassifier?.id,
-                                state.selectedPriority?.id,
-                                state.selectedLevel?.id,
-                            ),
+                            selected = item.id == state.selectedItemIdForActiveSheet(),
                             onClick = { onAction(CreateCardViewModel.Action.SelectItem(item.id)) },
                         )
                     }
@@ -678,6 +696,17 @@ private fun SelectionBottomSheet(
             }
         }
     }
+}
+
+private fun CreateCardState.selectedItemIdForActiveSheet(): String? = when (activeSheet) {
+    CreateCardSheet.CARD_TYPE -> selectedCardType?.id
+    CreateCardSheet.CARD_TYPE_VALUE -> selectedCardTypeValue
+    CreateCardSheet.PRECLASSIFIER -> selectedPreclassifier?.id
+    CreateCardSheet.PRIORITY -> selectedPriority?.id
+    CreateCardSheet.LEVEL -> selectedLevel?.id
+    CreateCardSheet.CUSTOM_DUE_DATE,
+    null,
+    -> null
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -141,7 +141,7 @@ fun AnatomyTextField(
                     )
                 }
                 .padding(start = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
         ) {
             leadingIcon?.let { icon ->
                 Box(
@@ -161,7 +161,7 @@ fun AnatomyTextField(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp, vertical = 15.dp),
-                contentAlignment = Alignment.CenterStart,
+                contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
             ) {
                 BasicTextField(
                     value = value,
@@ -181,7 +181,10 @@ fun AnatomyTextField(
                     interactionSource = interactionSource,
                     cursorBrush = SolidColor(if (isError) colorScheme.error else colorScheme.primary),
                     decorationBox = { innerTextField ->
-                        Box(contentAlignment = Alignment.CenterStart) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
+                        ) {
                             if (value.isEmpty() && placeholder != null) {
                                 AnatomyText(
                                     text = placeholder,

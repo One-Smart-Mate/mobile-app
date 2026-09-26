@@ -18,7 +18,7 @@ internal data class CreateCardRequestDto(
     val cardTypeId: Long,
     val preclassifierId: Long,
     val comments: String? = null,
-    val evidences: List<CreateCardEvidenceDto> = emptyList(),
+    val evidences: List<CreateCardEvidenceDto>,
     val appSo: String? = null,
     val appVersion: String? = null,
     val customDueDate: String? = null,

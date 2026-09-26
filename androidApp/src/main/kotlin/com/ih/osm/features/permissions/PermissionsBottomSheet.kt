@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -35,7 +35,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberBottomSheetState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -103,15 +102,20 @@ private fun PermissionsBottomSheet(
     onContinue: () -> Unit,
     onNotNow: () -> Unit,
 ) {
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+    )
+
     ModalBottomSheet(
-        sheetState = rememberBottomSheetState(SheetValue.Expanded),
+        modifier = Modifier.fillMaxSize(),
+        sheetState = sheetState,
         onDismissRequest = onNotNow,
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.9f)
+                .fillMaxSize()
                 .widthIn(max = 720.dp)
                 .align(Alignment.CenterHorizontally)
                 .padding(horizontal = 20.dp),
