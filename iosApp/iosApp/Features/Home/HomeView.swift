@@ -9,9 +9,19 @@ enum MainTab: Hashable {
 struct MainTabRoot: View {
     let user: SessionUser
 
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: MainTab = .home
     @State private var presentsCreateNote = false
     @State private var networkMonitor = NetworkStatusMonitor()
+    @State private var catalogSyncViewModel: CatalogSyncViewModel?
+
+    init(
+        user: SessionUser,
+        catalogSyncViewModel: CatalogSyncViewModel? = nil
+    ) {
+        self.user = user
+        _catalogSyncViewModel = State(initialValue: catalogSyncViewModel)
+    }
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -19,6 +29,7 @@ struct MainTabRoot: View {
                 HomeView(
                     user: user,
                     networkStatus: networkMonitor.status,
+                    catalogSyncState: catalogSyncViewModel?.state ?? .idle,
                     onCreateNote: { presentsCreateNote = true },
                     onOpenNotes: { selectedTab = .notes }
                 )
@@ -38,12 +49,26 @@ struct MainTabRoot: View {
                 .tag(MainTab.settings)
         }
         .tint(.osmPrimary)
+        .task { catalogSyncViewModel?.syncIfNeeded() }
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .active:
+                catalogSyncViewModel?.syncIfNeeded()
+            case .background:
+                catalogSyncViewModel?.appDidEnterBackground()
+            case .inactive:
+                break
+            @unknown default:
+                break
+            }
+        }
     }
 }
 
 struct HomeView: View {
     let user: SessionUser
     let networkStatus: NetworkConnectionStatus
+    let catalogSyncState: CatalogSyncViewState
     let onCreateNote: () -> Void
     let onOpenNotes: () -> Void
 
@@ -52,11 +77,13 @@ struct HomeView: View {
     init(
         user: SessionUser,
         networkStatus: NetworkConnectionStatus,
+        catalogSyncState: CatalogSyncViewState,
         onCreateNote: @escaping () -> Void,
         onOpenNotes: @escaping () -> Void
     ) {
         self.user = user
         self.networkStatus = networkStatus
+        self.catalogSyncState = catalogSyncState
         self.onCreateNote = onCreateNote
         self.onOpenNotes = onOpenNotes
         _selectedSiteID = State(initialValue: user.sites.first?.id)
@@ -79,6 +106,11 @@ struct HomeView: View {
 
                 NetworkStatusBadge(status: networkStatus)
                     .padding(.top, OSMSpacing.sm)
+
+                if catalogSyncState != .idle {
+                    CatalogSyncStatusCard(state: catalogSyncState)
+                        .padding(.top, OSMSpacing.sm)
+                }
 
                 AnatomyText(
                     AppStrings.Home.quickActions,
@@ -257,6 +289,79 @@ private struct NetworkStatusBadge: View {
         case .wifiConnected, .cellularConnected: .osmOnPrimaryContainer
         case .wifiNoInternet, .cellularNoInternet: .osmOnWarningContainer
         case .offline: .osmOnErrorContainer
+        }
+    }
+}
+
+private struct CatalogSyncStatusCard: View {
+    let state: CatalogSyncViewState
+
+    var body: some View {
+        AnatomyCard(variant: .filled) {
+            HStack(alignment: .top, spacing: OSMSpacing.sm) {
+                Image(systemName: isFailure ? "icloud.slash" : "icloud.and.arrow.down")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(isFailure ? Color.osmError : Color.osmPrimary)
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: OSMSpacing.xs) {
+                    Text(AppStrings.CatalogSync.title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.osmOnSurface)
+
+                    Text(statusText)
+                        .font(.caption)
+                        .foregroundStyle(isFailure ? Color.osmError : Color.osmOnSurfaceVariant)
+
+                    switch state {
+                    case .waitingForNetwork:
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(Color.osmPrimary)
+                    case let .downloading(progress, _):
+                        ProgressView(value: progress)
+                            .tint(Color.osmPrimary)
+                    case .idle, .failed:
+                        EmptyView()
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private var isFailure: Bool {
+        if case .failed = state { return true }
+        return false
+    }
+
+    private var statusText: String {
+        switch state {
+        case .idle:
+            return ""
+        case .waitingForNetwork:
+            return String(localized: AppStrings.CatalogSync.waiting)
+        case let .downloading(_, catalogKey):
+            return String(localized: catalogLabel(for: catalogKey))
+        case let .failed(message):
+            return message
+        }
+    }
+
+    private func catalogLabel(for key: String?) -> LocalizedStringResource {
+        switch key {
+        case CatalogSyncSelection.cardTypes.rawValue:
+            AppStrings.CatalogSync.cardTypes
+        case CatalogSyncSelection.preclassifiers.rawValue:
+            AppStrings.CatalogSync.preclassifiers
+        case CatalogSyncSelection.priorities.rawValue:
+            AppStrings.CatalogSync.priorities
+        case CatalogSyncSelection.levels.rawValue:
+            AppStrings.CatalogSync.levels
+        case CatalogSyncSelection.employees.rawValue:
+            AppStrings.CatalogSync.employees
+        default:
+            AppStrings.CatalogSync.starting
         }
     }
 }

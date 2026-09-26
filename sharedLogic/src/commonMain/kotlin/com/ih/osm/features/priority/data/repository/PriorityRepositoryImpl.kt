@@ -19,8 +19,8 @@ internal class PriorityRepositoryImpl(
             Priority(it.id, it.code, it.description, it.days, it.status)
         }
 
-    override fun hasData(siteId: Long): Boolean =
-        database.catalogsQueries.hasPrioritiesBySite(siteId).executeAsOne()
+    override fun count(siteId: Long): Long =
+        database.catalogsQueries.countPrioritiesBySite(siteId).executeAsOne()
 
     override fun replaceAll(siteId: Long, items: List<Priority>) {
         database.catalogsQueries.deletePrioritiesBySite(siteId)

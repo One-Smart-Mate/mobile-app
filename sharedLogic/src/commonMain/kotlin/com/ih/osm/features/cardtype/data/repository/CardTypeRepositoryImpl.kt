@@ -43,8 +43,8 @@ internal class CardTypeRepositoryImpl(
             )
         }
 
-    override fun hasData(siteId: Long): Boolean =
-        database.catalogsQueries.hasCardTypesBySite(siteId).executeAsOne()
+    override fun count(siteId: Long): Long =
+        database.catalogsQueries.countCardTypesBySite(siteId).executeAsOne()
 
     override fun replaceAll(siteId: Long, items: List<CardType>) {
         database.catalogsQueries.deleteCardTypesBySite(siteId)

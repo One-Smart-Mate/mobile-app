@@ -4,10 +4,13 @@ import SharedLogic
 struct AppDependencies {
     let makeSessionViewModel: @MainActor () -> SessionViewModel
     let makeLoginViewModel: @MainActor () -> LoginViewModel
+    let makeCatalogSyncViewModel: @MainActor () -> CatalogSyncViewModel?
+    let catalogSyncController: IosCatalogSyncController?
 
     @MainActor
     static func live() -> AppDependencies {
         let authController = KoinIosKt.createIosAuthController()
+        let catalogSyncController = KoinIosKt.createIosCatalogSyncController()
 
         return AppDependencies(
             makeSessionViewModel: {
@@ -35,7 +38,14 @@ struct AppDependencies {
                         )
                     }
                 })
-            }
+            },
+            makeCatalogSyncViewModel: {
+                CatalogSyncViewModel(
+                    controller: catalogSyncController,
+                    backgroundScheduler: .shared
+                )
+            },
+            catalogSyncController: catalogSyncController
         )
     }
 
@@ -50,7 +60,9 @@ struct AppDependencies {
                     stopObservation: {}
                 )
             },
-            makeLoginViewModel: { LoginViewModel() }
+            makeLoginViewModel: { LoginViewModel() },
+            makeCatalogSyncViewModel: { nil },
+            catalogSyncController: nil
         )
     }
 }

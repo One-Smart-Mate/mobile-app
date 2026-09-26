@@ -19,8 +19,8 @@ internal class PreclassifierRepositoryImpl(
             Preclassifier(it.id, it.code, it.description, it.card_type_id)
         }
 
-    override fun hasData(siteId: Long): Boolean =
-        database.catalogsQueries.hasPreclassifiersBySite(siteId).executeAsOne()
+    override fun count(siteId: Long): Long =
+        database.catalogsQueries.countPreclassifiersBySite(siteId).executeAsOne()
 
     override fun replaceAll(siteId: Long, items: List<Preclassifier>) {
         database.catalogsQueries.deletePreclassifiersBySite(siteId)

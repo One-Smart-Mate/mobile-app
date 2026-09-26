@@ -44,6 +44,19 @@ enum AppStrings {
         static let notes: LocalizedStringResource = "home.action.notes"
     }
 
+    enum CatalogSync {
+        static let title: LocalizedStringResource = "catalog_sync.title"
+        static let starting: LocalizedStringResource = "catalog_sync.starting"
+        static let waiting: LocalizedStringResource = "catalog_sync.waiting"
+        static let failed: LocalizedStringResource = "catalog_sync.failed"
+        static let genericError: LocalizedStringResource = "catalog_sync.error.generic"
+        static let cardTypes: LocalizedStringResource = "catalog_sync.card_types"
+        static let preclassifiers: LocalizedStringResource = "catalog_sync.preclassifiers"
+        static let priorities: LocalizedStringResource = "catalog_sync.priorities"
+        static let levels: LocalizedStringResource = "catalog_sync.levels"
+        static let employees: LocalizedStringResource = "catalog_sync.employees"
+    }
+
     enum Network {
         static let wifiConnected: LocalizedStringResource = "network.wifi.connected"
         static let wifiNoInternet: LocalizedStringResource = "network.wifi.no_internet"

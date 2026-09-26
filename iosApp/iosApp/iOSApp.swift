@@ -11,7 +11,12 @@ struct iOSApp: App {
             environment: AppConfiguration.environment,
             enableNetworkLogging: AppConfiguration.enableNetworkLogging
         )
-        dependencies = .live()
+        let liveDependencies = AppDependencies.live()
+        dependencies = liveDependencies
+        if let catalogSyncController = liveDependencies.catalogSyncController {
+            CatalogSyncBackgroundScheduler.shared.configure(controller: catalogSyncController)
+            CatalogSyncBackgroundScheduler.shared.register()
+        }
     }
 
     var body: some Scene {

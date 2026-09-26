@@ -1,0 +1,130 @@
+CREATE TABLE CardRecord (
+    uuid TEXT NOT NULL PRIMARY KEY,
+    server_id TEXT,
+    site_card_id INTEGER NOT NULL,
+    site_id INTEGER NOT NULL,
+    site_code TEXT,
+    card_type_color TEXT,
+    status TEXT NOT NULL,
+    creation_date TEXT NOT NULL,
+    due_date TEXT,
+    priority_id TEXT,
+    priority_code TEXT,
+    priority_description TEXT,
+    node_id TEXT,
+    node_name TEXT,
+    card_type_id TEXT,
+    card_type_name TEXT,
+    card_type_value TEXT,
+    preclassifier_id TEXT,
+    preclassifier_code TEXT,
+    preclassifier_description TEXT,
+    creator_id TEXT,
+    creator_name TEXT,
+    responsible_id TEXT,
+    responsible_name TEXT,
+    mechanic_id TEXT,
+    mechanic_name TEXT,
+    comments TEXT,
+    evidence_audio_creation INTEGER NOT NULL DEFAULT 0,
+    evidence_video_creation INTEGER NOT NULL DEFAULT 0,
+    evidence_image_creation INTEGER NOT NULL DEFAULT 0,
+    card_location TEXT,
+    definitive_solution_date TEXT,
+    is_local INTEGER NOT NULL DEFAULT 0,
+    has_local_solutions INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT,
+    app_so TEXT,
+    app_version TEXT,
+    custom_due_date TEXT,
+    notify_responsible INTEGER NOT NULL DEFAULT 0,
+    sync_state TEXT NOT NULL DEFAULT 'SYNCED',
+    sync_error TEXT,
+    sync_attempts INTEGER NOT NULL DEFAULT 0
+);
+
+selectAllCards:
+SELECT * FROM CardRecord
+ORDER BY is_local DESC, site_card_id DESC, creation_date DESC;
+
+selectCardByUuid:
+SELECT * FROM CardRecord WHERE uuid = ? LIMIT 1;
+
+selectPendingCards:
+SELECT * FROM CardRecord
+WHERE is_local = 1
+ORDER BY creation_date
+LIMIT ?;
+
+countPendingCards:
+SELECT COUNT(*) FROM CardRecord WHERE is_local = 1;
+
+deleteRemoteCardsBySite:
+DELETE FROM CardRecord WHERE site_id = ? AND is_local = 0;
+
+deleteAllCards:
+DELETE FROM CardRecord;
+
+upsertCard:
+INSERT OR REPLACE INTO CardRecord(
+    uuid,
+    server_id,
+    site_card_id,
+    site_id,
+    site_code,
+    card_type_color,
+    status,
+    creation_date,
+    due_date,
+    priority_id,
+    priority_code,
+    priority_description,
+    node_id,
+    node_name,
+    card_type_id,
+    card_type_name,
+    card_type_value,
+    preclassifier_id,
+    preclassifier_code,
+    preclassifier_description,
+    creator_id,
+    creator_name,
+    responsible_id,
+    responsible_name,
+    mechanic_id,
+    mechanic_name,
+    comments,
+    evidence_audio_creation,
+    evidence_video_creation,
+    evidence_image_creation,
+    card_location,
+    definitive_solution_date,
+    is_local,
+    has_local_solutions,
+    updated_at,
+    app_so,
+    app_version,
+    custom_due_date,
+    notify_responsible,
+    sync_state,
+    sync_error,
+    sync_attempts
+) VALUES (
+    ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?
+);
+
+markCardSyncing:
+UPDATE CardRecord
+SET sync_state = 'SYNCING', sync_error = NULL, sync_attempts = sync_attempts + 1
+WHERE uuid = ? AND is_local = 1;
+
+markCardSyncFailed:
+UPDATE CardRecord
+SET sync_state = 'FAILED', sync_error = ?
+WHERE uuid = ? AND is_local = 1;

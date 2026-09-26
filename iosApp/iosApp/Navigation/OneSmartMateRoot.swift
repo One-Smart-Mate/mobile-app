@@ -30,7 +30,11 @@ struct OneSmartMateRoot: View {
                 LoginView(viewModel: dependencies.makeLoginViewModel())
             }
         case let .signedIn(user):
-            MainTabRoot(user: user)
+            MainTabRoot(
+                user: user,
+                catalogSyncViewModel: dependencies.makeCatalogSyncViewModel()
+            )
+            .id(user.id)
         }
     }
 }

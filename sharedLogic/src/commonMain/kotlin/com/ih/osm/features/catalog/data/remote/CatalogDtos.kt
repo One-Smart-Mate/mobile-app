@@ -98,8 +98,24 @@ internal data class LevelDto(
     val name: String,
     val description: String = "",
     val status: String,
+    val level: Long = 0,
+    val levelMachineId: String? = null,
+    val notify: Long = 0,
+    val assignWhileCreate: Long = 0,
 ) {
-    fun toDomain() = Level(id, ownerId, ownerName, superiorId, name, description, status)
+    fun toDomain() = Level(
+        id = id,
+        ownerId = ownerId,
+        ownerName = ownerName,
+        superiorId = superiorId,
+        name = name,
+        description = description,
+        status = status,
+        depth = level,
+        machineId = levelMachineId,
+        notifyResponsible = notify != 0L,
+        assignResponsibleOnCreate = assignWhileCreate != 0L,
+    )
 }
 
 @Serializable

@@ -6,7 +6,7 @@ import com.ih.osm.features.cardtype.domain.model.CardType
 interface CardTypeRepository {
     suspend fun fetchRemote(siteId: Long): NetworkResult<List<CardType>>
     fun getAll(siteId: Long): List<CardType>
-    fun hasData(siteId: Long): Boolean
+    fun count(siteId: Long): Long
     fun replaceAll(siteId: Long, items: List<CardType>)
     fun deleteAll()
 }

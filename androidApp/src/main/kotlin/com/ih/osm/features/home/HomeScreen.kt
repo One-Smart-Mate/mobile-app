@@ -71,12 +71,14 @@ import com.ih.osm.features.auth.domain.model.UserSite
 import com.ih.osm.features.catalog.domain.model.CatalogKind
 import com.ih.osm.features.catalog.sync.CatalogSyncScheduler
 import com.ih.osm.features.catalog.sync.CatalogSyncUiState
+import com.ih.osm.features.permissions.PermissionsBottomSheetHost
+import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
 @Composable
 fun HomeScreenRoute(
     user: AuthenticatedUser,
-    onCreateNote: () -> Unit,
+    onCreateCard: (Long) -> Unit,
     onOpenNotes: () -> Unit,
     modifier: Modifier = Modifier,
     networkStatusMonitor: NetworkStatusMonitor = koinInject(),
@@ -86,15 +88,25 @@ fun HomeScreenRoute(
     val catalogSyncState by catalogSyncScheduler.observe(user).collectAsStateWithLifecycle(
         initialValue = CatalogSyncUiState.Idle,
     )
+    val isTransientSyncState = catalogSyncState is CatalogSyncUiState.WaitingForNetwork ||
+        catalogSyncState is CatalogSyncUiState.Downloading
+    var showTransientSyncState by remember { mutableStateOf(false) }
     var selectedSiteId by rememberSaveable(user.id) {
         mutableStateOf(user.sites.firstOrNull()?.id)
     }
 
-    LaunchedEffect(user.id, user.sites) {
+    LaunchedEffect(user.sites) {
         if (user.sites.none { it.id == selectedSiteId }) {
             selectedSiteId = user.sites.firstOrNull()?.id
         }
-        catalogSyncScheduler.enqueueIfNeeded(user)
+    }
+    LaunchedEffect(isTransientSyncState) {
+        showTransientSyncState = if (isTransientSyncState) {
+            delay(SYNC_PROGRESS_VISIBILITY_DELAY_MS)
+            true
+        } else {
+            false
+        }
     }
 
     val selectedSite = user.sites.firstOrNull { it.id == selectedSiteId }
@@ -104,13 +116,21 @@ fun HomeScreenRoute(
         user = user,
         selectedSite = selectedSite,
         networkStatus = networkStatus,
-        catalogSyncState = catalogSyncState,
+        catalogSyncState = when {
+            catalogSyncState is CatalogSyncUiState.Failed -> catalogSyncState
+            showTransientSyncState -> catalogSyncState
+            else -> CatalogSyncUiState.Idle
+        },
         onSiteSelected = { selectedSiteId = it.id },
-        onCreateNote = onCreateNote,
+        onCreateNote = { selectedSite?.let { onCreateCard(it.id) } },
         onOpenNotes = onOpenNotes,
         modifier = modifier,
     )
+
+    PermissionsBottomSheetHost()
 }
+
+private const val SYNC_PROGRESS_VISIBILITY_DELAY_MS = 500L
 
 @Composable
 fun HomeScreen(
@@ -251,7 +271,7 @@ private fun HomeHeader(
         Column(modifier = Modifier.weight(1f)) {
             AnatomyText(
                 text = user.companyName,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 properties = AnatomyTextProperties(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

@@ -6,7 +6,7 @@ import com.ih.osm.features.level.domain.model.Level
 interface LevelRepository {
     suspend fun fetchRemote(siteId: Long): NetworkResult<List<Level>>
     fun getAll(siteId: Long): List<Level>
-    fun hasData(siteId: Long): Boolean
+    fun count(siteId: Long): Long
     fun replaceAll(siteId: Long, items: List<Level>)
     fun deleteAll()
 }

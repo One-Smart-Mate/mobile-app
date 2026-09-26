@@ -26,7 +26,7 @@ class BuildCatalogSyncPlanUseCaseTest {
     fun syncsOnlyTheMissingCatalogForTheAffectedSite() {
         val fixture = Fixture(
             metadata = recentMetadata(),
-            preclassifiersWithData = setOf(2L),
+            incompleteSnapshots = setOf(1L to CatalogKind.PRECLASSIFIERS),
         )
 
         val plan = fixture.useCase(userId = USER_ID, siteIds = listOf(1L, 2L))
@@ -49,6 +49,16 @@ class BuildCatalogSyncPlanUseCaseTest {
     }
 
     @Test
+    fun acceptsAnEmptyCatalogThatWasSuccessfullySynchronized() {
+        val plan = Fixture(
+            metadata = recentMetadata(),
+            emptySnapshots = setOf(1L to CatalogKind.PRECLASSIFIERS),
+        ).useCase(userId = USER_ID, siteIds = listOf(1L, 2L))
+
+        assertTrue(plan.isEmpty)
+    }
+
+    @Test
     fun manualPlanCanRefreshOnlySelectedCatalogs() {
         val useCase = Fixture(metadata = recentMetadata()).useCase
 
@@ -65,61 +75,69 @@ class BuildCatalogSyncPlanUseCaseTest {
 
     private class Fixture(
         metadata: CatalogSyncMetadata?,
-        preclassifiersWithData: Set<Long> = setOf(1L, 2L),
+        incompleteSnapshots: Set<Pair<Long, CatalogKind>> = emptySet(),
+        emptySnapshots: Set<Pair<Long, CatalogKind>> = emptySet(),
     ) {
-        private val alwaysAvailable = setOf(1L, 2L)
+        private val defaultCounts = mapOf(1L to 1L, 2L to 1L)
+        private val preclassifierCounts = defaultCounts.mapValues { (siteId, count) ->
+            if (siteId to CatalogKind.PRECLASSIFIERS in emptySnapshots) 0L else count
+        }
         val useCase = BuildCatalogSyncPlanUseCase(
-            cardTypes = FakeCardTypeRepository(alwaysAvailable),
-            preclassifiers = FakePreclassifierRepository(preclassifiersWithData),
-            priorities = FakePriorityRepository(alwaysAvailable),
-            levels = FakeLevelRepository(alwaysAvailable),
-            employees = FakeEmployeeRepository(alwaysAvailable),
-            catalogSyncRepository = FakeCatalogSyncRepository(metadata),
+            cardTypes = FakeCardTypeRepository(defaultCounts),
+            preclassifiers = FakePreclassifierRepository(preclassifierCounts),
+            priorities = FakePriorityRepository(defaultCounts),
+            levels = FakeLevelRepository(defaultCounts),
+            employees = FakeEmployeeRepository(defaultCounts),
+            catalogSyncRepository = FakeCatalogSyncRepository(
+                metadata = metadata,
+                incompleteSnapshots = incompleteSnapshots,
+            ),
         )
     }
 
-    private class FakeCardTypeRepository(private val dataSites: Set<Long>) : CardTypeRepository {
+    private class FakeCardTypeRepository(private val counts: Map<Long, Long>) : CardTypeRepository {
         override suspend fun fetchRemote(siteId: Long) = NetworkResult.Success(emptyList<CardType>(), 200)
         override fun getAll(siteId: Long) = emptyList<CardType>()
-        override fun hasData(siteId: Long) = siteId in dataSites
+        override fun count(siteId: Long) = counts[siteId] ?: 0L
         override fun replaceAll(siteId: Long, items: List<CardType>) = Unit
         override fun deleteAll() = Unit
     }
 
-    private class FakePreclassifierRepository(private val dataSites: Set<Long>) : PreclassifierRepository {
+    private class FakePreclassifierRepository(private val counts: Map<Long, Long>) : PreclassifierRepository {
         override suspend fun fetchRemote(siteId: Long) = NetworkResult.Success(emptyList<Preclassifier>(), 200)
         override fun getAll(siteId: Long) = emptyList<Preclassifier>()
-        override fun hasData(siteId: Long) = siteId in dataSites
+        override fun count(siteId: Long) = counts[siteId] ?: 0L
         override fun replaceAll(siteId: Long, items: List<Preclassifier>) = Unit
         override fun deleteAll() = Unit
     }
 
-    private class FakePriorityRepository(private val dataSites: Set<Long>) : PriorityRepository {
+    private class FakePriorityRepository(private val counts: Map<Long, Long>) : PriorityRepository {
         override suspend fun fetchRemote(siteId: Long) = NetworkResult.Success(emptyList<Priority>(), 200)
         override fun getAll(siteId: Long) = emptyList<Priority>()
-        override fun hasData(siteId: Long) = siteId in dataSites
+        override fun count(siteId: Long) = counts[siteId] ?: 0L
         override fun replaceAll(siteId: Long, items: List<Priority>) = Unit
         override fun deleteAll() = Unit
     }
 
-    private class FakeLevelRepository(private val dataSites: Set<Long>) : LevelRepository {
+    private class FakeLevelRepository(private val counts: Map<Long, Long>) : LevelRepository {
         override suspend fun fetchRemote(siteId: Long) = NetworkResult.Success(emptyList<Level>(), 200)
         override fun getAll(siteId: Long) = emptyList<Level>()
-        override fun hasData(siteId: Long) = siteId in dataSites
+        override fun count(siteId: Long) = counts[siteId] ?: 0L
         override fun replaceAll(siteId: Long, items: List<Level>) = Unit
         override fun deleteAll() = Unit
     }
 
-    private class FakeEmployeeRepository(private val dataSites: Set<Long>) : EmployeeRepository {
+    private class FakeEmployeeRepository(private val counts: Map<Long, Long>) : EmployeeRepository {
         override suspend fun fetchRemote(siteId: Long) = NetworkResult.Success(emptyList<Employee>(), 200)
         override fun getAll(siteId: Long) = emptyList<Employee>()
-        override fun hasData(siteId: Long) = siteId in dataSites
+        override fun count(siteId: Long) = counts[siteId] ?: 0L
         override fun replaceAll(siteId: Long, items: List<Employee>) = Unit
         override fun deleteAll() = Unit
     }
 
     private class FakeCatalogSyncRepository(
         private val metadata: CatalogSyncMetadata?,
+        private val incompleteSnapshots: Set<Pair<Long, CatalogKind>> = emptySet(),
     ) : CatalogSyncRepository {
         override fun replaceAllTransactionally(
             userId: Long,
@@ -130,6 +148,8 @@ class BuildCatalogSyncPlanUseCaseTest {
         ) = Unit
 
         override fun getMetadata(userId: Long) = metadata
+        override fun isSnapshotComplete(siteId: Long, catalog: CatalogKind, localItemCount: Long) =
+            siteId to catalog !in incompleteSnapshots
         override fun invalidate(userId: Long) = Unit
     }
 

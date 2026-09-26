@@ -39,7 +39,7 @@ data class AppConfig private constructor(
             return AppConfig(
                 baseUrl = normalizedBaseUrl,
                 environment = environment,
-                enableNetworkLogging = enableNetworkLogging && environment == AppEnvironment.DEV,
+                enableNetworkLogging = environment == AppEnvironment.DEV,
             )
         }
     }

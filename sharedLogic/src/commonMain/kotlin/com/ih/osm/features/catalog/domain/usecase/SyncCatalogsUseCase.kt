@@ -120,11 +120,21 @@ class BuildCatalogSyncPlanUseCase(
 
         val missing = distinctSiteIds.mapNotNull { siteId ->
             val kinds = buildSet {
-                if (!cardTypes.hasData(siteId)) add(CatalogKind.CARD_TYPES)
-                if (!preclassifiers.hasData(siteId)) add(CatalogKind.PRECLASSIFIERS)
-                if (!priorities.hasData(siteId)) add(CatalogKind.PRIORITIES)
-                if (!levels.hasData(siteId)) add(CatalogKind.LEVELS)
-                if (!employees.hasData(siteId)) add(CatalogKind.EMPLOYEES)
+                if (!isComplete(siteId, CatalogKind.CARD_TYPES, cardTypes.count(siteId))) {
+                    add(CatalogKind.CARD_TYPES)
+                }
+                if (!isComplete(siteId, CatalogKind.PRECLASSIFIERS, preclassifiers.count(siteId))) {
+                    add(CatalogKind.PRECLASSIFIERS)
+                }
+                if (!isComplete(siteId, CatalogKind.PRIORITIES, priorities.count(siteId))) {
+                    add(CatalogKind.PRIORITIES)
+                }
+                if (!isComplete(siteId, CatalogKind.LEVELS, levels.count(siteId))) {
+                    add(CatalogKind.LEVELS)
+                }
+                if (!isComplete(siteId, CatalogKind.EMPLOYEES, employees.count(siteId))) {
+                    add(CatalogKind.EMPLOYEES)
+                }
             }
             kinds.takeIf(Set<CatalogKind>::isNotEmpty)?.let { SiteCatalogSyncRequest(siteId, it) }
         }
@@ -155,6 +165,9 @@ class BuildCatalogSyncPlanUseCase(
         sites = siteIds.map { SiteCatalogSyncRequest(it, CatalogKind.entries.toSet()) },
         resetAllBeforeSave = true,
     )
+
+    private fun isComplete(siteId: Long, catalog: CatalogKind, localItemCount: Long): Boolean =
+        catalogSyncRepository.isSnapshotComplete(siteId, catalog, localItemCount)
 
     private companion object {
         const val REFRESH_INTERVAL_MS = 24L * 60L * 60L * 1_000L

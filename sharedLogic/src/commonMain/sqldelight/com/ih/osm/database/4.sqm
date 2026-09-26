@@ -1,0 +1,17 @@
+ALTER TABLE LevelCatalog ADD COLUMN depth INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE LevelCatalog ADD COLUMN machine_id TEXT;
+ALTER TABLE LevelCatalog ADD COLUMN notify_responsible INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE LevelCatalog ADD COLUMN assign_responsible_on_create INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE CardRecord ADD COLUMN node_id TEXT;
+ALTER TABLE CardRecord ADD COLUMN node_name TEXT;
+ALTER TABLE CardRecord ADD COLUMN card_type_value TEXT;
+ALTER TABLE CardRecord ADD COLUMN app_so TEXT;
+ALTER TABLE CardRecord ADD COLUMN app_version TEXT;
+ALTER TABLE CardRecord ADD COLUMN custom_due_date TEXT;
+ALTER TABLE CardRecord ADD COLUMN notify_responsible INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE CardRecord ADD COLUMN sync_state TEXT NOT NULL DEFAULT 'SYNCED';
+ALTER TABLE CardRecord ADD COLUMN sync_error TEXT;
+ALTER TABLE CardRecord ADD COLUMN sync_attempts INTEGER NOT NULL DEFAULT 0;
+
+UPDATE CardRecord SET sync_state = 'PENDING' WHERE is_local = 1;

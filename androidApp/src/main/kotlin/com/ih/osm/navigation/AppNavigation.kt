@@ -19,6 +19,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -40,22 +41,25 @@ import com.ih.osm.designsystem.anatomy.AnatomyText
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.session.SessionStatus
 import com.ih.osm.features.auth.login.LoginScreenRoute
-import com.ih.osm.features.createnote.CreateNoteScreen
+import com.ih.osm.features.catalog.sync.CatalogSyncScheduler
+import com.ih.osm.features.cards.CardListScreenRoute
+import com.ih.osm.features.cards.sync.CardSyncScheduler
+import com.ih.osm.features.createcard.CreateCardScreenRoute
 import com.ih.osm.features.home.HomeScreenRoute
-import com.ih.osm.features.notes.NotesScreen
 import com.ih.osm.features.settings.SettingsScreen
 import kotlinx.serialization.Serializable
+import org.koin.compose.koinInject
 
 @Serializable
 private sealed interface AppRoute : NavKey {
     @Serializable data object Login : AppRoute
     @Serializable data object Main : AppRoute
-    @Serializable data object CreateNote : AppRoute
+    @Serializable data class CreateCard(val siteId: Long? = null) : AppRoute
 }
 
 private enum class MainTab(val labelRes: Int, val icon: ImageVector, val selectedIcon: ImageVector) {
     HOME(R.string.navigation_home, Icons.Outlined.Home, Icons.Rounded.Home),
-    NOTES(R.string.navigation_notes, Icons.Outlined.Description, Icons.Rounded.Description),
+    CARDS(R.string.navigation_cards, Icons.Outlined.Description, Icons.Rounded.Description),
     SETTINGS(R.string.navigation_settings, Icons.Outlined.Settings, Icons.Rounded.Settings),
 }
 
@@ -104,10 +108,14 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
         entryProvider = { route ->
             when (route) {
                 AppRoute.Main -> NavEntry(route) {
-                    MainTabRoot(user = user, onCreateNote = { backStack.add(AppRoute.CreateNote) })
+                    MainTabRoot(user = user, onCreateCard = { backStack.add(AppRoute.CreateCard(it)) })
                 }
-                AppRoute.CreateNote -> NavEntry(route) {
-                    CreateNoteScreen(onBack = { backStack.removeLast() })
+                is AppRoute.CreateCard -> NavEntry(route) {
+                    CreateCardScreenRoute(
+                        user = user,
+                        siteId = route.siteId,
+                        onFinished = { backStack.removeLast() },
+                    )
                 }
                 else -> NavEntry(route) { Box(Modifier.fillMaxSize()) }
             }
@@ -116,8 +124,19 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
 }
 
 @Composable
-private fun MainTabRoot(user: AuthenticatedUser, onCreateNote: () -> Unit) {
+private fun MainTabRoot(
+    user: AuthenticatedUser,
+    onCreateCard: (Long?) -> Unit,
+    catalogSyncScheduler: CatalogSyncScheduler = koinInject(),
+    cardSyncScheduler: CardSyncScheduler = koinInject(),
+) {
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
+
+    LaunchedEffect(user.id, user.sites) {
+        catalogSyncScheduler.enqueueIfNeeded(user)
+        cardSyncScheduler.enqueueIfPending()
+    }
+
     Scaffold(
         bottomBar = {
             Column {
@@ -150,11 +169,15 @@ private fun MainTabRoot(user: AuthenticatedUser, onCreateNote: () -> Unit) {
         when (selectedTab) {
             MainTab.HOME -> HomeScreenRoute(
                 user = user,
-                onCreateNote = onCreateNote,
-                onOpenNotes = { selectedTab = MainTab.NOTES },
+                onCreateCard = { onCreateCard(it) },
+                onOpenNotes = { selectedTab = MainTab.CARDS },
                 modifier = Modifier.padding(innerPadding),
             )
-            MainTab.NOTES -> NotesScreen(Modifier.padding(innerPadding))
+            MainTab.CARDS -> CardListScreenRoute(
+                user = user,
+                onCreateCard = { onCreateCard(user.sites.firstOrNull()?.id) },
+                modifier = Modifier.padding(innerPadding),
+            )
             MainTab.SETTINGS -> SettingsScreen(Modifier.padding(innerPadding))
         }
     }

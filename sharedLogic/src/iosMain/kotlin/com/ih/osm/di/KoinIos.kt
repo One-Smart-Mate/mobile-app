@@ -8,6 +8,7 @@ import com.ih.osm.features.auth.IosAuthController
 import com.ih.osm.features.auth.IosSessionController
 import com.ih.osm.features.auth.domain.repository.AuthRepository
 import com.ih.osm.features.auth.domain.session.SessionRepository
+import com.ih.osm.features.catalog.IosCatalogSyncController
 
 fun initKoinIos(
     baseUrl: String,
@@ -32,3 +33,6 @@ fun createIosAuthController(): IosAuthController = IosAuthController(
 fun createIosSessionController(): IosSessionController = IosSessionController(
     sessionRepository = KoinPlatform.getKoin().get<SessionRepository>(),
 )
+
+fun createIosCatalogSyncController(): IosCatalogSyncController =
+    KoinPlatform.getKoin().get<IosCatalogSyncController>()

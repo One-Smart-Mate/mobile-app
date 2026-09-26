@@ -41,6 +41,10 @@ private fun <T : HttpClientEngineConfig> HttpClientConfig<T>.configure(
 ) {
     expectSuccess = false
 
+    install(Logging) {
+        level = if (config.enableNetworkLogging) LogLevel.ALL else LogLevel.NONE
+    }
+
     install(ContentNegotiation) {
         json(
             Json {
@@ -55,10 +59,6 @@ private fun <T : HttpClientEngineConfig> HttpClientConfig<T>.configure(
         requestTimeoutMillis = 30_000
         connectTimeoutMillis = 15_000
         socketTimeoutMillis = 30_000
-    }
-
-    install(Logging) {
-        level = if (config.enableNetworkLogging) LogLevel.INFO else LogLevel.NONE
     }
 
     install(Auth) {

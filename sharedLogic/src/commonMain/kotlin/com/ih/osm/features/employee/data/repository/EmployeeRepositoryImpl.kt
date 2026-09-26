@@ -19,8 +19,8 @@ internal class EmployeeRepositoryImpl(
             Employee(it.id, it.name, it.email)
         }
 
-    override fun hasData(siteId: Long): Boolean =
-        database.catalogsQueries.hasEmployeesBySite(siteId).executeAsOne()
+    override fun count(siteId: Long): Long =
+        database.catalogsQueries.countEmployeesBySite(siteId).executeAsOne()
 
     override fun replaceAll(siteId: Long, items: List<Employee>) {
         database.catalogsQueries.deleteEmployeesBySite(siteId)

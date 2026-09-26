@@ -1,0 +1,22 @@
+CREATE TABLE CatalogSyncState (
+    site_id INTEGER NOT NULL,
+    catalog_key TEXT NOT NULL,
+    item_count INTEGER NOT NULL,
+    completed_at_epoch_ms INTEGER NOT NULL,
+    PRIMARY KEY (site_id, catalog_key)
+);
+
+INSERT INTO CatalogSyncState(site_id, catalog_key, item_count, completed_at_epoch_ms)
+SELECT site_id, 'CARD_TYPES', COUNT(*), 0 FROM CardTypeCatalog GROUP BY site_id;
+
+INSERT INTO CatalogSyncState(site_id, catalog_key, item_count, completed_at_epoch_ms)
+SELECT site_id, 'PRECLASSIFIERS', COUNT(*), 0 FROM PreclassifierCatalog GROUP BY site_id;
+
+INSERT INTO CatalogSyncState(site_id, catalog_key, item_count, completed_at_epoch_ms)
+SELECT site_id, 'PRIORITIES', COUNT(*), 0 FROM PriorityCatalog GROUP BY site_id;
+
+INSERT INTO CatalogSyncState(site_id, catalog_key, item_count, completed_at_epoch_ms)
+SELECT site_id, 'LEVELS', COUNT(*), 0 FROM LevelCatalog GROUP BY site_id;
+
+INSERT INTO CatalogSyncState(site_id, catalog_key, item_count, completed_at_epoch_ms)
+SELECT site_id, 'EMPLOYEES', COUNT(*), 0 FROM EmployeeCatalog GROUP BY site_id;

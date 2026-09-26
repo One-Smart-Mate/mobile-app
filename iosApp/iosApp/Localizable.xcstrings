@@ -145,6 +145,46 @@
       "extractionState" : "manual",
       "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Nueva nota" } } }
     },
+    "catalog_sync.card_types" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando tipos de tarjeta" } } }
+    },
+    "catalog_sync.employees" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando usuarios" } } }
+    },
+    "catalog_sync.error.generic" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "No fue posible descargar los catálogos" } } }
+    },
+    "catalog_sync.failed" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "La descarga se reintentará automáticamente" } } }
+    },
+    "catalog_sync.levels" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando niveles" } } }
+    },
+    "catalog_sync.preclassifiers" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando preclasificadores" } } }
+    },
+    "catalog_sync.priorities" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando prioridades" } } }
+    },
+    "catalog_sync.starting" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Preparando catálogos" } } }
+    },
+    "catalog_sync.title" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Datos para trabajar sin conexión" } } }
+    },
+    "catalog_sync.waiting" : {
+      "extractionState" : "manual",
+      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Esperando conexión para continuar" } } }
+    },
     "home.action.fast_password" : {
       "extractionState" : "manual",
       "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Fast password" } } }

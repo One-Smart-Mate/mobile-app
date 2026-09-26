@@ -7,6 +7,7 @@ import com.ih.osm.core.database.databaseModule
 import com.ih.osm.features.auth.di.authModule
 import com.ih.osm.features.auth.domain.session.SessionRepository
 import com.ih.osm.features.catalog.di.catalogModule
+import com.ih.osm.features.card.di.cardModule
 import com.ih.osm.getPlatform
 import org.koin.dsl.module
 
@@ -28,5 +29,6 @@ fun sharedModules(config: AppConfig) = listOf(
     databaseModule,
     authModule,
     catalogModule,
+    cardModule,
     networkModule(config),
 )

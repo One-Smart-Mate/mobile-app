@@ -8,4 +8,8 @@ data class Level(
     val name: String,
     val description: String,
     val status: String,
+    val depth: Long = 0,
+    val machineId: String? = null,
+    val notifyResponsible: Boolean = false,
+    val assignResponsibleOnCreate: Boolean = false,
 )

@@ -31,17 +31,31 @@ internal class LevelRepositoryImpl(
 
     override fun getAll(siteId: Long): List<Level> =
         database.catalogsQueries.selectLevelsBySite(siteId).executeAsList().map {
-            Level(it.id, it.owner_id, it.owner_name, it.superior_id, it.name, it.description, it.status)
+            Level(
+                id = it.id,
+                ownerId = it.owner_id,
+                ownerName = it.owner_name,
+                superiorId = it.superior_id,
+                name = it.name,
+                description = it.description,
+                status = it.status,
+                depth = it.depth,
+                machineId = it.machine_id,
+                notifyResponsible = it.notify_responsible != 0L,
+                assignResponsibleOnCreate = it.assign_responsible_on_create != 0L,
+            )
         }
 
-    override fun hasData(siteId: Long): Boolean =
-        database.catalogsQueries.hasLevelsBySite(siteId).executeAsOne()
+    override fun count(siteId: Long): Long =
+        database.catalogsQueries.countLevelsBySite(siteId).executeAsOne()
 
     override fun replaceAll(siteId: Long, items: List<Level>) {
         database.catalogsQueries.deleteLevelsBySite(siteId)
         items.forEach {
             database.catalogsQueries.insertLevel(
                 siteId, it.id, it.ownerId, it.ownerName, it.superiorId, it.name, it.description, it.status,
+                it.depth, it.machineId, if (it.notifyResponsible) 1 else 0,
+                if (it.assignResponsibleOnCreate) 1 else 0,
             )
         }
     }

@@ -3,6 +3,7 @@ package com.ih.osm.features.catalog.data.repository
 import com.ih.osm.database.AppDatabase
 import com.ih.osm.features.cardtype.domain.repository.CardTypeRepository
 import com.ih.osm.features.catalog.domain.model.CatalogSyncMetadata
+import com.ih.osm.features.catalog.domain.model.CatalogKind
 import com.ih.osm.features.catalog.domain.model.SiteCatalogs
 import com.ih.osm.features.catalog.domain.repository.CatalogSyncRepository
 import com.ih.osm.features.employee.domain.repository.EmployeeRepository
@@ -33,13 +34,29 @@ internal class CatalogSyncRepositoryImpl(
                 levels.deleteAll()
                 employees.deleteAll()
                 database.catalogsQueries.deleteAllCatalogSyncMetadata()
+                database.catalogsQueries.deleteAllCatalogSyncStates()
             }
             catalogs.forEach { site ->
-                site.cardTypes?.let { cardTypes.replaceAll(site.siteId, it) }
-                site.preclassifiers?.let { preclassifiers.replaceAll(site.siteId, it) }
-                site.priorities?.let { priorities.replaceAll(site.siteId, it) }
-                site.levels?.let { levels.replaceAll(site.siteId, it) }
-                site.employees?.let { employees.replaceAll(site.siteId, it) }
+                site.cardTypes?.let {
+                    cardTypes.replaceAll(site.siteId, it)
+                    markComplete(site.siteId, CatalogKind.CARD_TYPES, it.size, completedAtEpochMs)
+                }
+                site.preclassifiers?.let {
+                    preclassifiers.replaceAll(site.siteId, it)
+                    markComplete(site.siteId, CatalogKind.PRECLASSIFIERS, it.size, completedAtEpochMs)
+                }
+                site.priorities?.let {
+                    priorities.replaceAll(site.siteId, it)
+                    markComplete(site.siteId, CatalogKind.PRIORITIES, it.size, completedAtEpochMs)
+                }
+                site.levels?.let {
+                    levels.replaceAll(site.siteId, it)
+                    markComplete(site.siteId, CatalogKind.LEVELS, it.size, completedAtEpochMs)
+                }
+                site.employees?.let {
+                    employees.replaceAll(site.siteId, it)
+                    markComplete(site.siteId, CatalogKind.EMPLOYEES, it.size, completedAtEpochMs)
+                }
             }
             database.catalogsQueries.upsertCatalogSyncMetadata(userId, siteScope, completedAtEpochMs)
         }
@@ -50,7 +67,29 @@ internal class CatalogSyncRepositoryImpl(
             CatalogSyncMetadata(it.user_id, it.site_scope, it.completed_at_epoch_ms)
         }
 
+    override fun isSnapshotComplete(
+        siteId: Long,
+        catalog: CatalogKind,
+        localItemCount: Long,
+    ): Boolean = database.catalogsQueries
+        .selectCatalogSyncItemCount(siteId, catalog.name)
+        .executeAsOneOrNull() == localItemCount
+
     override fun invalidate(userId: Long) {
         database.catalogsQueries.deleteCatalogSyncMetadata(userId)
+    }
+
+    private fun markComplete(
+        siteId: Long,
+        catalog: CatalogKind,
+        itemCount: Int,
+        completedAtEpochMs: Long,
+    ) {
+        database.catalogsQueries.upsertCatalogSyncState(
+            siteId,
+            catalog.name,
+            itemCount.toLong(),
+            completedAtEpochMs,
+        )
     }
 }
