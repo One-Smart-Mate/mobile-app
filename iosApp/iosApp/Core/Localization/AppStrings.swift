@@ -42,6 +42,32 @@ enum AppStrings {
         static let scanQR: LocalizedStringResource = "home.action.scan_qr"
         static let fastPassword: LocalizedStringResource = "home.action.fast_password"
         static let notes: LocalizedStringResource = "home.action.notes"
+        static let pendingCardsTitle: LocalizedStringResource = "home.pending_cards.title"
+        static let pendingCardsBody: LocalizedStringResource = "home.pending_cards.body"
+        static let pendingCardsAction: LocalizedStringResource = "home.pending_cards.action"
+    }
+
+    enum Permissions {
+        static let title: LocalizedStringResource = "permissions.title"
+        static let subtitle: LocalizedStringResource = "permissions.subtitle"
+        static let continueAction: LocalizedStringResource = "permissions.continue"
+        static let openSettings: LocalizedStringResource = "permissions.open_settings"
+        static let notNow: LocalizedStringResource = "permissions.not_now"
+        static let notificationsTitle: LocalizedStringResource = "permissions.notifications.title"
+        static let notificationsDescription: LocalizedStringResource = "permissions.notifications.description"
+        static let cameraTitle: LocalizedStringResource = "permissions.camera.title"
+        static let cameraDescription: LocalizedStringResource = "permissions.camera.description"
+        static let microphoneTitle: LocalizedStringResource = "permissions.microphone.title"
+        static let microphoneDescription: LocalizedStringResource = "permissions.microphone.description"
+        static let galleryTitle: LocalizedStringResource = "permissions.gallery.title"
+        static let galleryDescription: LocalizedStringResource = "permissions.gallery.description"
+        static let backgroundTitle: LocalizedStringResource = "permissions.background.title"
+        static let backgroundDescription: LocalizedStringResource = "permissions.background.description"
+        static let granted: LocalizedStringResource = "permissions.status.granted"
+        static let partial: LocalizedStringResource = "permissions.status.partial"
+        static let pending: LocalizedStringResource = "permissions.status.pending"
+        static let denied: LocalizedStringResource = "permissions.status.denied"
+        static let ready: LocalizedStringResource = "permissions.status.ready"
     }
 
     enum CatalogSync {

@@ -16,6 +16,8 @@ struct MainTabRoot: View {
     @State private var catalogSyncViewModel: CatalogSyncViewModel?
     @State private var cardListViewModel: CardListViewModel?
     @State private var createCardViewModel: CreateCardViewModel?
+    @State private var permissionsViewModel = PermissionsViewModel()
+    @State private var cardSyncScheduler = CardSyncBackgroundScheduler.shared
     private let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
 
     init(
@@ -39,6 +41,11 @@ struct MainTabRoot: View {
                     selectedSiteID: $selectedSiteID,
                     networkStatus: networkMonitor.status,
                     catalogSyncState: catalogSyncViewModel?.state ?? .idle,
+                    pendingCardCount: cardSyncScheduler.pendingCount,
+                    isCardSyncing: cardSyncScheduler.isSyncing,
+                    cardSyncCompleted: cardSyncScheduler.completed,
+                    cardSyncTotal: cardSyncScheduler.total,
+                    onSyncPendingCards: cardSyncScheduler.syncManually,
                     onCreateNote: presentCreateCard,
                     onOpenNotes: { selectedTab = .cards }
                 )
@@ -68,6 +75,9 @@ struct MainTabRoot: View {
                 .tag(MainTab.settings)
         }
         .tint(.osmPrimary)
+        .sheet(isPresented: $permissionsViewModel.showsSheet) {
+            PermissionsSheet(viewModel: permissionsViewModel)
+        }
         .fullScreenCover(item: $createCardViewModel) { presentedViewModel in
             NavigationStack {
                 CreateCardView(
@@ -80,12 +90,16 @@ struct MainTabRoot: View {
                 )
             }
         }
-        .task { catalogSyncViewModel?.syncIfNeeded() }
+        .task {
+            catalogSyncViewModel?.syncIfNeeded()
+            await permissionsViewModel.autoPromptIfNeeded()
+        }
         .onDisappear { cardListViewModel?.stop() }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
                 catalogSyncViewModel?.syncIfNeeded()
+                Task { await permissionsViewModel.refresh() }
             case .background:
                 catalogSyncViewModel?.appDidEnterBackground()
                 CardSyncBackgroundScheduler.shared.appDidEnterBackground()
@@ -107,6 +121,11 @@ struct HomeView: View {
     @Binding var selectedSiteID: Int64?
     let networkStatus: NetworkConnectionStatus
     let catalogSyncState: CatalogSyncViewState
+    let pendingCardCount: Int
+    let isCardSyncing: Bool
+    let cardSyncCompleted: Int
+    let cardSyncTotal: Int
+    let onSyncPendingCards: () -> Void
     let onCreateNote: () -> Void
     let onOpenNotes: () -> Void
 
@@ -115,6 +134,11 @@ struct HomeView: View {
         selectedSiteID: Binding<Int64?>,
         networkStatus: NetworkConnectionStatus,
         catalogSyncState: CatalogSyncViewState,
+        pendingCardCount: Int,
+        isCardSyncing: Bool,
+        cardSyncCompleted: Int,
+        cardSyncTotal: Int,
+        onSyncPendingCards: @escaping () -> Void,
         onCreateNote: @escaping () -> Void,
         onOpenNotes: @escaping () -> Void
     ) {
@@ -122,6 +146,11 @@ struct HomeView: View {
         _selectedSiteID = selectedSiteID
         self.networkStatus = networkStatus
         self.catalogSyncState = catalogSyncState
+        self.pendingCardCount = pendingCardCount
+        self.isCardSyncing = isCardSyncing
+        self.cardSyncCompleted = cardSyncCompleted
+        self.cardSyncTotal = cardSyncTotal
+        self.onSyncPendingCards = onSyncPendingCards
         self.onCreateNote = onCreateNote
         self.onOpenNotes = onOpenNotes
     }
@@ -147,6 +176,17 @@ struct HomeView: View {
                 if catalogSyncState != .idle {
                     CatalogSyncStatusCard(state: catalogSyncState)
                         .padding(.top, OSMSpacing.sm)
+                }
+
+                if pendingCardCount > 0 {
+                    PendingCardsSyncCard(
+                        count: pendingCardCount,
+                        isSyncing: isCardSyncing,
+                        completed: cardSyncCompleted,
+                        total: cardSyncTotal,
+                        action: onSyncPendingCards
+                    )
+                    .padding(.top, OSMSpacing.sm)
                 }
 
                 AnatomyText(
@@ -252,6 +292,70 @@ struct HomeView: View {
 
     private var firstName: String {
         user.name.split(separator: " ").first.map(String.init) ?? user.name
+    }
+}
+
+private struct PendingCardsSyncCard: View {
+    let count: Int
+    let isSyncing: Bool
+    let completed: Int
+    let total: Int
+    let action: () -> Void
+
+    var body: some View {
+        AnatomyCard(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: "icloud.and.arrow.up")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Color.osmPrimary)
+                    .frame(width: 42, height: 42)
+                    .background(Color.osmPrimaryContainer)
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(AppStrings.Home.pendingCardsTitle)
+                        .font(.subheadline.weight(.semibold))
+                    Text(
+                        String(
+                            format: String(localized: AppStrings.Home.pendingCardsBody),
+                            locale: .current,
+                            Int64(count)
+                        )
+                    )
+                    .font(.caption)
+                    .foregroundStyle(Color.osmOnSurfaceVariant)
+
+                    Text(statusText)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.osmPrimary)
+
+                    if isSyncing {
+                        if total > 0 {
+                            ProgressView(value: Double(completed), total: Double(total))
+                                .tint(Color.osmPrimary)
+                        } else {
+                            ProgressView().tint(Color.osmPrimary)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .allowsHitTesting(!isSyncing)
+        .opacity(isSyncing ? 0.9 : 1)
+    }
+
+    private var statusText: String {
+        if isSyncing {
+            return total > 0
+                ? String(
+                    format: String(localized: AppStrings.CardSync.progress),
+                    locale: .current,
+                    Int64(completed), Int64(total)
+                )
+                : String(localized: AppStrings.CardSync.preparing)
+        }
+        return String(localized: AppStrings.Home.pendingCardsAction)
     }
 }
 

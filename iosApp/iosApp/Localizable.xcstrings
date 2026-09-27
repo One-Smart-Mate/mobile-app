@@ -2139,6 +2139,29 @@
         }
       }
     },
+    "home.pending_cards.action" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Sincronizar ahora" } } } },
+    "home.pending_cards.body" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "%lld tarjetas locales pendientes de sincronizar." } } } },
+    "home.pending_cards.title" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Tarjetas pendientes" } } } },
+    "permissions.background.description" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "iOS administra la ejecución de sincronizaciones cuando la app está en segundo plano." } } } },
+    "permissions.background.title" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Tareas en segundo plano" } } } },
+    "permissions.camera.description" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Permite capturar fotos y videos como evidencia." } } } },
+    "permissions.camera.title" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Cámara y video" } } } },
+    "permissions.continue" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Continuar" } } } },
+    "permissions.gallery.description" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Permite seleccionar imágenes y videos guardados en tu dispositivo." } } } },
+    "permissions.gallery.title" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Fototeca" } } } },
+    "permissions.microphone.description" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Permite grabar audio para las evidencias." } } } },
+    "permissions.microphone.title" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Micrófono" } } } },
+    "permissions.not_now" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Ahora no" } } } },
+    "permissions.notifications.description" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Muestra el progreso y resultado de las sincronizaciones." } } } },
+    "permissions.notifications.title" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Notificaciones" } } } },
+    "permissions.open_settings" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Abrir Ajustes" } } } },
+    "permissions.status.denied" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Denegado" } } } },
+    "permissions.status.granted" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Permitido" } } } },
+    "permissions.status.partial" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Parcial" } } } },
+    "permissions.status.pending" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Pendiente" } } } },
+    "permissions.status.ready" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Listo" } } } },
+    "permissions.subtitle" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Activa estos permisos para recibir avisos y preparar la captura de evidencias. Puedes cambiarlos después desde Ajustes." } } } },
+    "permissions.title" : { "extractionState" : "manual", "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Todo listo para trabajar" } } } },
     "Tarjeta seleccionada" : {
 
     }

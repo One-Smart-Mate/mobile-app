@@ -1,12 +1,14 @@
 import BackgroundTasks
 import Foundation
 import Network
+import Observation
 import OSLog
 import SharedLogic
 import UIKit
 import UserNotifications
 
 @MainActor
+@Observable
 final class CardSyncBackgroundScheduler {
     static let shared = CardSyncBackgroundScheduler()
     static let taskIdentifier = "com.ih.osm.card-sync"
@@ -24,6 +26,13 @@ final class CardSyncBackgroundScheduler {
     private var backgroundExecution: UIBackgroundTaskIdentifier = .invalid
     private var isRegistered = false
     private var hasNetwork = false
+    private let notificationDelegate = CardSyncNotificationDelegate()
+
+    private(set) var pendingCount = 0
+    private(set) var isSyncing = false
+    private(set) var completed = 0
+    private(set) var total = 0
+    private(set) var lastError: String?
 
     private init() {
         networkMonitor.pathUpdateHandler = { [weak self] path in
@@ -36,10 +45,17 @@ final class CardSyncBackgroundScheduler {
 
     func configure(controller: IosCardSyncController) {
         self.controller = controller
+        pendingCount = Int(controller.pendingCount())
+        controller.observePendingCount { [weak self] count in
+            Task { @MainActor [weak self] in
+                self?.pendingCount = Int(count.int64Value)
+            }
+        }
     }
 
     func register() {
         guard !isRegistered else { return }
+        UNUserNotificationCenter.current().delegate = notificationDelegate
         isRegistered = BGTaskScheduler.shared.register(
             forTaskWithIdentifier: Self.taskIdentifier,
             using: nil
@@ -61,7 +77,9 @@ final class CardSyncBackgroundScheduler {
     }
 
     func syncManually() {
+        guard !isSyncing else { return }
         schedule(resetRetryCount: true)
+        Task { await notificationsAuthorizationIfNeeded() }
         runImmediately()
     }
 
@@ -72,12 +90,17 @@ final class CardSyncBackgroundScheduler {
 
     private func runImmediately() {
         guard activeTask == nil, let controller, controller.pendingCount() > 0 else { return }
+        isSyncing = true
+        completed = 0
+        total = Int(controller.pendingCount())
+        lastError = nil
         beginBackgroundExecution()
         activeTask = Task { [weak self] in
             guard let self else { return }
             defer {
                 endBackgroundExecution()
                 activeTask = nil
+                isSyncing = false
             }
             await notificationsAuthorizationIfNeeded()
             await postProgress(completed: 0, total: Int(controller.pendingCount()))
@@ -109,6 +132,10 @@ final class CardSyncBackgroundScheduler {
                 backgroundTask.setTaskCompleted(success: false)
                 return
             }
+            isSyncing = true
+            completed = 0
+            total = Int(controller.pendingCount())
+            defer { isSyncing = false }
             do {
                 let outcome = try await controller.syncPending { [weak self] progress in
                     Task { @MainActor [weak self] in
@@ -143,6 +170,7 @@ final class CardSyncBackgroundScheduler {
             UserDefaults.standard.removeObject(forKey: retryCountKey)
             await postSuccess(count: Int(outcome.synced))
         } else {
+            lastError = outcome.errorMessage
             await postFailure(
                 outcome.errorMessage ?? String(localized: AppStrings.CardSync.failureBody)
             )
@@ -198,6 +226,8 @@ final class CardSyncBackgroundScheduler {
     }
 
     private func postProgress(completed: Int, total: Int) async {
+        self.completed = completed
+        self.total = total
         let body = total > 0
             ? String(
                 format: String(localized: AppStrings.CardSync.progress),
@@ -229,6 +259,7 @@ final class CardSyncBackgroundScheduler {
     }
 
     private func postFailure(_ message: String) async {
+        lastError = message
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: ["card-sync-progress"])
         await postNotification(
             identifier: "card-sync-result",
@@ -253,5 +284,15 @@ final class CardSyncBackgroundScheduler {
         content.threadIdentifier = "card-sync"
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
         try? await UNUserNotificationCenter.current().add(request)
+    }
+}
+
+private final class CardSyncNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        guard notification.request.content.threadIdentifier == "card-sync" else { return [] }
+        return [.banner, .list, .sound]
     }
 }

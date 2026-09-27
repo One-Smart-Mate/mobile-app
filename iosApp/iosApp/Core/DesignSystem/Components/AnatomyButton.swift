@@ -38,6 +38,7 @@ struct AnatomyButton: View {
                 if isLoading {
                     ProgressView()
                         .controlSize(.small)
+                        .tint(variant == .primary || variant == .destructive ? .white : .osmPrimary)
                 } else {
                     HStack(spacing: OSMSpacing.xs) {
                         if let leadingSystemImage {
@@ -103,7 +104,7 @@ private struct AnatomyControlButtonStyle: ButtonStyle {
         }
 
         switch variant {
-        case .primary: return Color.osmOnPrimary
+        case .primary: return Color.white
         case .secondary, .tertiary: return Color.osmPrimary
         case .destructive: return Color.white
         }

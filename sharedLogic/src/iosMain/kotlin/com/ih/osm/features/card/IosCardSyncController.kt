@@ -13,7 +13,12 @@ import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.readBytes
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import platform.Foundation.NSFileManager
@@ -41,9 +46,23 @@ class IosCardSyncController(
     private val syncPendingSolutions: SyncPendingSolutionsUseCase,
 ) {
     private val mutex = Mutex()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var activeJob: Job? = null
+    private var pendingObservationJob: Job? = null
 
     fun pendingCount(): Long = repository.pendingCount()
+
+    fun observePendingCount(onChanged: (Long) -> Unit) {
+        pendingObservationJob?.cancel()
+        pendingObservationJob = scope.launch {
+            repository.observePendingCount().collectLatest(onChanged)
+        }
+    }
+
+    fun stopPendingCountObservation() {
+        pendingObservationJob?.cancel()
+        pendingObservationJob = null
+    }
 
     suspend fun syncPending(
         onProgress: (IosCardSyncProgress) -> Unit,
