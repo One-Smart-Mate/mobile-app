@@ -4,6 +4,7 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.view.ViewGroup
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,15 +12,19 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Note
@@ -91,6 +96,7 @@ import com.ih.osm.features.card.domain.model.CardSyncState
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import coil3.compose.AsyncImage
 import java.io.File
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
@@ -717,11 +723,10 @@ private fun ImagePreviewDialog(url: String, onDismiss: () -> Unit) {
             color = Color.Black,
         ) {
             Box(Modifier.fillMaxSize()) {
-                AnatomyImage(
-                    source = AnatomyImageSource.Url(Uri.fromFile(File(url)).toString()),
+                AsyncImage(
+                    model = Uri.fromFile(File(url)),
                     contentDescription = stringResource(R.string.card_detail_image_description),
                     contentScale = ContentScale.Fit,
-                    shape = MaterialTheme.shapes.extraSmall,
                     modifier = Modifier.fillMaxSize()
                         .pointerInput(Unit) {
                             detectTransformGestures { _, pan, zoom, _ ->
@@ -737,15 +742,22 @@ private fun ImagePreviewDialog(url: String, onDismiss: () -> Unit) {
                             translationY = offsetY,
                         ),
                 )
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+                Box(
+                    modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
                 ) {
-                    Icon(
-                        Icons.Outlined.Close,
-                        contentDescription = stringResource(R.string.card_detail_close),
-                        tint = Color.White,
-                    )
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(Color.Black.copy(alpha = 0.6f), CircleShape),
+                    ) {
+                        Icon(
+                            Icons.Outlined.Close,
+                            contentDescription = stringResource(R.string.card_detail_close),
+                            tint = Color.White,
+                        )
+                    }
                 }
             }
         }
@@ -770,10 +782,11 @@ private fun VideoPreviewDialog(path: String, onDismiss: () -> Unit) {
             decorFitsSystemWindows = false,
         ),
     ) {
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
             AndroidView(
                 factory = { viewContext ->
                     PlayerView(viewContext).apply {
+                        setBackgroundColor(android.graphics.Color.BLACK)
                         this.player = player
                         useController = true
                         keepScreenOn = true
@@ -786,15 +799,22 @@ private fun VideoPreviewDialog(path: String, onDismiss: () -> Unit) {
                 update = { it.player = player },
                 modifier = Modifier.fillMaxSize(),
             )
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+            Box(
+                modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
-                Icon(
-                    Icons.Outlined.Close,
-                    contentDescription = stringResource(R.string.card_detail_close),
-                    tint = Color.White,
-                )
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .background(Color.Black.copy(alpha = 0.6f), CircleShape),
+                ) {
+                    Icon(
+                        Icons.Outlined.Close,
+                        contentDescription = stringResource(R.string.card_detail_close),
+                        tint = Color.White,
+                    )
+                }
             }
         }
     }

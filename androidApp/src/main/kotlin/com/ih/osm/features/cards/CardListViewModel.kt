@@ -49,11 +49,13 @@ class CardListViewModel(
     private var currentUserId: Long? = null
     private var currentSiteIds: Set<Long> = emptySet()
     private var initializedScope: Pair<Long, Set<Long>>? = null
+    private var hasDatabaseSnapshot: Boolean = false
 
     init {
         viewModelScope.launch {
             repository.observeCards().collectLatest { cards ->
                 databaseCards = cards
+                hasDatabaseSnapshot = true
                 publishCards()
             }
         }
@@ -78,12 +80,14 @@ class CardListViewModel(
     private fun initialize(userId: Long, sites: Map<Long, String>) {
         currentUserId = userId
         currentSiteIds = sites.keys
+        val scope = userId to sites.keys
+        val scopeChanged = initializedScope != scope
+        initializedScope = scope
+
         setState { copy(siteNames = sites) }
         publishCards()
 
-        val scope = userId to sites.keys
-        if (initializedScope == scope) return
-        initializedScope = scope
+        if (!scopeChanged) return
         refresh()
     }
 
@@ -96,7 +100,6 @@ class CardListViewModel(
             setState {
                 copy(
                     isRefreshing = true,
-                    isInitialLoading = cards.isEmpty(),
                     errorMessage = null,
                 )
             }
@@ -149,7 +152,10 @@ class CardListViewModel(
             copy(
                 cards = filtered,
                 totalCount = scopedCards.size,
-                isInitialLoading = if (scopedCards.isNotEmpty()) false else isInitialLoading,
+                // The local database is the source of truth. An empty snapshot is still a
+                // completed load and must not keep the full-screen loader visible while the
+                // independent network refresh runs in the background.
+                isInitialLoading = !hasDatabaseSnapshot,
             )
         }
     }
