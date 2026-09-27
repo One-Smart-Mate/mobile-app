@@ -130,4 +130,7 @@ private val NETWORK_JSON = Json { ignoreUnknownKeys = true }
 private val PUBLIC_AUTH_PATHS = setOf(
     "/auth/login",
     "/auth/refresh-token",
+    "/users/send-code",
+    "/users/verify-code",
+    "/users/reset-password",
 )

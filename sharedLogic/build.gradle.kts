@@ -55,7 +55,7 @@ kotlin {
             implementation(libs.ksafe)
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines.extensions)
-            implementation("co.touchlab:kermit:2.0.4")
+            implementation(libs.kermit)
 
         }
         commonTest.dependencies {

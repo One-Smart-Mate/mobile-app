@@ -68,7 +68,51 @@ enum AppStrings {
     enum Navigation {
         static let home: LocalizedStringResource = "navigation.home"
         static let notes: LocalizedStringResource = "navigation.notes"
+        static let cards: LocalizedStringResource = "navigation.cards"
         static let settings: LocalizedStringResource = "navigation.settings"
+    }
+
+    enum Common {
+        static let cancel: LocalizedStringResource = "common.cancel"
+        static let done: LocalizedStringResource = "common.done"
+    }
+
+    enum Cards {
+        static let title: LocalizedStringResource = "cards.title"
+        static let count: LocalizedStringResource = "cards.count"
+        static let searchPrompt: LocalizedStringResource = "cards.search_prompt"
+        static let active: LocalizedStringResource = "cards.filter.active"
+        static let custom: LocalizedStringResource = "cards.filter.custom"
+        static let assigned: LocalizedStringResource = "cards.filter.assigned"
+        static let overdue: LocalizedStringResource = "cards.filter.overdue"
+        static let filters: LocalizedStringResource = "cards.filters"
+        static let filtersSubtitle: LocalizedStringResource = "cards.filters.subtitle"
+        static let allOpen: LocalizedStringResource = "cards.filter.all_open"
+        static let myOpen: LocalizedStringResource = "cards.filter.my_open"
+        static let myAssigned: LocalizedStringResource = "cards.filter.my_assigned"
+        static let unassignedCards: LocalizedStringResource = "cards.filter.unassigned"
+        static let dueCards: LocalizedStringResource = "cards.filter.due"
+        static let closedCards: LocalizedStringResource = "cards.filter.closed"
+        static let clearFilters: LocalizedStringResource = "cards.filter.clear"
+        static let refresh: LocalizedStringResource = "cards.refresh"
+        static let retry: LocalizedStringResource = "cards.retry"
+        static let create: LocalizedStringResource = "cards.create"
+        static let localFolio: LocalizedStringResource = "cards.local_folio"
+        static let unknownType: LocalizedStringResource = "cards.unknown_type"
+        static let noDescription: LocalizedStringResource = "cards.no_description"
+        static let statusOpen: LocalizedStringResource = "cards.status.open"
+        static let statusOverdue: LocalizedStringResource = "cards.status.overdue"
+        static let statusClosed: LocalizedStringResource = "cards.status.closed"
+        static let pendingSync: LocalizedStringResource = "cards.pending_sync"
+        static let localSolution: LocalizedStringResource = "cards.local_solution"
+        static let unassigned: LocalizedStringResource = "cards.unassigned"
+        static let emptySearch: LocalizedStringResource = "cards.empty.search"
+        static let emptyFilter: LocalizedStringResource = "cards.empty.filter"
+        static let emptySupport: LocalizedStringResource = "cards.empty.support"
+        static let actionsTitle: LocalizedStringResource = "cards.actions.title"
+        static let actionsSubtitle: LocalizedStringResource = "cards.actions.subtitle"
+        static let provisionalSolution: LocalizedStringResource = "cards.actions.provisional"
+        static let definitiveSolution: LocalizedStringResource = "cards.actions.definitive"
     }
 
     enum Notes {

@@ -2,7 +2,7 @@ import SwiftUI
 
 enum MainTab: Hashable {
     case home
-    case notes
+    case cards
     case settings
 }
 
@@ -14,13 +14,16 @@ struct MainTabRoot: View {
     @State private var presentsCreateNote = false
     @State private var networkMonitor = NetworkStatusMonitor()
     @State private var catalogSyncViewModel: CatalogSyncViewModel?
+    @State private var cardListViewModel: CardListViewModel?
 
     init(
         user: SessionUser,
-        catalogSyncViewModel: CatalogSyncViewModel? = nil
+        catalogSyncViewModel: CatalogSyncViewModel? = nil,
+        cardListViewModel: CardListViewModel? = nil
     ) {
         self.user = user
         _catalogSyncViewModel = State(initialValue: catalogSyncViewModel)
+        _cardListViewModel = State(initialValue: cardListViewModel)
     }
 
     var body: some View {
@@ -31,7 +34,7 @@ struct MainTabRoot: View {
                     networkStatus: networkMonitor.status,
                     catalogSyncState: catalogSyncViewModel?.state ?? .idle,
                     onCreateNote: { presentsCreateNote = true },
-                    onOpenNotes: { selectedTab = .notes }
+                    onOpenNotes: { selectedTab = .cards }
                 )
                 .navigationDestination(isPresented: $presentsCreateNote) {
                     CreateNoteView()
@@ -40,9 +43,22 @@ struct MainTabRoot: View {
             .tabItem { Label(AppStrings.Navigation.home, systemImage: "house") }
             .tag(MainTab.home)
 
-            NavigationStack { NotesView() }
-                .tabItem { Label(AppStrings.Navigation.notes, systemImage: "doc.text") }
-                .tag(MainTab.notes)
+            NavigationStack {
+                if let cardListViewModel {
+                    CardListView(
+                        user: user,
+                        viewModel: cardListViewModel,
+                        onCreateCard: nil,
+                        onOpenCard: nil,
+                        onApplyProvisionalSolution: nil,
+                        onApplyDefinitiveSolution: nil
+                    )
+                } else {
+                    ProgressView()
+                }
+            }
+            .tabItem { Label(AppStrings.Navigation.cards, systemImage: "doc.text") }
+            .tag(MainTab.cards)
 
             NavigationStack { SettingsView() }
                 .tabItem { Label(AppStrings.Navigation.settings, systemImage: "gearshape") }
@@ -50,6 +66,7 @@ struct MainTabRoot: View {
         }
         .tint(.osmPrimary)
         .task { catalogSyncViewModel?.syncIfNeeded() }
+        .onDisappear { cardListViewModel?.stop() }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:

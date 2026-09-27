@@ -41,6 +41,7 @@ import com.ih.osm.designsystem.anatomy.AnatomyText
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.session.SessionStatus
 import com.ih.osm.features.auth.login.LoginScreenRoute
+import com.ih.osm.features.auth.passwordrecovery.ForgotPasswordScreenRoute
 import com.ih.osm.features.catalog.domain.manager.CatalogSyncManager
 import com.ih.osm.features.cards.CardListScreenRoute
 import com.ih.osm.features.carddetail.CardDetailScreenRoute
@@ -55,6 +56,7 @@ import org.koin.compose.koinInject
 @Serializable
 private sealed interface AppRoute : NavKey {
     @Serializable data object Login : AppRoute
+    @Serializable data class ForgotPassword(val email: String) : AppRoute
     @Serializable data object Main : AppRoute
     @Serializable data class CreateCard(val siteId: Long? = null) : AppRoute
     @Serializable data class CardDetail(val uuid: String) : AppRoute
@@ -87,10 +89,25 @@ private fun AuthenticationRoot(onExitRequested: () -> Unit) {
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
         ),
-        onBack = onExitRequested,
+        onBack = {
+            if (backStack.size > 1) backStack.removeLast() else onExitRequested()
+        },
         entryProvider = { route ->
             when (route) {
-                AppRoute.Login -> NavEntry(route) { LoginScreenRoute() }
+                AppRoute.Login -> NavEntry(route) {
+                    LoginScreenRoute(
+                        onForgotPasswordClick = { email ->
+                            backStack.add(AppRoute.ForgotPassword(email))
+                        },
+                    )
+                }
+                is AppRoute.ForgotPassword -> NavEntry(route) {
+                    ForgotPasswordScreenRoute(
+                        initialEmail = route.email,
+                        onBack = { backStack.removeLast() },
+                        onFinished = { backStack.removeLast() },
+                    )
+                }
                 else -> NavEntry(route) { Box(Modifier.fillMaxSize()) }
             }
         },

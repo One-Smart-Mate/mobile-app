@@ -5,12 +5,14 @@ struct AppDependencies {
     let makeSessionViewModel: @MainActor () -> SessionViewModel
     let makeLoginViewModel: @MainActor () -> LoginViewModel
     let makeCatalogSyncViewModel: @MainActor () -> CatalogSyncViewModel?
+    let makeCardListViewModel: @MainActor () -> CardListViewModel?
     let catalogSyncController: IosCatalogSyncController?
 
     @MainActor
     static func live() -> AppDependencies {
         let authController = KoinIosKt.createIosAuthController()
         let catalogSyncController = KoinIosKt.createIosCatalogSyncController()
+        let cardListController = KoinIosKt.createIosCardListController()
 
         return AppDependencies(
             makeSessionViewModel: {
@@ -45,6 +47,9 @@ struct AppDependencies {
                     backgroundScheduler: .shared
                 )
             },
+            makeCardListViewModel: {
+                CardListViewModel(controller: cardListController)
+            },
             catalogSyncController: catalogSyncController
         )
     }
@@ -62,6 +67,7 @@ struct AppDependencies {
             },
             makeLoginViewModel: { LoginViewModel() },
             makeCatalogSyncViewModel: { nil },
+            makeCardListViewModel: { nil },
             catalogSyncController: nil
         )
     }

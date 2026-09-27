@@ -4,6 +4,9 @@
     "" : {
 
     },
+    "%lld" : {
+
+    },
     "accessibility.banner.error" : {
       "comment" : "Nombre accesible para un banner de error.",
       "extractionState" : "manual",
@@ -106,8 +109,525 @@
     "Acción secundaria" : {
 
     },
+    "cards.actions.definitive" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solución definitiva"
+          }
+        }
+      }
+    },
+    "cards.actions.provisional" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solución provisional"
+          }
+        }
+      }
+    },
+    "cards.actions.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige la solución que deseas registrar."
+          }
+        }
+      }
+    },
+    "cards.actions.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acciones de tarjeta"
+          }
+        }
+      }
+    },
+    "cards.count" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld tarjetas"
+          }
+        }
+      }
+    },
+    "cards.create" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear tarjeta"
+          }
+        }
+      }
+    },
+    "cards.empty.filter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay tarjetas en este filtro"
+          }
+        }
+      }
+    },
+    "cards.empty.search" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No encontramos tarjetas"
+          }
+        }
+      }
+    },
+    "cards.empty.support" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba con otra búsqueda o actualiza la información."
+          }
+        }
+      }
+    },
+    "cards.filter.active" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activas"
+          }
+        }
+      }
+    },
+    "cards.filter.all_open" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las tarjetas abiertas"
+          }
+        }
+      }
+    },
+    "cards.filter.assigned" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asignadas"
+          }
+        }
+      }
+    },
+    "cards.filter.clear" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpiar filtros"
+          }
+        }
+      }
+    },
+    "cards.filter.closed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarjetas cerradas"
+          }
+        }
+      }
+    },
+    "cards.filter.custom" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom"
+          }
+        }
+      }
+    },
+    "cards.filter.due" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarjetas vencidas"
+          }
+        }
+      }
+    },
+    "cards.filter.my_assigned" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mis tarjetas asignadas"
+          }
+        }
+      }
+    },
+    "cards.filter.my_open" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mis tarjetas abiertas"
+          }
+        }
+      }
+    },
+    "cards.filter.overdue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vencidas"
+          }
+        }
+      }
+    },
+    "cards.filter.unassigned" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarjetas sin asignar"
+          }
+        }
+      }
+    },
+    "cards.filters" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtros"
+          }
+        }
+      }
+    },
+    "cards.filters.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona una opción para aplicarla inmediatamente."
+          }
+        }
+      }
+    },
+    "cards.local_folio" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local"
+          }
+        }
+      }
+    },
+    "cards.local_solution" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SOLUCIÓN LOCAL"
+          }
+        }
+      }
+    },
+    "cards.no_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin descripción"
+          }
+        }
+      }
+    },
+    "cards.pending_sync" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PENDIENTE DE SINCRONIZAR"
+          }
+        }
+      }
+    },
+    "cards.refresh" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar tarjetas"
+          }
+        }
+      }
+    },
+    "cards.retry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar"
+          }
+        }
+      }
+    },
+    "cards.search_prompt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar folio, equipo o área"
+          }
+        }
+      }
+    },
+    "cards.status.closed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CERRADA"
+          }
+        }
+      }
+    },
+    "cards.status.open" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ABIERTA"
+          }
+        }
+      }
+    },
+    "cards.status.overdue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VENCIDA"
+          }
+        }
+      }
+    },
+    "cards.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarjetas"
+          }
+        }
+      }
+    },
+    "cards.unassigned" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin asignar"
+          }
+        }
+      }
+    },
+    "cards.unknown_type" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin tipo"
+          }
+        }
+      }
+    },
     "Cargando" : {
 
+    },
+    "catalog_sync.card_types" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargando tipos de tarjeta"
+          }
+        }
+      }
+    },
+    "catalog_sync.employees" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargando usuarios"
+          }
+        }
+      }
+    },
+    "catalog_sync.error.generic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No fue posible descargar los catálogos"
+          }
+        }
+      }
+    },
+    "catalog_sync.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La descarga se reintentará automáticamente"
+          }
+        }
+      }
+    },
+    "catalog_sync.levels" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargando niveles"
+          }
+        }
+      }
+    },
+    "catalog_sync.preclassifiers" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargando preclasificadores"
+          }
+        }
+      }
+    },
+    "catalog_sync.priorities" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargando prioridades"
+          }
+        }
+      }
+    },
+    "catalog_sync.starting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando catálogos"
+          }
+        }
+      }
+    },
+    "catalog_sync.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datos para trabajar sin conexión"
+          }
+        }
+      }
+    },
+    "catalog_sync.waiting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esperando conexión para continuar"
+          }
+        }
+      }
+    },
+    "common.cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        }
+      }
+    },
+    "common.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
+          }
+        }
+      }
     },
     "Contenido destacado sin perder contraste." : {
 
@@ -121,6 +641,17 @@
     "Correo electrónico" : {
 
     },
+    "create_note.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva nota"
+          }
+        }
+      }
+    },
     "Deshabilitado" : {
 
     },
@@ -129,6 +660,72 @@
     },
     "Empacadora · Línea 2" : {
 
+    },
+    "home.action.fast_password" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fast password"
+          }
+        }
+      }
+    },
+    "home.action.new_note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva nota"
+          }
+        }
+      }
+    },
+    "home.action.notes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas"
+          }
+        }
+      }
+    },
+    "home.action.scan_qr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leer código QR"
+          }
+        }
+      }
+    },
+    "home.greeting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buenos días, %@"
+          }
+        }
+      }
+    },
+    "home.quick_actions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acciones rápidas"
+          }
+        }
+      }
     },
     "home.title" : {
       "extractionState" : "manual",
@@ -140,114 +737,6 @@
           }
         }
       }
-    },
-    "create_note.title" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Nueva nota" } } }
-    },
-    "catalog_sync.card_types" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando tipos de tarjeta" } } }
-    },
-    "catalog_sync.employees" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando usuarios" } } }
-    },
-    "catalog_sync.error.generic" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "No fue posible descargar los catálogos" } } }
-    },
-    "catalog_sync.failed" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "La descarga se reintentará automáticamente" } } }
-    },
-    "catalog_sync.levels" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando niveles" } } }
-    },
-    "catalog_sync.preclassifiers" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando preclasificadores" } } }
-    },
-    "catalog_sync.priorities" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Descargando prioridades" } } }
-    },
-    "catalog_sync.starting" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Preparando catálogos" } } }
-    },
-    "catalog_sync.title" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Datos para trabajar sin conexión" } } }
-    },
-    "catalog_sync.waiting" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Esperando conexión para continuar" } } }
-    },
-    "home.action.fast_password" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Fast password" } } }
-    },
-    "home.action.new_note" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Nueva nota" } } }
-    },
-    "home.action.notes" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Notas" } } }
-    },
-    "home.action.scan_qr" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Leer código QR" } } }
-    },
-    "home.greeting" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Buenos días, %@" } } }
-    },
-    "home.quick_actions" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Acciones rápidas" } } }
-    },
-    "navigation.home" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Inicio" } } }
-    },
-    "navigation.notes" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Notas" } } }
-    },
-    "navigation.settings" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Ajustes" } } }
-    },
-    "network.mobile.connected" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Datos móviles con internet" } } }
-    },
-    "network.mobile.no_internet" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Datos móviles sin internet" } } }
-    },
-    "network.offline" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Sin conexión" } } }
-    },
-    "network.wifi.connected" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Wi-Fi con internet" } } }
-    },
-    "network.wifi.no_internet" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Wi-Fi sin internet" } } }
-    },
-    "notes.title" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Notas" } } }
-    },
-    "settings.title" : {
-      "extractionState" : "manual",
-      "localizations" : { "es" : { "stringUnit" : { "state" : "translated", "value" : "Ajustes" } } }
     },
     "home.welcome" : {
       "extractionState" : "manual",
@@ -442,8 +931,118 @@
     "Motor M-204" : {
 
     },
+    "navigation.cards" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarjetas"
+          }
+        }
+      }
+    },
+    "navigation.home" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicio"
+          }
+        }
+      }
+    },
+    "navigation.notes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas"
+          }
+        }
+      }
+    },
+    "navigation.settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
+          }
+        }
+      }
+    },
+    "network.mobile.connected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datos móviles con internet"
+          }
+        }
+      }
+    },
+    "network.mobile.no_internet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datos móviles sin internet"
+          }
+        }
+      }
+    },
+    "network.offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin conexión"
+          }
+        }
+      }
+    },
+    "network.wifi.connected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi con internet"
+          }
+        }
+      }
+    },
+    "network.wifi.no_internet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi sin internet"
+          }
+        }
+      }
+    },
     "nombre@empresa.com" : {
 
+    },
+    "notes.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas"
+          }
+        }
+      }
     },
     "Reintentar" : {
 
@@ -455,6 +1054,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurando sesión"
+          }
+        }
+      }
+    },
+    "settings.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
           }
         }
       }

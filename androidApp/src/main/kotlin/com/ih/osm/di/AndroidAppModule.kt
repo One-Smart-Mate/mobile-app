@@ -4,6 +4,7 @@ import com.ih.osm.AppViewModel
 import com.ih.osm.core.network.AndroidNetworkStatusMonitor
 import com.ih.osm.core.network.NetworkStatusMonitor
 import com.ih.osm.features.auth.login.LoginViewModel
+import com.ih.osm.features.auth.passwordrecovery.ForgotPasswordViewModel
 import com.ih.osm.features.cards.CardListViewModel
 import com.ih.osm.features.cards.data.sync.CardSyncScheduler
 import com.ih.osm.features.cards.data.sync.ServiceCardEvidenceUploader
@@ -41,6 +42,7 @@ val androidAppModule = module {
     single<LogoutManager> { AndroidLogoutManager(get(), get(), get(), get(), get(), get()) }
     viewModelOf(::AppViewModel)
     viewModelOf(::LoginViewModel)
+    viewModelOf(::ForgotPasswordViewModel)
     viewModelOf(::CardListViewModel)
     viewModelOf(::CardDetailViewModel)
     viewModelOf(::CreateCardViewModel)
