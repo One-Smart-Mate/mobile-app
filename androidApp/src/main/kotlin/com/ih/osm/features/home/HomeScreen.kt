@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.QrCodeScanner
@@ -48,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -74,6 +76,7 @@ import com.ih.osm.features.catalog.sync.CatalogSyncUiState
 import com.ih.osm.features.permissions.PermissionsBottomSheetHost
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun HomeScreenRoute(
@@ -83,8 +86,10 @@ fun HomeScreenRoute(
     modifier: Modifier = Modifier,
     networkStatusMonitor: NetworkStatusMonitor = koinInject(),
     catalogSyncScheduler: CatalogSyncScheduler = koinInject(),
+    viewModel: HomeViewModel = koinViewModel(),
 ) {
     val networkStatus by networkStatusMonitor.status.collectAsStateWithLifecycle()
+    val cardSyncState by viewModel.cardSyncState.collectAsStateWithLifecycle()
     val catalogSyncState by catalogSyncScheduler.observe(user).collectAsStateWithLifecycle(
         initialValue = CatalogSyncUiState.Idle,
     )
@@ -124,6 +129,11 @@ fun HomeScreenRoute(
         onSiteSelected = { selectedSiteId = it.id },
         onCreateNote = { selectedSite?.let { onCreateCard(it.id) } },
         onOpenNotes = onOpenNotes,
+        pendingCardCount = cardSyncState.pendingCount,
+        isCardSyncing = cardSyncState.isSyncing,
+        cardSyncCompleted = cardSyncState.completed,
+        cardSyncTotal = cardSyncState.total,
+        onSyncPendingCards = viewModel::syncPendingCards,
         modifier = modifier,
     )
 
@@ -141,6 +151,11 @@ fun HomeScreen(
     onSiteSelected: (UserSite) -> Unit,
     onCreateNote: () -> Unit,
     onOpenNotes: () -> Unit,
+    pendingCardCount: Long,
+    isCardSyncing: Boolean,
+    cardSyncCompleted: Int,
+    cardSyncTotal: Int,
+    onSyncPendingCards: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -172,6 +187,17 @@ fun HomeScreen(
                 CatalogSyncStatusCard(catalogSyncState)
             }
 
+            if (pendingCardCount > 0) {
+                Spacer(Modifier.height(12.dp))
+                PendingCardsSyncCard(
+                    count = pendingCardCount,
+                    isSyncing = isCardSyncing,
+                    completed = cardSyncCompleted,
+                    total = cardSyncTotal,
+                    onClick = onSyncPendingCards,
+                )
+            }
+
             Spacer(Modifier.height(24.dp))
 
             AnatomyText(
@@ -186,6 +212,90 @@ fun HomeScreen(
                 onOpenNotes = onOpenNotes,
             )
             Spacer(Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun PendingCardsSyncCard(
+    count: Long,
+    isSyncing: Boolean,
+    completed: Int,
+    total: Int,
+    onClick: () -> Unit,
+) {
+    val displayCount = count.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    AnatomyCard(
+        onClick = onClick,
+        enabled = !isSyncing,
+        style = AnatomyCardStyle.FILLED,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Surface(
+                modifier = Modifier.size(42.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Outlined.CloudUpload,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                AnatomyText(
+                    text = stringResource(R.string.home_pending_cards_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    properties = AnatomyTextProperties(fontWeight = FontWeight.SemiBold),
+                )
+                Spacer(Modifier.height(2.dp))
+                AnatomyText(
+                    text = pluralStringResource(
+                        R.plurals.home_pending_cards_body,
+                        displayCount,
+                        displayCount,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    properties = AnatomyTextProperties(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                )
+                Spacer(Modifier.height(5.dp))
+                AnatomyText(
+                    text = if (isSyncing) {
+                        if (total > 0) {
+                            stringResource(R.string.card_sync_progress, completed, total)
+                        } else {
+                            stringResource(R.string.card_sync_preparing)
+                        }
+                    } else {
+                        stringResource(R.string.home_pending_cards_action)
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    properties = AnatomyTextProperties(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                )
+                if (isSyncing) {
+                    Spacer(Modifier.height(7.dp))
+                    if (total > 0) {
+                        LinearProgressIndicator(
+                            progress = { (completed.toFloat() / total).coerceIn(0f, 1f) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
         }
     }
 }
@@ -518,6 +628,11 @@ private fun HomeScreenPreview() {
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},
+            pendingCardCount = 2,
+            isCardSyncing = true,
+            cardSyncCompleted = 1,
+            cardSyncTotal = 2,
+            onSyncPendingCards = {},
         )
     }
 }
@@ -534,6 +649,11 @@ private fun HomeScreenLandscapePreview() {
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},
+            pendingCardCount = 2,
+            isCardSyncing = false,
+            cardSyncCompleted = 0,
+            cardSyncTotal = 0,
+            onSyncPendingCards = {},
         )
     }
 }

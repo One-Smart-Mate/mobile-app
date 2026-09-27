@@ -31,6 +31,8 @@ class SyncPendingCardsUseCase(
         var completed = 0
         var synced = 0
         var failed = 0
+        var hasRetryableFailure = false
+        val failureMessages = linkedSetOf<String>()
         onProgress(CardSyncProgress(completed, pending.size))
 
         pending.chunked(SERVER_BATCH_SIZE).forEach { batch ->
@@ -56,10 +58,17 @@ class SyncPendingCardsUseCase(
                             repository.saveSynced(outcome.card)
                             synced += 1
                         } else {
+                            val message = outcome?.message
+                                ?.takeIf(String::isNotBlank)
+                                ?: "The server did not acknowledge the card."
                             repository.markSyncFailed(
                                 localCard.uuid,
-                                outcome?.message ?: "The server did not acknowledge the card.",
+                                message,
                             )
+                            failureMessages += message
+                            val statusCode = outcome?.statusCode
+                            hasRetryableFailure = hasRetryableFailure ||
+                                statusCode == null || statusCode >= 500
                             failed += 1
                         }
                         completed += 1
@@ -73,8 +82,8 @@ class SyncPendingCardsUseCase(
             PendingCardSyncResult.Success(synced)
         } else {
             PendingCardSyncResult.Failure(
-                message = "Some cards could not be synchronized.",
-                retryable = false,
+                message = failureMessages.joinToString(separator = "\n").take(MAX_ERROR_MESSAGE_LENGTH),
+                retryable = hasRetryableFailure,
                 synced = synced,
                 failed = failed,
             )
@@ -84,5 +93,6 @@ class SyncPendingCardsUseCase(
     private companion object {
         const val SERVER_BATCH_SIZE = 25
         const val MAX_PENDING_SNAPSHOT = 10_000L
+        const val MAX_ERROR_MESSAGE_LENGTH = 500
     }
 }

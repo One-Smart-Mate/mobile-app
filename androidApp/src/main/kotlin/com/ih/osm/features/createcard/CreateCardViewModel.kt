@@ -70,7 +70,7 @@ class CreateCardViewModel(
         viewModelScope.launch {
             when (val result = manager.save()) {
                 is CreateCardSaveResult.Success -> {
-                    syncScheduler.enqueueIfPending()
+                    syncScheduler.enqueueAfterCardCreated()
                     sendNewEvent(Event.Created(result.uuid))
                 }
                 is CreateCardSaveResult.Failure,

@@ -2,6 +2,7 @@ package com.ih.osm.features.card.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOne
 import com.ih.osm.core.network.NetworkResult
 import com.ih.osm.database.AppDatabase
 import com.ih.osm.database.CardRecord
@@ -84,6 +85,12 @@ internal class CardRepositoryImpl(
         }
     }
 
+    override fun observePendingCount(): Flow<Long> =
+        database.cardsQueries
+            .countPendingCards()
+            .asFlow()
+            .mapToOne(Dispatchers.Default)
+
     override fun pendingCount(): Long = database.cardsQueries.countPendingCards().executeAsOne()
 
     override fun getPending(limit: Long): List<Card> =
@@ -138,6 +145,7 @@ internal class CardRepositoryImpl(
                         uuid = item.uuid,
                         success = item.success,
                         card = item.card?.toDomain(siteByUuid[item.uuid] ?: 0),
+                        statusCode = item.statusCode,
                         message = item.message,
                     )
                 },

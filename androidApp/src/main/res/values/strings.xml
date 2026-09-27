@@ -153,7 +153,14 @@
         <item quantity="other">Se sincronizaron %d tarjetas.</item>
     </plurals>
     <string name="card_sync_failed_title">No se pudieron sincronizar las tarjetas</string>
-    <string name="card_sync_failed_body">Se intentará de nuevo cuando haya conexión. Más adelante podrás iniciar la sincronización manualmente.</string>
+    <string name="card_sync_failed_body">Las tarjetas permanecen guardadas en el equipo. Puedes reintentar la sincronización desde Inicio.</string>
+    <string name="card_sync_no_internet">No hay una conexión a internet validada. La tarjeta permanece guardada en el equipo.</string>
+    <string name="home_pending_cards_title">Tarjetas pendientes</string>
+    <plurals name="home_pending_cards_body">
+        <item quantity="one">%d tarjeta local está pendiente de sincronizar.</item>
+        <item quantity="other">%d tarjetas locales están pendientes de sincronizar.</item>
+    </plurals>
+    <string name="home_pending_cards_action">Sincronizar ahora</string>
     <string name="permissions_title">Todo listo para trabajar</string>
     <string name="permissions_subtitle">Activa estos permisos para recibir avisos y preparar la captura de evidencias. Puedes cambiarlos después desde Ajustes.</string>
     <string name="permissions_continue">Continuar</string>

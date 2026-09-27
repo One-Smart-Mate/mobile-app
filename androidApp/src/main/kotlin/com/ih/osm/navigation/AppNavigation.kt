@@ -43,7 +43,6 @@ import com.ih.osm.features.auth.domain.session.SessionStatus
 import com.ih.osm.features.auth.login.LoginScreenRoute
 import com.ih.osm.features.catalog.sync.CatalogSyncScheduler
 import com.ih.osm.features.cards.CardListScreenRoute
-import com.ih.osm.features.cards.sync.CardSyncScheduler
 import com.ih.osm.features.createcard.CreateCardScreenRoute
 import com.ih.osm.features.home.HomeScreenRoute
 import com.ih.osm.features.settings.SettingsScreen
@@ -128,13 +127,11 @@ private fun MainTabRoot(
     user: AuthenticatedUser,
     onCreateCard: (Long?) -> Unit,
     catalogSyncScheduler: CatalogSyncScheduler = koinInject(),
-    cardSyncScheduler: CardSyncScheduler = koinInject(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
 
     LaunchedEffect(user.id, user.sites) {
         catalogSyncScheduler.enqueueIfNeeded(user)
-        cardSyncScheduler.enqueueIfPending()
     }
 
     Scaffold(

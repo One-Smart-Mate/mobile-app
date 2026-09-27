@@ -12,21 +12,24 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.ih.osm.R
 import com.ih.osm.features.card.domain.repository.CardRepository
 import com.ih.osm.features.card.domain.usecase.PendingCardSyncResult
 import com.ih.osm.features.card.domain.usecase.SyncPendingCardsUseCase
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -38,10 +41,15 @@ class CardSyncWorker(
     private val notifications = CardSyncNotifications(appContext)
 
     override suspend fun doWork(): Result {
-        if (!applicationContext.hasValidatedInternet()) return Result.retry()
+        if (!applicationContext.hasValidatedInternet()) {
+            notifications.failure(applicationContext.getString(R.string.card_sync_no_internet))
+            return Result.failure()
+        }
+        setProgress(syncProgressData(completed = 0, total = 0))
         setForeground(notifications.foreground(completed = 0, total = 0))
         return try {
             when (val result = syncPendingCards { progress ->
+                setProgress(syncProgressData(progress.completed, progress.total))
                 setForeground(notifications.foreground(progress.completed, progress.total))
             }) {
                 is PendingCardSyncResult.Success -> {
@@ -50,21 +58,31 @@ class CardSyncWorker(
                 }
                 is PendingCardSyncResult.Failure -> {
                     notifications.failure(result.message)
-                    if (result.retryable && runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure()
+                    Result.failure()
                 }
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
             notifications.failure(throwable.message)
-            if (runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure()
+            Result.failure()
         }
     }
-
-    private companion object {
-        const val MAX_RETRIES = 3
-    }
 }
+
+data class CardSyncWorkStatus(
+    val isActive: Boolean = false,
+    val completed: Int = 0,
+    val total: Int = 0,
+)
+
+private const val CARD_SYNC_COMPLETED = "card-sync-completed"
+private const val CARD_SYNC_TOTAL = "card-sync-total"
+
+private fun syncProgressData(completed: Int, total: Int) = workDataOf(
+    CARD_SYNC_COMPLETED to completed,
+    CARD_SYNC_TOTAL to total,
+)
 
 private fun Context.hasValidatedInternet(): Boolean {
     val connectivity = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -77,9 +95,40 @@ class CardSyncScheduler(
     context: Context,
     private val repository: CardRepository,
 ) {
-    private val workManager = WorkManager.getInstance(context.applicationContext)
+    private val applicationContext = context.applicationContext
+    private val workManager = WorkManager.getInstance(applicationContext)
 
-    fun enqueueIfPending() {
+    val workStatus: Flow<CardSyncWorkStatus> = workManager
+        .getWorkInfosForUniqueWorkFlow(UNIQUE_WORK_NAME)
+        .map { workInfos ->
+            val activeWork = workInfos.lastOrNull { !it.state.isFinished }
+            if (activeWork == null) {
+                CardSyncWorkStatus()
+            } else {
+                CardSyncWorkStatus(
+                    isActive = activeWork.state == WorkInfo.State.ENQUEUED ||
+                        activeWork.state == WorkInfo.State.RUNNING ||
+                        activeWork.state == WorkInfo.State.BLOCKED,
+                    completed = activeWork.progress.getInt(CARD_SYNC_COMPLETED, 0),
+                    total = activeWork.progress.getInt(CARD_SYNC_TOTAL, 0),
+                )
+            }
+        }
+        .distinctUntilChanged()
+
+    fun enqueueAfterCardCreated() {
+        if (!applicationContext.hasValidatedInternet()) return
+        enqueuePending()
+    }
+
+    fun enqueueManually(): Boolean {
+        if (!applicationContext.hasValidatedInternet()) return false
+        if (repository.pendingCount() == 0L) return false
+        enqueuePending()
+        return true
+    }
+
+    private fun enqueuePending() {
         if (repository.pendingCount() == 0L) return
         val request = OneTimeWorkRequestBuilder<CardSyncWorker>()
             .setConstraints(
@@ -87,12 +136,11 @@ class CardSyncScheduler(
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build(),
             )
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .build()
 
         workManager.enqueueUniqueWork(
             UNIQUE_WORK_NAME,
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            ExistingWorkPolicy.KEEP,
             request,
         )
     }

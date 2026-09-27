@@ -19,6 +19,8 @@ interface CardRepository {
 
     suspend fun saveSynced(card: Card)
 
+    fun observePendingCount(): Flow<Long>
+
     fun pendingCount(): Long
 
     fun getPending(limit: Long = 25): List<Card>
@@ -34,5 +36,6 @@ data class CardSyncOutcome(
     val uuid: String,
     val success: Boolean,
     val card: Card? = null,
+    val statusCode: Int? = null,
     val message: String? = null,
 )
