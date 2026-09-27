@@ -1,14 +1,11 @@
 package com.ih.osm.features.home
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ih.osm.core.feature.viewmodel.GRViewModel
 import com.ih.osm.features.card.domain.repository.CardRepository
-import com.ih.osm.features.cards.sync.CardSyncScheduler
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import com.ih.osm.features.cards.domain.manager.CardSyncManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class HomeCardSyncState(
@@ -20,31 +17,36 @@ data class HomeCardSyncState(
 
 class HomeViewModel(
     repository: CardRepository,
-    private val cardSyncScheduler: CardSyncScheduler,
-) : ViewModel() {
-    private val syncRequested = MutableStateFlow(false)
+    private val cardSyncManager: CardSyncManager,
+) : GRViewModel<HomeCardSyncState, HomeViewModel.Action, HomeViewModel.Event>(HomeCardSyncState()) {
+    sealed interface Action {
+        data object SyncPendingCards : Action
+    }
 
-    val cardSyncState: StateFlow<HomeCardSyncState> = combine(
-        repository.observePendingCount(),
-        cardSyncScheduler.workStatus,
-        syncRequested,
-    ) { pendingCount, workStatus, requested ->
-        HomeCardSyncState(
-            pendingCount = pendingCount,
-            isSyncing = requested || workStatus.isActive,
-            completed = workStatus.completed,
-            total = workStatus.total,
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
-        initialValue = HomeCardSyncState(),
-    )
+    sealed interface Event
+
+    private val syncRequested = MutableStateFlow(false)
 
     init {
         viewModelScope.launch {
+            combine(
+                repository.observePendingCount(),
+                cardSyncManager.workStatus,
+                syncRequested,
+            ) { pendingCount, workStatus, requested ->
+                HomeCardSyncState(
+                    pendingCount = pendingCount,
+                    isSyncing = requested || workStatus.isActive,
+                    completed = workStatus.completed,
+                    total = workStatus.total,
+                )
+            }.collect { state ->
+                setState { state }
+            }
+        }
+        viewModelScope.launch {
             var workStarted = false
-            cardSyncScheduler.workStatus.collect { status ->
+            cardSyncManager.workStatus.collect { status ->
                 if (status.isActive) {
                     workStarted = true
                 } else if (workStarted) {
@@ -55,10 +57,16 @@ class HomeViewModel(
         }
     }
 
-    fun syncPendingCards() {
-        if (cardSyncState.value.isSyncing) return
+    override fun processImpl(action: Action) {
+        when (action) {
+            Action.SyncPendingCards -> syncPendingCards()
+        }
+    }
+
+    private fun syncPendingCards() {
+        if (getStateValue().isSyncing) return
         syncRequested.value = true
-        if (!cardSyncScheduler.enqueueManually()) {
+        if (!cardSyncManager.enqueueManually()) {
             syncRequested.value = false
         }
     }

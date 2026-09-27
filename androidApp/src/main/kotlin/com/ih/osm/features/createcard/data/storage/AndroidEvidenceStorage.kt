@@ -1,4 +1,4 @@
-package com.ih.osm.features.createcard.evidence
+package com.ih.osm.features.createcard.data.storage
 
 import android.content.Context
 import android.media.MediaMetadataRetriever
@@ -9,26 +9,20 @@ import androidx.core.content.FileProvider
 import com.ih.osm.BuildConfig
 import com.ih.osm.features.card.domain.create.CreateCardEvidenceDraft
 import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
+import com.ih.osm.features.createcard.domain.storage.EvidenceStorage
+import com.ih.osm.features.createcard.domain.storage.PendingEvidenceCapture
 import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-data class PendingEvidenceCapture(
-    val id: String,
-    val file: File,
-    val uri: Uri,
-    val mediaType: CardEvidenceMediaType,
-    val mimeType: String,
-)
-
-class AndroidEvidenceStorage(context: Context) {
+class AndroidEvidenceStorage(context: Context) : EvidenceStorage {
     private val appContext = context.applicationContext
     private val evidenceDirectory = File(appContext.filesDir, "card_evidence").apply { mkdirs() }
     private var audioRecorder: MediaRecorder? = null
     private var activeAudioCapture: PendingEvidenceCapture? = null
 
-    fun createCapture(mediaType: CardEvidenceMediaType): PendingEvidenceCapture {
+    override fun createCapture(mediaType: CardEvidenceMediaType): PendingEvidenceCapture {
         val id = UUID.randomUUID().toString()
         val mimeType = when (mediaType) {
             CardEvidenceMediaType.IMAGE -> "image/jpeg"
@@ -54,7 +48,7 @@ class AndroidEvidenceStorage(context: Context) {
         )
     }
 
-    suspend fun import(uri: Uri, mediaType: CardEvidenceMediaType): CreateCardEvidenceDraft =
+    override suspend fun import(uri: Uri, mediaType: CardEvidenceMediaType): CreateCardEvidenceDraft =
         withContext(Dispatchers.IO) {
             val mimeType = appContext.contentResolver.getType(uri) ?: mediaType.defaultMimeType()
             require(mimeType in mediaType.allowedMimeTypes()) { "Unsupported evidence format." }
@@ -87,7 +81,7 @@ class AndroidEvidenceStorage(context: Context) {
             }
         }
 
-    suspend fun finishCapture(capture: PendingEvidenceCapture): CreateCardEvidenceDraft =
+    override suspend fun finishCapture(capture: PendingEvidenceCapture): CreateCardEvidenceDraft =
         withContext(Dispatchers.IO) {
             require(capture.file.isFile && capture.file.length() > 0L) {
                 "The captured evidence is empty."
@@ -100,7 +94,7 @@ class AndroidEvidenceStorage(context: Context) {
             )
         }
 
-    fun startAudioRecording(maxDurationSeconds: Long): PendingEvidenceCapture {
+    override fun startAudioRecording(maxDurationSeconds: Long): PendingEvidenceCapture {
         cancelAudioRecording()
         val capture = createCapture(CardEvidenceMediaType.AUDIO)
         val recorder = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
@@ -139,7 +133,7 @@ class AndroidEvidenceStorage(context: Context) {
         return capture
     }
 
-    suspend fun stopAudioRecording(): CreateCardEvidenceDraft {
+    override suspend fun stopAudioRecording(): CreateCardEvidenceDraft {
         val capture = requireNotNull(activeAudioCapture) { "There is no active audio recording." }
         val recorder = requireNotNull(audioRecorder)
         audioRecorder = null
@@ -155,7 +149,7 @@ class AndroidEvidenceStorage(context: Context) {
         return finishCapture(capture)
     }
 
-    fun cancelAudioRecording() {
+    override fun cancelAudioRecording() {
         val recorder = audioRecorder
         audioRecorder = null
         val capture = activeAudioCapture
@@ -165,11 +159,11 @@ class AndroidEvidenceStorage(context: Context) {
         capture?.file?.delete()
     }
 
-    fun delete(localPath: String) {
+    override fun delete(localPath: String) {
         runCatching { File(localPath).delete() }
     }
 
-    fun discard(capture: PendingEvidenceCapture?) {
+    override fun discard(capture: PendingEvidenceCapture?) {
         capture?.file?.delete()
     }
 

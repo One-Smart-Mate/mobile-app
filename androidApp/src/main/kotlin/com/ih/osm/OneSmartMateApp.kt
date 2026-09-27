@@ -11,7 +11,7 @@ fun OneSmartMateApp(
     viewModel: AppViewModel = koinViewModel(),
     onExitRequested: () -> Unit = {},
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.getStateFlow().collectAsStateWithLifecycle()
     OneSmartMateRoot(
         session = uiState.session,
         onExitRequested = onExitRequested,

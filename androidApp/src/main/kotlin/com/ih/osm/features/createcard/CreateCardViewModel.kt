@@ -8,15 +8,15 @@ import com.ih.osm.features.card.domain.create.CreateCardEvidenceDraft
 import com.ih.osm.features.card.domain.create.CreateCardSaveResult
 import com.ih.osm.features.card.domain.create.CreateCardSheet
 import com.ih.osm.features.card.domain.create.CreateCardState
-import com.ih.osm.features.cards.sync.CardSyncScheduler
-import com.ih.osm.features.createcard.evidence.AndroidEvidenceStorage
+import com.ih.osm.features.cards.domain.manager.CardSyncManager
+import com.ih.osm.features.createcard.domain.storage.EvidenceStorage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class CreateCardViewModel(
     private val manager: CreateCardManager,
-    private val syncScheduler: CardSyncScheduler,
-    private val evidenceStorage: AndroidEvidenceStorage,
+    private val cardSyncManager: CardSyncManager,
+    private val evidenceStorage: EvidenceStorage,
 ) : GRViewModel<CreateCardState, CreateCardViewModel.Action, CreateCardViewModel.Event>(
     initialState = CreateCardState(),
 ) {
@@ -106,7 +106,7 @@ class CreateCardViewModel(
         viewModelScope.launch {
             when (val result = manager.save()) {
                 is CreateCardSaveResult.Success -> {
-                    syncScheduler.enqueueAfterCardCreated()
+                    cardSyncManager.enqueueAfterCardCreated()
                     sendNewEvent(Event.Created(result.uuid))
                 }
                 is CreateCardSaveResult.Failure,

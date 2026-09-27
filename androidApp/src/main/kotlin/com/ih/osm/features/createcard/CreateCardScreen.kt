@@ -100,8 +100,8 @@ import com.ih.osm.features.card.domain.create.CreateCardState
 import com.ih.osm.features.card.domain.create.CreateCardStep
 import com.ih.osm.features.card.domain.create.CreateCardValidationError
 import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
-import com.ih.osm.features.createcard.evidence.AndroidEvidenceStorage
-import com.ih.osm.features.createcard.evidence.PendingEvidenceCapture
+import com.ih.osm.features.createcard.domain.storage.EvidenceStorage
+import com.ih.osm.features.createcard.domain.storage.PendingEvidenceCapture
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -118,7 +118,7 @@ fun CreateCardScreenRoute(
     siteId: Long?,
     onFinished: () -> Unit,
     viewModel: CreateCardViewModel = koinViewModel(),
-    evidenceStorage: AndroidEvidenceStorage = koinInject(),
+    evidenceStorage: EvidenceStorage = koinInject(),
 ) {
     val state by viewModel.getStateFlow().collectAsStateWithLifecycle()
     val context = LocalContext.current

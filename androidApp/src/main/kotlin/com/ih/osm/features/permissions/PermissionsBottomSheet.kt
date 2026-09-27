@@ -1,5 +1,8 @@
 package com.ih.osm.features.permissions
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -42,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -51,29 +55,39 @@ import com.ih.osm.designsystem.anatomy.AnatomyButton
 import com.ih.osm.designsystem.anatomy.AnatomyButtonStyle
 import com.ih.osm.designsystem.anatomy.AnatomyText
 import com.ih.osm.designsystem.anatomy.AnatomyTextProperties
+import com.ih.osm.features.permissions.domain.model.AppPermissionItem
+import com.ih.osm.features.permissions.domain.model.AppPermissionKind
+import com.ih.osm.features.permissions.domain.model.AppPermissionStatus
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.koinInject
 
 @Composable
 fun PermissionsBottomSheetHost(
+    autoPrompt: Boolean = true,
+    showRequestKey: Int = 0,
+    onPermissionsChanged: () -> Unit = {},
     viewModel: PermissionsViewModel = koinViewModel(),
-    helper: PermissionHelper = koinInject(),
 ) {
+    val context = LocalContext.current
     val state by viewModel.getStateFlow().collectAsStateWithLifecycle()
     val runtimePermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) {
         viewModel.process(PermissionsViewModel.Action.RuntimeRequestFinished)
+        onPermissionsChanged()
     }
     val settingsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
         viewModel.process(PermissionsViewModel.Action.RuntimeRequestFinished)
+        onPermissionsChanged()
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.process(PermissionsViewModel.Action.Initialize)
+    LaunchedEffect(autoPrompt) {
+        if (autoPrompt) viewModel.process(PermissionsViewModel.Action.Initialize)
+    }
+    LaunchedEffect(showRequestKey) {
+        if (showRequestKey > 0) viewModel.process(PermissionsViewModel.Action.Show)
     }
     LaunchedEffect(viewModel) {
         viewModel.getEventFlow().collectLatest { event ->
@@ -81,7 +95,12 @@ fun PermissionsBottomSheetHost(
                 is PermissionsViewModel.Event.RequestRuntimePermissions ->
                     runtimePermissionLauncher.launch(event.permissions.toTypedArray())
                 PermissionsViewModel.Event.OpenAppSettings ->
-                    settingsLauncher.launch(helper.appSettingsIntent())
+                    settingsLauncher.launch(
+                        Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.parse("package:${context.packageName}"),
+                        ),
+                    )
             }
         }
     }

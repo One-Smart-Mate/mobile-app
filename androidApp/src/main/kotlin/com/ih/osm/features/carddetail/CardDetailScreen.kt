@@ -110,14 +110,16 @@ fun CardDetailScreenRoute(
     onBack: () -> Unit,
     viewModel: CardDetailViewModel = koinViewModel(),
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(cardUuid) { viewModel.load(cardUuid) }
+    val state by viewModel.getStateFlow().collectAsStateWithLifecycle()
+    LaunchedEffect(cardUuid) {
+        viewModel.process(CardDetailViewModel.Action.Load(cardUuid))
+    }
     CardDetailScreen(
         state = state,
         siteNames = siteNames,
         onBack = onBack,
-        onPrepareEvidence = viewModel::prepareEvidence,
-        onRetryEvidence = viewModel::resolveEvidence,
+        onPrepareEvidence = { viewModel.process(CardDetailViewModel.Action.PrepareEvidence) },
+        onRetryEvidence = { viewModel.process(CardDetailViewModel.Action.ResolveEvidence(it)) },
     )
 }
 

@@ -91,6 +91,9 @@ DELETE FROM CardEvidenceRecord WHERE site_id = ? AND is_local = 0;
 deleteEvidencesByCardUuid:
 DELETE FROM CardEvidenceRecord WHERE card_uuid = ?;
 
+deleteAllEvidences:
+DELETE FROM CardEvidenceRecord;
+
 deleteAllCards:
 DELETE FROM CardRecord;
 

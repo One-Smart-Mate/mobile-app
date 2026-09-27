@@ -71,8 +71,8 @@ import com.ih.osm.designsystem.theme.OneSmartMateTheme
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.model.UserSite
 import com.ih.osm.features.catalog.domain.model.CatalogKind
-import com.ih.osm.features.catalog.sync.CatalogSyncScheduler
-import com.ih.osm.features.catalog.sync.CatalogSyncUiState
+import com.ih.osm.features.catalog.domain.manager.CatalogSyncManager
+import com.ih.osm.features.catalog.domain.model.CatalogSyncStatus
 import com.ih.osm.features.permissions.PermissionsBottomSheetHost
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
@@ -85,16 +85,16 @@ fun HomeScreenRoute(
     onOpenNotes: () -> Unit,
     modifier: Modifier = Modifier,
     networkStatusMonitor: NetworkStatusMonitor = koinInject(),
-    catalogSyncScheduler: CatalogSyncScheduler = koinInject(),
+    catalogSyncManager: CatalogSyncManager = koinInject(),
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val networkStatus by networkStatusMonitor.status.collectAsStateWithLifecycle()
-    val cardSyncState by viewModel.cardSyncState.collectAsStateWithLifecycle()
-    val catalogSyncState by catalogSyncScheduler.observe(user).collectAsStateWithLifecycle(
-        initialValue = CatalogSyncUiState.Idle,
+    val cardSyncState by viewModel.getStateFlow().collectAsStateWithLifecycle()
+    val catalogSyncState by catalogSyncManager.observe(user).collectAsStateWithLifecycle(
+        initialValue = CatalogSyncStatus.Idle,
     )
-    val isTransientSyncState = catalogSyncState is CatalogSyncUiState.WaitingForNetwork ||
-        catalogSyncState is CatalogSyncUiState.Downloading
+    val isTransientSyncState = catalogSyncState is CatalogSyncStatus.WaitingForNetwork ||
+        catalogSyncState is CatalogSyncStatus.Downloading
     var showTransientSyncState by remember { mutableStateOf(false) }
     var selectedSiteId by rememberSaveable(user.id) {
         mutableStateOf(user.sites.firstOrNull()?.id)
@@ -122,9 +122,9 @@ fun HomeScreenRoute(
         selectedSite = selectedSite,
         networkStatus = networkStatus,
         catalogSyncState = when {
-            catalogSyncState is CatalogSyncUiState.Failed -> catalogSyncState
+            catalogSyncState is CatalogSyncStatus.Failed -> catalogSyncState
             showTransientSyncState -> catalogSyncState
-            else -> CatalogSyncUiState.Idle
+            else -> CatalogSyncStatus.Idle
         },
         onSiteSelected = { selectedSiteId = it.id },
         onCreateNote = { selectedSite?.let { onCreateCard(it.id) } },
@@ -133,7 +133,7 @@ fun HomeScreenRoute(
         isCardSyncing = cardSyncState.isSyncing,
         cardSyncCompleted = cardSyncState.completed,
         cardSyncTotal = cardSyncState.total,
-        onSyncPendingCards = viewModel::syncPendingCards,
+        onSyncPendingCards = { viewModel.process(HomeViewModel.Action.SyncPendingCards) },
         modifier = modifier,
     )
 
@@ -147,7 +147,7 @@ fun HomeScreen(
     user: AuthenticatedUser,
     selectedSite: UserSite?,
     networkStatus: NetworkConnectionStatus,
-    catalogSyncState: CatalogSyncUiState,
+    catalogSyncState: CatalogSyncStatus,
     onSiteSelected: (UserSite) -> Unit,
     onCreateNote: () -> Unit,
     onOpenNotes: () -> Unit,
@@ -182,7 +182,7 @@ fun HomeScreen(
 
             NetworkStatusBadge(status = networkStatus)
 
-            if (catalogSyncState !is CatalogSyncUiState.Idle) {
+            if (catalogSyncState !is CatalogSyncStatus.Idle) {
                 Spacer(Modifier.height(12.dp))
                 CatalogSyncStatusCard(catalogSyncState)
             }
@@ -301,13 +301,13 @@ private fun PendingCardsSyncCard(
 }
 
 @Composable
-private fun CatalogSyncStatusCard(state: CatalogSyncUiState) {
-    val isFailure = state is CatalogSyncUiState.Failed
+private fun CatalogSyncStatusCard(state: CatalogSyncStatus) {
+    val isFailure = state is CatalogSyncStatus.Failed
     val title = when (state) {
-        CatalogSyncUiState.Idle -> ""
-        CatalogSyncUiState.WaitingForNetwork -> stringResource(R.string.catalog_sync_waiting)
-        is CatalogSyncUiState.Downloading -> state.catalog.catalogLabel()
-        is CatalogSyncUiState.Failed -> stringResource(R.string.catalog_sync_failed)
+        CatalogSyncStatus.Idle -> ""
+        CatalogSyncStatus.WaitingForNetwork -> stringResource(R.string.catalog_sync_waiting)
+        is CatalogSyncStatus.Downloading -> state.catalog.catalogLabel()
+        is CatalogSyncStatus.Failed -> stringResource(R.string.catalog_sync_failed)
     }
 
     AnatomyCard(
@@ -332,7 +332,7 @@ private fun CatalogSyncStatusCard(state: CatalogSyncUiState) {
                 )
                 Spacer(Modifier.height(2.dp))
                 AnatomyText(
-                    text = (state as? CatalogSyncUiState.Failed)?.message ?: title,
+                    text = (state as? CatalogSyncStatus.Failed)?.message ?: title,
                     style = MaterialTheme.typography.bodySmall,
                     properties = AnatomyTextProperties(
                         color = if (isFailure) {
@@ -344,10 +344,10 @@ private fun CatalogSyncStatusCard(state: CatalogSyncUiState) {
                 )
                 Spacer(Modifier.height(9.dp))
                 when (state) {
-                    CatalogSyncUiState.WaitingForNetwork -> LinearProgressIndicator(
+                    CatalogSyncStatus.WaitingForNetwork -> LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    is CatalogSyncUiState.Downloading -> LinearProgressIndicator(
+                    is CatalogSyncStatus.Downloading -> LinearProgressIndicator(
                         progress = { state.progress },
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -624,7 +624,7 @@ private fun HomeScreenPreview() {
             user = previewUser,
             selectedSite = previewUser.sites.first(),
             networkStatus = NetworkConnectionStatus.WIFI_CONNECTED,
-            catalogSyncState = CatalogSyncUiState.Downloading(0.45f, CatalogKind.LEVELS),
+            catalogSyncState = CatalogSyncStatus.Downloading(0.45f, CatalogKind.LEVELS),
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},
@@ -645,7 +645,7 @@ private fun HomeScreenLandscapePreview() {
             user = previewUser,
             selectedSite = previewUser.sites.first(),
             networkStatus = NetworkConnectionStatus.CELLULAR_CONNECTED,
-            catalogSyncState = CatalogSyncUiState.Downloading(0.7f, CatalogKind.EMPLOYEES),
+            catalogSyncState = CatalogSyncStatus.Downloading(0.7f, CatalogKind.EMPLOYEES),
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},

@@ -2,10 +2,12 @@ package com.ih.osm.features.permissions
 
 import androidx.lifecycle.viewModelScope
 import com.ih.osm.core.feature.viewmodel.GRViewModel
+import com.ih.osm.features.permissions.domain.manager.PermissionManager
+import com.ih.osm.features.permissions.domain.model.AppPermissionItem
 import kotlinx.coroutines.launch
 
 class PermissionsViewModel(
-    private val helper: PermissionHelper,
+    private val permissionManager: PermissionManager,
 ) : GRViewModel<PermissionsViewModel.UiState, PermissionsViewModel.Action, PermissionsViewModel.Event>(
     initialState = UiState(),
 ) {
@@ -19,6 +21,7 @@ class PermissionsViewModel(
 
     sealed interface Action {
         data object Initialize : Action
+        data object Show : Action
         data object Continue : Action
         data object NotNow : Action
         data object RuntimeRequestFinished : Action
@@ -32,6 +35,7 @@ class PermissionsViewModel(
     override fun processImpl(action: Action) {
         when (action) {
             Action.Initialize -> initialize()
+            Action.Show -> show()
             Action.Continue -> continueRequest()
             Action.NotNow -> setState { copy(showSheet = false, isRequesting = false) }
             Action.RuntimeRequestFinished -> refreshAfterRequest()
@@ -40,7 +44,7 @@ class PermissionsViewModel(
 
     private fun initialize() {
         if (getStateValue().initialized) return
-        val snapshot = helper.snapshot()
+        val snapshot = permissionManager.snapshot()
         setState {
             copy(
                 initialized = true,
@@ -50,9 +54,21 @@ class PermissionsViewModel(
         }
     }
 
+    private fun show() {
+        val snapshot = permissionManager.snapshot()
+        setState {
+            copy(
+                initialized = true,
+                showSheet = true,
+                isRequesting = false,
+                items = snapshot.items,
+            )
+        }
+    }
+
     private fun continueRequest() {
         if (getStateValue().isRequesting) return
-        val snapshot = helper.snapshot()
+        val snapshot = permissionManager.snapshot()
         if (snapshot.allRuntimePermissionsGranted) {
             setState { copy(showSheet = false, items = snapshot.items) }
             return
@@ -68,7 +84,7 @@ class PermissionsViewModel(
     }
 
     private fun refreshAfterRequest() {
-        val snapshot = helper.snapshot()
+        val snapshot = permissionManager.snapshot()
         setState {
             copy(
                 showSheet = !snapshot.allRuntimePermissionsGranted,

@@ -1,46 +1,20 @@
-package com.ih.osm.features.permissions
+package com.ih.osm.features.permissions.data.manager
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import androidx.core.content.ContextCompat
+import com.ih.osm.features.permissions.domain.manager.PermissionManager
+import com.ih.osm.features.permissions.domain.model.AppPermissionItem
+import com.ih.osm.features.permissions.domain.model.AppPermissionKind
+import com.ih.osm.features.permissions.domain.model.AppPermissionSnapshot
+import com.ih.osm.features.permissions.domain.model.AppPermissionStatus
 
-enum class AppPermissionKind {
-    NOTIFICATIONS,
-    CAMERA,
-    MICROPHONE,
-    GALLERY,
-    BACKGROUND_TASKS,
-}
-
-enum class AppPermissionStatus {
-    GRANTED,
-    PARTIAL,
-    MISSING,
-    SYSTEM_MANAGED,
-}
-
-data class AppPermissionItem(
-    val kind: AppPermissionKind,
-    val status: AppPermissionStatus,
-)
-
-data class AppPermissionSnapshot(
-    val items: List<AppPermissionItem>,
-    val missingRuntimePermissions: List<String>,
-) {
-    val allRuntimePermissionsGranted: Boolean
-        get() = missingRuntimePermissions.isEmpty()
-}
-
-class PermissionHelper(context: Context) {
+class AndroidPermissionManager(context: Context) : PermissionManager {
     private val appContext = context.applicationContext
 
-    fun snapshot(): AppPermissionSnapshot {
+    override fun snapshot(): AppPermissionSnapshot {
         val notificationPermissions = notificationPermissions()
         val cameraPermissions = listOf(Manifest.permission.CAMERA)
         val microphonePermissions = listOf(Manifest.permission.RECORD_AUDIO)
@@ -71,11 +45,6 @@ class PermissionHelper(context: Context) {
             missingRuntimePermissions = missing,
         )
     }
-
-    fun appSettingsIntent(): Intent = Intent(
-        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-        Uri.parse("package:${appContext.packageName}"),
-    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
     private fun notificationPermissions(): List<String> =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

@@ -41,12 +41,12 @@ import com.ih.osm.designsystem.anatomy.AnatomyText
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.session.SessionStatus
 import com.ih.osm.features.auth.login.LoginScreenRoute
-import com.ih.osm.features.catalog.sync.CatalogSyncScheduler
+import com.ih.osm.features.catalog.domain.manager.CatalogSyncManager
 import com.ih.osm.features.cards.CardListScreenRoute
 import com.ih.osm.features.carddetail.CardDetailScreenRoute
 import com.ih.osm.features.createcard.CreateCardScreenRoute
 import com.ih.osm.features.home.HomeScreenRoute
-import com.ih.osm.features.settings.SettingsScreen
+import com.ih.osm.features.settings.SettingsScreenRoute
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 
@@ -140,12 +140,12 @@ private fun MainTabRoot(
     user: AuthenticatedUser,
     onCreateCard: (Long?) -> Unit,
     onOpenCard: (String) -> Unit,
-    catalogSyncScheduler: CatalogSyncScheduler = koinInject(),
+    catalogSyncManager: CatalogSyncManager = koinInject(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
 
     LaunchedEffect(user.id, user.sites) {
-        catalogSyncScheduler.enqueueIfNeeded(user)
+        catalogSyncManager.enqueueIfNeeded(user)
     }
 
     Scaffold(
@@ -190,7 +190,10 @@ private fun MainTabRoot(
                 onCardClick = onOpenCard,
                 modifier = Modifier.padding(innerPadding),
             )
-            MainTab.SETTINGS -> SettingsScreen(Modifier.padding(innerPadding))
+            MainTab.SETTINGS -> SettingsScreenRoute(
+                user = user,
+                modifier = Modifier.padding(innerPadding),
+            )
         }
     }
 }

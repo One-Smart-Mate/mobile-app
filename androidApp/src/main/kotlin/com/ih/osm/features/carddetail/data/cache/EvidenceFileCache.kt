@@ -1,10 +1,11 @@
-package com.ih.osm.features.carddetail
+package com.ih.osm.features.carddetail.data.cache
 
 import android.content.Context
 import com.ih.osm.core.network.NetworkResult
 import com.ih.osm.features.card.domain.model.CardEvidence
 import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
 import com.ih.osm.features.card.domain.repository.CardRepository
+import com.ih.osm.features.carddetail.domain.cache.EvidenceCache
 import java.io.File
 import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
@@ -15,11 +16,11 @@ import kotlinx.coroutines.withContext
 class EvidenceFileCache(
     context: Context,
     private val repository: CardRepository,
-) {
+) : EvidenceCache {
     private val directory = File(context.applicationContext.cacheDir, "card_evidence").apply { mkdirs() }
     private val mutex = Mutex()
 
-    suspend fun resolve(evidence: CardEvidence): Result<File> = withContext(Dispatchers.IO) {
+    override suspend fun resolve(evidence: CardEvidence): Result<File> = withContext(Dispatchers.IO) {
         val localSource = File(evidence.url)
         if (localSource.isFile && localSource.length() > 0L) {
             return@withContext Result.success(localSource)
@@ -48,7 +49,7 @@ class EvidenceFileCache(
         }
     }
 
-    suspend fun adopt(localFile: File, remoteReference: String, mediaType: CardEvidenceMediaType) {
+    override suspend fun adopt(localFile: File, remoteReference: String, mediaType: CardEvidenceMediaType) {
         if (!localFile.isFile) return
         withContext(Dispatchers.IO) {
             mutex.withLock {

@@ -1,10 +1,10 @@
-package com.ih.osm.features.cards.sync
+package com.ih.osm.features.cards.data.sync
 
 import com.ih.osm.core.network.NetworkResult
 import com.ih.osm.features.card.domain.model.CardEvidence
 import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
 import com.ih.osm.features.card.domain.repository.CardRepository
-import com.ih.osm.features.carddetail.EvidenceFileCache
+import com.ih.osm.features.carddetail.domain.cache.EvidenceCache
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,7 +16,7 @@ sealed interface EvidenceUploadResult {
 
 class ServiceCardEvidenceUploader(
     private val repository: CardRepository,
-    private val evidenceCache: EvidenceFileCache,
+    private val evidenceCache: EvidenceCache,
 ) {
     fun pendingEvidenceCount(): Int = repository.getPending(MAX_PENDING_CARDS)
         .sumOf { card -> card.evidences.count { it.isLocal } }
