@@ -40,7 +40,27 @@ CREATE TABLE CardRecord (
     notify_responsible INTEGER NOT NULL DEFAULT 0,
     sync_state TEXT NOT NULL DEFAULT 'SYNCED',
     sync_error TEXT,
-    sync_attempts INTEGER NOT NULL DEFAULT 0
+    sync_attempts INTEGER NOT NULL DEFAULT 0,
+    provisional_solution_date TEXT,
+    provisional_solution_comments TEXT,
+    provisional_solution_user_name TEXT,
+    definitive_solution_comments TEXT,
+    definitive_solution_user_name TEXT,
+    manager_name TEXT,
+    manager_close_date TEXT,
+    manager_comments TEXT
+);
+
+CREATE TABLE CardEvidenceRecord (
+    id TEXT NOT NULL PRIMARY KEY,
+    card_uuid TEXT NOT NULL,
+    site_id INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    type_code TEXT NOT NULL,
+    stage TEXT NOT NULL,
+    media_type TEXT NOT NULL,
+    created_at TEXT,
+    is_local INTEGER NOT NULL DEFAULT 0
 );
 
 selectAllCards:
@@ -49,6 +69,9 @@ ORDER BY is_local DESC, site_card_id DESC, creation_date DESC;
 
 selectCardByUuid:
 SELECT * FROM CardRecord WHERE uuid = ? LIMIT 1;
+
+selectEvidencesByCardUuid:
+SELECT * FROM CardEvidenceRecord WHERE card_uuid = ? ORDER BY created_at, id;
 
 selectPendingCards:
 SELECT * FROM CardRecord
@@ -61,6 +84,12 @@ SELECT COUNT(*) FROM CardRecord WHERE is_local = 1;
 
 deleteRemoteCardsBySite:
 DELETE FROM CardRecord WHERE site_id = ? AND is_local = 0;
+
+deleteRemoteEvidencesBySite:
+DELETE FROM CardEvidenceRecord WHERE site_id = ? AND is_local = 0;
+
+deleteEvidencesByCardUuid:
+DELETE FROM CardEvidenceRecord WHERE card_uuid = ?;
 
 deleteAllCards:
 DELETE FROM CardRecord;
@@ -108,7 +137,15 @@ INSERT OR REPLACE INTO CardRecord(
     notify_responsible,
     sync_state,
     sync_error,
-    sync_attempts
+    sync_attempts,
+    provisional_solution_date,
+    provisional_solution_comments,
+    provisional_solution_user_name,
+    definitive_solution_comments,
+    definitive_solution_user_name,
+    manager_name,
+    manager_close_date,
+    manager_comments
 ) VALUES (
     ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?,
@@ -116,8 +153,14 @@ INSERT OR REPLACE INTO CardRecord(
     ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?,
-    ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?, ?, ?
 );
+
+insertEvidence:
+INSERT OR REPLACE INTO CardEvidenceRecord(
+    id, card_uuid, site_id, url, type_code, stage, media_type, created_at, is_local
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 markCardSyncing:
 UPDATE CardRecord

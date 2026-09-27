@@ -1,6 +1,9 @@
 package com.ih.osm.features.card.data.remote
 
 import com.ih.osm.features.card.domain.model.Card
+import com.ih.osm.features.card.domain.model.CardEvidence
+import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
+import com.ih.osm.features.card.domain.model.CardEvidenceStage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -109,15 +112,25 @@ internal data class CardDto(
     @SerialName("evidenceVicr") val evidenceVideoCreation: Long = 0,
     @SerialName("evidenceImcr") val evidenceImageCreation: Long = 0,
     val cardLocation: String? = null,
+    val cardProvisionalSolutionDate: String? = null,
+    val commentsAtCardProvisionalSolution: String? = null,
+    val userProvisionalSolutionName: String? = null,
     val cardDefinitiveSolutionDate: String? = null,
+    val commentsAtCardDefinitiveSolution: String? = null,
+    val userDefinitiveSolutionName: String? = null,
+    val managerName: String? = null,
+    val cardManagerCloseDate: String? = null,
+    val commentsManagerAtCardClose: String? = null,
+    val evidences: List<CardEvidenceDto> = emptyList(),
     val updatedAt: String? = null,
 ) {
     fun toDomain(siteId: Long): Card {
         val serverId = id.asString()
+        val resolvedUuid = uuid?.takeIf(String::isNotBlank)
+            ?: serverId?.takeIf(String::isNotBlank)
+            ?: "$siteId:$siteCardId"
         return Card(
-            uuid = uuid?.takeIf(String::isNotBlank)
-                ?: serverId?.takeIf(String::isNotBlank)
-                ?: "$siteId:$siteCardId",
+            uuid = resolvedUuid,
             serverId = serverId,
             siteCardId = siteCardId,
             siteId = siteId,
@@ -152,7 +165,50 @@ internal data class CardDto(
             isLocal = false,
             hasLocalSolutions = false,
             updatedAt = updatedAt,
+            provisionalSolutionDate = cardProvisionalSolutionDate,
+            provisionalSolutionComments = commentsAtCardProvisionalSolution,
+            provisionalSolutionUserName = userProvisionalSolutionName,
+            definitiveSolutionComments = commentsAtCardDefinitiveSolution,
+            definitiveSolutionUserName = userDefinitiveSolutionName,
+            managerName = managerName,
+            managerCloseDate = cardManagerCloseDate,
+            managerComments = commentsManagerAtCardClose,
+            evidences = evidences.map { it.toDomain(resolvedUuid, siteId) },
             syncState = com.ih.osm.features.card.domain.model.CardSyncState.SYNCED,
+        )
+    }
+}
+
+@Serializable
+internal data class CardEvidenceDto(
+    val id: JsonElement? = null,
+    val evidenceName: String = "",
+    val evidenceType: String = "",
+    val createdAt: String? = null,
+) {
+    fun toDomain(cardUuid: String, siteId: Long): CardEvidence {
+        val normalizedType = evidenceType.uppercase()
+        val stage = when {
+            normalizedType.endsWith("PS") -> CardEvidenceStage.PROVISIONAL_SOLUTION
+            normalizedType.endsWith("CL") -> CardEvidenceStage.DEFINITIVE_SOLUTION
+            else -> CardEvidenceStage.CREATION
+        }
+        val mediaType = when {
+            normalizedType.startsWith("VI") -> CardEvidenceMediaType.VIDEO
+            normalizedType.startsWith("AU") -> CardEvidenceMediaType.AUDIO
+            else -> CardEvidenceMediaType.IMAGE
+        }
+        val remoteId = id.asString()
+        return CardEvidence(
+            id = remoteId?.takeIf(String::isNotBlank)
+                ?: "$cardUuid:$normalizedType:${evidenceName.hashCode()}",
+            cardUuid = cardUuid,
+            siteId = siteId,
+            url = evidenceName,
+            typeCode = normalizedType,
+            stage = stage,
+            mediaType = mediaType,
+            createdAt = createdAt,
         )
     }
 }

@@ -3,17 +3,23 @@ package com.ih.osm.features.card.data.repository
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOne
+import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.ih.osm.core.network.NetworkResult
 import com.ih.osm.database.AppDatabase
 import com.ih.osm.database.CardRecord
+import com.ih.osm.database.CardEvidenceRecord
 import com.ih.osm.features.card.data.remote.CardApiService
 import com.ih.osm.features.card.data.remote.CreateCardRequestDto
 import com.ih.osm.features.card.domain.model.Card
+import com.ih.osm.features.card.domain.model.CardEvidence
+import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
+import com.ih.osm.features.card.domain.model.CardEvidenceStage
 import com.ih.osm.features.card.domain.model.CardSyncState
 import com.ih.osm.features.card.domain.repository.CardSyncOutcome
 import com.ih.osm.features.card.domain.repository.CardRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 internal class CardRepositoryImpl(
@@ -26,6 +32,13 @@ internal class CardRepositoryImpl(
             .asFlow()
             .mapToList(Dispatchers.Default)
             .map { rows -> rows.map { it.toDomain() } }
+
+    override fun observeCard(uuid: String): Flow<Card?> = combine(
+        database.cardsQueries.selectCardByUuid(uuid).asFlow().mapToOneOrNull(Dispatchers.Default),
+        database.cardsQueries.selectEvidencesByCardUuid(uuid).asFlow().mapToList(Dispatchers.Default),
+    ) { card, evidences ->
+        card?.toDomain(evidences.map { it.toDomain() })
+    }
 
     override suspend fun refresh(siteIds: List<Long>): NetworkResult<Unit> {
         if (siteIds.isEmpty()) return NetworkResult.Success(Unit, statusCode = 200)
@@ -54,6 +67,7 @@ internal class CardRepositoryImpl(
 
         database.transaction {
             snapshots.forEach { (siteId, cards) ->
+                database.cardsQueries.deleteRemoteEvidencesBySite(siteId)
                 database.cardsQueries.deleteRemoteCardsBySite(siteId)
                 cards.forEach(::upsert)
             }
@@ -198,10 +212,32 @@ internal class CardRepositoryImpl(
             sync_state = card.syncState.name,
             sync_error = card.syncError,
             sync_attempts = card.syncAttempts,
+            provisional_solution_date = card.provisionalSolutionDate,
+            provisional_solution_comments = card.provisionalSolutionComments,
+            provisional_solution_user_name = card.provisionalSolutionUserName,
+            definitive_solution_comments = card.definitiveSolutionComments,
+            definitive_solution_user_name = card.definitiveSolutionUserName,
+            manager_name = card.managerName,
+            manager_close_date = card.managerCloseDate,
+            manager_comments = card.managerComments,
         )
+        database.cardsQueries.deleteEvidencesByCardUuid(card.uuid)
+        card.evidences.forEach { evidence ->
+            database.cardsQueries.insertEvidence(
+                id = evidence.id,
+                card_uuid = card.uuid,
+                site_id = card.siteId,
+                url = evidence.url,
+                type_code = evidence.typeCode,
+                stage = evidence.stage.name,
+                media_type = evidence.mediaType.name,
+                created_at = evidence.createdAt,
+                is_local = if (evidence.isLocal) 1L else 0L,
+            )
+        }
     }
 
-    private fun CardRecord.toDomain() = Card(
+    private fun CardRecord.toDomain(evidences: List<CardEvidence> = emptyList()) = Card(
         uuid = uuid,
         serverId = server_id,
         siteCardId = site_card_id,
@@ -244,6 +280,29 @@ internal class CardRepositoryImpl(
         syncState = runCatching { CardSyncState.valueOf(sync_state) }.getOrDefault(CardSyncState.SYNCED),
         syncError = sync_error,
         syncAttempts = sync_attempts,
+        provisionalSolutionDate = provisional_solution_date,
+        provisionalSolutionComments = provisional_solution_comments,
+        provisionalSolutionUserName = provisional_solution_user_name,
+        definitiveSolutionComments = definitive_solution_comments,
+        definitiveSolutionUserName = definitive_solution_user_name,
+        managerName = manager_name,
+        managerCloseDate = manager_close_date,
+        managerComments = manager_comments,
+        evidences = evidences,
+    )
+
+    private fun CardEvidenceRecord.toDomain() = CardEvidence(
+        id = id,
+        cardUuid = card_uuid,
+        siteId = site_id,
+        url = url,
+        typeCode = type_code,
+        stage = runCatching { CardEvidenceStage.valueOf(stage) }
+            .getOrDefault(CardEvidenceStage.CREATION),
+        mediaType = runCatching { CardEvidenceMediaType.valueOf(media_type) }
+            .getOrDefault(CardEvidenceMediaType.IMAGE),
+        createdAt = created_at,
+        isLocal = is_local != 0L,
     )
 
     private companion object {

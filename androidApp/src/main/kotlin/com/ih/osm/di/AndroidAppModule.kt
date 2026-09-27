@@ -6,6 +6,7 @@ import com.ih.osm.core.network.NetworkStatusMonitor
 import com.ih.osm.features.auth.login.LoginViewModel
 import com.ih.osm.features.cards.CardListViewModel
 import com.ih.osm.features.cards.sync.CardSyncScheduler
+import com.ih.osm.features.carddetail.CardDetailViewModel
 import com.ih.osm.features.createcard.CreateCardViewModel
 import com.ih.osm.features.home.HomeViewModel
 import com.ih.osm.features.permissions.PermissionHelper
@@ -22,6 +23,7 @@ val androidAppModule = module {
     viewModelOf(::AppViewModel)
     viewModelOf(::LoginViewModel)
     viewModelOf(::CardListViewModel)
+    viewModelOf(::CardDetailViewModel)
     viewModelOf(::CreateCardViewModel)
     viewModelOf(::HomeViewModel)
     viewModelOf(::PermissionsViewModel)

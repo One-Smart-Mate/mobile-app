@@ -8,6 +8,8 @@ interface CardRepository {
     /** The database is the only source consumed by presentation layers. */
     fun observeCards(): Flow<List<Card>>
 
+    fun observeCard(uuid: String): Flow<Card?>
+
     /**
      * Downloads a complete snapshot first and only then updates the database.
      * Existing local cards are preserved until the server acknowledges them.

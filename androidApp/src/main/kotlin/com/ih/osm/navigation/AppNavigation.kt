@@ -43,6 +43,7 @@ import com.ih.osm.features.auth.domain.session.SessionStatus
 import com.ih.osm.features.auth.login.LoginScreenRoute
 import com.ih.osm.features.catalog.sync.CatalogSyncScheduler
 import com.ih.osm.features.cards.CardListScreenRoute
+import com.ih.osm.features.carddetail.CardDetailScreenRoute
 import com.ih.osm.features.createcard.CreateCardScreenRoute
 import com.ih.osm.features.home.HomeScreenRoute
 import com.ih.osm.features.settings.SettingsScreen
@@ -54,6 +55,7 @@ private sealed interface AppRoute : NavKey {
     @Serializable data object Login : AppRoute
     @Serializable data object Main : AppRoute
     @Serializable data class CreateCard(val siteId: Long? = null) : AppRoute
+    @Serializable data class CardDetail(val uuid: String) : AppRoute
 }
 
 private enum class MainTab(val labelRes: Int, val icon: ImageVector, val selectedIcon: ImageVector) {
@@ -107,13 +109,24 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
         entryProvider = { route ->
             when (route) {
                 AppRoute.Main -> NavEntry(route) {
-                    MainTabRoot(user = user, onCreateCard = { backStack.add(AppRoute.CreateCard(it)) })
+                    MainTabRoot(
+                        user = user,
+                        onCreateCard = { backStack.add(AppRoute.CreateCard(it)) },
+                        onOpenCard = { backStack.add(AppRoute.CardDetail(it)) },
+                    )
                 }
                 is AppRoute.CreateCard -> NavEntry(route) {
                     CreateCardScreenRoute(
                         user = user,
                         siteId = route.siteId,
                         onFinished = { backStack.removeLast() },
+                    )
+                }
+                is AppRoute.CardDetail -> NavEntry(route) {
+                    CardDetailScreenRoute(
+                        cardUuid = route.uuid,
+                        siteNames = user.sites.associate { it.id to it.name },
+                        onBack = { backStack.removeLast() },
                     )
                 }
                 else -> NavEntry(route) { Box(Modifier.fillMaxSize()) }
@@ -126,6 +139,7 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
 private fun MainTabRoot(
     user: AuthenticatedUser,
     onCreateCard: (Long?) -> Unit,
+    onOpenCard: (String) -> Unit,
     catalogSyncScheduler: CatalogSyncScheduler = koinInject(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
@@ -173,6 +187,7 @@ private fun MainTabRoot(
             MainTab.CARDS -> CardListScreenRoute(
                 user = user,
                 onCreateCard = { onCreateCard(user.sites.firstOrNull()?.id) },
+                onCardClick = onOpenCard,
                 modifier = Modifier.padding(innerPadding),
             )
             MainTab.SETTINGS -> SettingsScreen(Modifier.padding(innerPadding))

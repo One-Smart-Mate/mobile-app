@@ -1,0 +1,20 @@
+ALTER TABLE CardRecord ADD COLUMN provisional_solution_date TEXT;
+ALTER TABLE CardRecord ADD COLUMN provisional_solution_comments TEXT;
+ALTER TABLE CardRecord ADD COLUMN provisional_solution_user_name TEXT;
+ALTER TABLE CardRecord ADD COLUMN definitive_solution_comments TEXT;
+ALTER TABLE CardRecord ADD COLUMN definitive_solution_user_name TEXT;
+ALTER TABLE CardRecord ADD COLUMN manager_name TEXT;
+ALTER TABLE CardRecord ADD COLUMN manager_close_date TEXT;
+ALTER TABLE CardRecord ADD COLUMN manager_comments TEXT;
+
+CREATE TABLE CardEvidenceRecord (
+    id TEXT NOT NULL PRIMARY KEY,
+    card_uuid TEXT NOT NULL,
+    site_id INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    type_code TEXT NOT NULL,
+    stage TEXT NOT NULL,
+    media_type TEXT NOT NULL,
+    created_at TEXT,
+    is_local INTEGER NOT NULL DEFAULT 0
+);

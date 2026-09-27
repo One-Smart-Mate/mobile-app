@@ -43,6 +43,15 @@ data class Card(
     val syncState: CardSyncState = CardSyncState.SYNCED,
     val syncError: String? = null,
     val syncAttempts: Long = 0,
+    val provisionalSolutionDate: String? = null,
+    val provisionalSolutionComments: String? = null,
+    val provisionalSolutionUserName: String? = null,
+    val definitiveSolutionComments: String? = null,
+    val definitiveSolutionUserName: String? = null,
+    val managerName: String? = null,
+    val managerCloseDate: String? = null,
+    val managerComments: String? = null,
+    val evidences: List<CardEvidence> = emptyList(),
 ) {
     val isOpen: Boolean
         get() = status in OPEN_STATUSES
@@ -59,6 +68,30 @@ data class Card(
         val OPEN_STATUSES = setOf("P", "A", "V")
         val CLOSED_STATUSES = setOf("R", "C")
     }
+}
+
+data class CardEvidence(
+    val id: String,
+    val cardUuid: String,
+    val siteId: Long,
+    val url: String,
+    val typeCode: String,
+    val stage: CardEvidenceStage,
+    val mediaType: CardEvidenceMediaType,
+    val createdAt: String?,
+    val isLocal: Boolean = false,
+)
+
+enum class CardEvidenceStage {
+    CREATION,
+    PROVISIONAL_SOLUTION,
+    DEFINITIVE_SOLUTION,
+}
+
+enum class CardEvidenceMediaType {
+    IMAGE,
+    VIDEO,
+    AUDIO,
 }
 
 enum class CardSyncState {

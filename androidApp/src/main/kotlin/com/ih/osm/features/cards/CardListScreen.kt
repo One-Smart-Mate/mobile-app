@@ -74,6 +74,7 @@ import java.util.Locale
 fun CardListScreenRoute(
     user: AuthenticatedUser,
     onCreateCard: () -> Unit,
+    onCardClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CardListViewModel = koinViewModel(),
 ) {
@@ -92,6 +93,7 @@ fun CardListScreenRoute(
         uiState = uiState,
         onAction = viewModel::process,
         onCreateCard = onCreateCard,
+        onCardClick = onCardClick,
         modifier = modifier,
     )
 }
@@ -102,6 +104,7 @@ fun CardListScreen(
     uiState: CardListViewModel.UiState,
     onAction: (CardListViewModel.Action) -> Unit,
     onCreateCard: () -> Unit,
+    onCardClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -153,6 +156,7 @@ fun CardListScreen(
                     CardListItem(
                         card = card,
                         siteName = uiState.siteNames[card.siteId],
+                        onClick = { onCardClick(card.uuid) },
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
                     )
                 }
@@ -331,11 +335,13 @@ private fun FilterChip(
 private fun CardListItem(
     card: Card,
     siteName: String?,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val overdue = card.isOpen && card.isOverdue()
     val folio = if (card.siteCardId > 0) "#${card.siteCardId}" else stringResource(R.string.cards_local_folio)
     Surface(
+        onClick = onClick,
         modifier = modifier.fillMaxWidth().widthIn(max = 720.dp),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -631,6 +637,7 @@ private fun CardListScreenPreview() {
             ),
             onAction = {},
             onCreateCard = {},
+            onCardClick = {},
         )
     }
 }
