@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.outlined.Add
@@ -42,6 +44,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -64,6 +67,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ih.osm.R
 import com.ih.osm.designsystem.anatomy.AnatomyBanner
 import com.ih.osm.designsystem.anatomy.AnatomyBannerType
+import com.ih.osm.designsystem.anatomy.AnatomyButton
+import com.ih.osm.designsystem.anatomy.AnatomyButtonStyle
 import com.ih.osm.designsystem.anatomy.AnatomyText
 import com.ih.osm.designsystem.anatomy.AnatomyTextProperties
 import com.ih.osm.designsystem.preview.PreviewScreen
@@ -117,6 +122,7 @@ fun CardListScreen(
     modifier: Modifier = Modifier,
 ) {
     var actionCard by remember { mutableStateOf<Card?>(null) }
+    var showAdvancedFilters by remember { mutableStateOf(false) }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -141,6 +147,7 @@ fun CardListScreen(
                 CardListHeader(
                     uiState = uiState,
                     onAction = onAction,
+                    onShowFilters = { showAdvancedFilters = true },
                 )
             }
 
@@ -184,12 +191,27 @@ fun CardListScreen(
             },
         )
     }
+    if (showAdvancedFilters) {
+        AdvancedFiltersBottomSheet(
+            selection = uiState.customFilter,
+            onDismiss = { showAdvancedFilters = false },
+            onSelect = { filter ->
+                onAction(CardListViewModel.Action.CustomFilterSelected(filter))
+                showAdvancedFilters = false
+            },
+            onClear = {
+                onAction(CardListViewModel.Action.ClearFilters)
+                showAdvancedFilters = false
+            },
+        )
+    }
 }
 
 @Composable
 private fun CardListHeader(
     uiState: CardListViewModel.UiState,
     onAction: (CardListViewModel.Action) -> Unit,
+    onShowFilters: () -> Unit,
 ) {
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -239,8 +261,15 @@ private fun CardListHeader(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 FilterChip(
-                    text = stringResource(R.string.cards_filter_open),
-                    selected = uiState.filter == CardListViewModel.Filter.OPEN,
+                    text = stringResource(
+                        if (uiState.filter == CardListViewModel.Filter.CUSTOM) {
+                            R.string.cards_filter_custom
+                        } else {
+                            R.string.cards_filter_open
+                        },
+                    ),
+                    selected = uiState.filter == CardListViewModel.Filter.OPEN ||
+                        uiState.filter == CardListViewModel.Filter.CUSTOM,
                     onClick = { onAction(CardListViewModel.Action.FilterSelected(CardListViewModel.Filter.OPEN)) },
                     modifier = Modifier.weight(1f),
                 )
@@ -257,6 +286,7 @@ private fun CardListHeader(
                     modifier = Modifier.weight(1f),
                 )
                 Surface(
+                    onClick = onShowFilters,
                     modifier = Modifier.size(40.dp),
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surface,
@@ -268,13 +298,93 @@ private fun CardListHeader(
                             contentDescription = stringResource(R.string.cards_filters),
                             modifier = Modifier.size(19.dp),
                         )
-                        Box(
-                            modifier = Modifier.align(Alignment.TopEnd).size(9.dp)
-                                .clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                        if (uiState.filter == CardListViewModel.Filter.CUSTOM) {
+                            Box(
+                                modifier = Modifier.align(Alignment.TopEnd).size(9.dp)
+                                    .clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun AdvancedFiltersBottomSheet(
+    selection: CardListViewModel.CustomFilter?,
+    onDismiss: () -> Unit,
+    onSelect: (CardListViewModel.CustomFilter) -> Unit,
+    onClear: () -> Unit,
+) {
+    val options = listOf(
+        CardListViewModel.CustomFilter.ALL_OPEN to R.string.cards_filter_all_open,
+        CardListViewModel.CustomFilter.MY_OPEN to R.string.cards_filter_my_open,
+        CardListViewModel.CustomFilter.MY_ASSIGNED to R.string.cards_filter_my_assigned,
+        CardListViewModel.CustomFilter.UNASSIGNED to R.string.cards_filter_unassigned,
+        CardListViewModel.CustomFilter.DUE to R.string.cards_filter_due,
+        CardListViewModel.CustomFilter.CLOSED to R.string.cards_filter_closed,
+    )
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().widthIn(max = 720.dp)
+                .align(Alignment.CenterHorizontally)
+                .verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            AnatomyText(
+                text = stringResource(R.string.cards_filters),
+                style = MaterialTheme.typography.titleLarge,
+                properties = AnatomyTextProperties(fontWeight = FontWeight.Bold),
+            )
+            AnatomyText(
+                text = stringResource(R.string.cards_filters_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            )
+            Spacer(Modifier.height(6.dp))
+            options.forEach { (filter, label) ->
+                val selected = selection == filter
+                Surface(
+                    onClick = { onSelect(filter) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = .55f)
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        RadioButton(selected = selected, onClick = null)
+                        AnatomyText(
+                            text = stringResource(label),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge,
+                            properties = AnatomyTextProperties(
+                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            ),
                         )
                     }
                 }
             }
+            Spacer(Modifier.height(8.dp))
+            AnatomyButton(
+                text = stringResource(R.string.cards_filter_clear),
+                onClick = onClear,
+                style = AnatomyButtonStyle.SECONDARY,
+            )
         }
     }
 }

@@ -19,6 +19,7 @@ class CardListViewModel(
         val totalCount: Int = 0,
         val query: String = "",
         val filter: Filter = Filter.OPEN,
+        val customFilter: CustomFilter? = null,
         val isInitialLoading: Boolean = true,
         val isRefreshing: Boolean = false,
         val errorMessage: String? = null,
@@ -29,6 +30,16 @@ class CardListViewModel(
         OPEN,
         ASSIGNED,
         OVERDUE,
+        CUSTOM,
+    }
+
+    enum class CustomFilter {
+        ALL_OPEN,
+        MY_OPEN,
+        MY_ASSIGNED,
+        UNASSIGNED,
+        DUE,
+        CLOSED,
     }
 
     sealed interface Action {
@@ -39,6 +50,8 @@ class CardListViewModel(
 
         data class SearchChanged(val value: String) : Action
         data class FilterSelected(val value: Filter) : Action
+        data class CustomFilterSelected(val value: CustomFilter) : Action
+        data object ClearFilters : Action
         data object Refresh : Action
         data object DismissError : Action
     }
@@ -69,7 +82,15 @@ class CardListViewModel(
                 publishCards()
             }
             is Action.FilterSelected -> {
-                setState { copy(filter = action.value) }
+                setState { copy(filter = action.value, customFilter = null) }
+                publishCards()
+            }
+            is Action.CustomFilterSelected -> {
+                setState { copy(filter = Filter.CUSTOM, customFilter = action.value) }
+                publishCards()
+            }
+            Action.ClearFilters -> {
+                setState { copy(query = "", filter = Filter.OPEN, customFilter = null) }
                 publishCards()
             }
             Action.Refresh -> refresh()
@@ -134,6 +155,15 @@ class CardListViewModel(
                         card.responsibleId == currentUserId?.toString()
                     )
                 Filter.OVERDUE -> card.isOpen && card.isOverdue()
+                Filter.CUSTOM -> when (state.customFilter) {
+                    CustomFilter.ALL_OPEN -> card.isOpen
+                    CustomFilter.MY_OPEN -> card.isOpen && card.creatorId == currentUserId?.toString()
+                    CustomFilter.MY_ASSIGNED -> card.isOpen && card.mechanicId == currentUserId?.toString()
+                    CustomFilter.UNASSIGNED -> card.isOpen && card.mechanicId.isNullOrBlank()
+                    CustomFilter.DUE -> card.isOpen && card.isOverdue()
+                    CustomFilter.CLOSED -> card.isClosed
+                    null -> card.isOpen
+                }
             }
             val matchesQuery = normalizedQuery.isEmpty() || listOfNotNull(
                 card.siteCardId.takeIf { it > 0 }?.toString(),
@@ -151,7 +181,7 @@ class CardListViewModel(
         setState {
             copy(
                 cards = filtered,
-                totalCount = scopedCards.size,
+                totalCount = filtered.size,
                 // The local database is the source of truth. An empty snapshot is still a
                 // completed load and must not keep the full-screen loader visible while the
                 // independent network refresh runs in the background.

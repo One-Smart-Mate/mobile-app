@@ -545,7 +545,7 @@ private fun QuickActionsGrid(
 //                modifier = Modifier.weight(1f),
 //            )
             QuickActionCard(
-                title = stringResource(R.string.home_action_notes),
+                title = stringResource(R.string.cards_title),
                 icon = Icons.Outlined.Description,
                 onClick = onOpenNotes,
                 modifier = Modifier.weight(1f),
