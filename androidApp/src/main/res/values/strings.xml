@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">OneSmartMate</string>
+    <string name="app_name" translatable="false">OSM - One Smart Mate</string>
     <string name="login_brand_name">OneSmartMate</string>
     <string name="login_brand_tagline">Tu operación, siempre contigo</string>
     <string name="login_title">Bienvenido</string>
