@@ -19,6 +19,9 @@ interface CardRepository {
      */
     suspend fun refresh(siteIds: List<Long>): NetworkResult<Unit>
 
+    /** Applies server changes after the site's persisted cursor in atomic pages. */
+    suspend fun syncChanges(siteId: Long): NetworkResult<Int>
+
     /** Prepared for the create-card flow: observers are notified immediately. */
     suspend fun saveLocal(card: Card)
 

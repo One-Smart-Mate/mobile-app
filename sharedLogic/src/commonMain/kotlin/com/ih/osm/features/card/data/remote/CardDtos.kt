@@ -119,6 +119,34 @@ internal data class CardPageDto(
 )
 
 @Serializable
+internal data class CardDeltaApiResponse(
+    val data: CardDeltaResponseDto,
+    val status: Int? = null,
+    val message: String? = null,
+)
+
+@Serializable
+internal data class CardDeltaResponseDto(
+    val schemaVersion: Int,
+    val siteId: Long,
+    val generatedAt: String,
+    val nextCursor: String,
+    val hasMore: Boolean,
+    val changes: List<CardDeltaChangeDto> = emptyList(),
+)
+
+@Serializable
+internal data class CardDeltaChangeDto(
+    val type: String,
+    val changedAt: String,
+    val card: CardDto? = null,
+    val id: JsonElement? = null,
+    @SerialName("cardUUID") val cardUuid: String? = null,
+    val siteId: Long? = null,
+    val deletedAt: String? = null,
+)
+
+@Serializable
 internal data class CardDto(
     val id: JsonElement? = null,
     val siteCardId: Long = 0,

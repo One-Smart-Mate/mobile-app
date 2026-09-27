@@ -1,0 +1,5 @@
+CREATE TABLE CardSyncCursor (
+    site_id INTEGER NOT NULL PRIMARY KEY,
+    cursor TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);

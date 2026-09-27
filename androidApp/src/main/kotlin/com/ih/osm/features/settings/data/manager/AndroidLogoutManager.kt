@@ -29,6 +29,7 @@ class AndroidLogoutManager(
         database.transaction {
             database.cardsQueries.deleteAllEvidences()
             database.cardsQueries.deleteAllCards()
+            database.cardsQueries.deleteAllSyncCursors()
             database.catalogsQueries.deleteAllCatalogSyncStates()
             database.catalogsQueries.deleteAllCatalogSyncMetadata()
             database.catalogsQueries.deleteAllEmployees()

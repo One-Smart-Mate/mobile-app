@@ -55,45 +55,74 @@ internal class CardRepositoryImpl(
 
     override suspend fun refresh(siteIds: List<Long>): NetworkResult<Unit> {
         if (siteIds.isEmpty()) return NetworkResult.Success(Unit, statusCode = 200)
-
-        val snapshots = linkedMapOf<Long, List<Card>>()
         var lastStatusCode = 200
         for (siteId in siteIds.distinct()) {
-            val cards = mutableListOf<Card>()
-            var page = FIRST_PAGE
-            do {
-                when (val result = api.getCards(siteId, page, PAGE_SIZE)) {
-                    is NetworkResult.Failure -> return result
-                    is NetworkResult.Success -> {
-                        lastStatusCode = result.statusCode
-                        val response = result.data
-                        cards += response.data.map { it.toDomain(siteId) }
-                        val hasAnotherPage = response.hasMore ||
-                            (response.totalPages != null && page < response.totalPages)
-                        page += 1
-                        if (!hasAnotherPage || response.data.isEmpty()) break
-                    }
-                }
-            } while (page <= MAX_PAGE_GUARD)
-            snapshots[siteId] = cards.distinctBy(Card::uuid)
-        }
-
-        database.transaction {
-            snapshots.forEach { (siteId, cards) ->
-                val pendingSolutions = database.cardsQueries
-                    .selectPendingSolutions(MAX_PENDING_LOCAL_WORK)
-                    .executeAsList()
-                    .filter { it.site_id == siteId }
-                    .associate { row -> row.uuid to withEvidences(row) }
-                database.cardsQueries.deleteRemoteEvidencesBySite(siteId)
-                database.cardsQueries.deleteRemoteCardsBySite(siteId)
-                cards.forEach { remote ->
-                    val pending = pendingSolutions[remote.uuid]
-                    upsert(if (pending == null) remote else remote.preservePendingSolutions(pending))
-                }
+            when (val result = syncChanges(siteId)) {
+                is NetworkResult.Failure -> return result
+                is NetworkResult.Success -> lastStatusCode = result.statusCode
             }
         }
         return NetworkResult.Success(Unit, lastStatusCode)
+    }
+
+    override suspend fun syncChanges(siteId: Long): NetworkResult<Int> {
+        var cursor = database.cardsQueries.selectSyncCursor(siteId).executeAsOneOrNull()
+        var appliedChanges = 0
+        var lastStatusCode = 200
+        var page = 0
+
+        do {
+            page += 1
+            if (page > MAX_PAGE_GUARD) {
+                return NetworkResult.Failure(
+                    com.ih.osm.core.network.NetworkError(
+                        kind = com.ih.osm.core.network.NetworkErrorKind.UNKNOWN,
+                        message = "Card synchronization exceeded the page safety limit.",
+                    ),
+                )
+            }
+            when (val result = api.getCardChanges(siteId, cursor, DELTA_PAGE_SIZE)) {
+                is NetworkResult.Failure -> return result
+                is NetworkResult.Success -> {
+                    val response = result.data
+                    if (response.schemaVersion != SUPPORTED_DELTA_SCHEMA) {
+                        return NetworkResult.Failure(
+                            com.ih.osm.core.network.NetworkError(
+                                kind = com.ih.osm.core.network.NetworkErrorKind.SERIALIZATION,
+                                message = "Unsupported card synchronization schema ${response.schemaVersion}.",
+                            ),
+                        )
+                    }
+                    if (response.siteId != siteId) {
+                        return NetworkResult.Failure(
+                            com.ih.osm.core.network.NetworkError(
+                                kind = com.ih.osm.core.network.NetworkErrorKind.SERIALIZATION,
+                                message = "Card synchronization returned a different site.",
+                            ),
+                        )
+                    }
+                    database.transaction {
+                        response.changes.forEach { change ->
+                            when (change.type.lowercase()) {
+                                "upsert" -> change.card?.toDomain(siteId)?.let(::mergeRemoteChange)
+                                "delete" -> change.cardUuid?.let(::deleteRemoteChange)
+                            }
+                        }
+                        database.cardsQueries.upsertSyncCursor(
+                            site_id = siteId,
+                            cursor = response.nextCursor,
+                            updated_at = response.generatedAt,
+                        )
+                    }
+                    appliedChanges += response.changes.size
+                    lastStatusCode = result.statusCode
+                    cursor = response.nextCursor
+                    if (!response.hasMore) break
+                }
+            }
+        } while (true)
+
+        return NetworkResult.Success(appliedChanges, lastStatusCode)
     }
 
     override suspend fun saveLocal(card: Card) {
@@ -413,6 +442,22 @@ internal class CardRepositoryImpl(
         }
     }
 
+    private fun mergeRemoteChange(remote: Card) {
+        val existing = getCard(remote.uuid)
+        when {
+            existing?.isLocal == true -> Unit
+            existing?.hasLocalSolutions == true -> upsert(remote.preservePendingSolutions(existing))
+            else -> upsert(remote)
+        }
+    }
+
+    private fun deleteRemoteChange(uuid: String) {
+        val existing = getCard(uuid) ?: return
+        if (existing.isLocal || existing.hasLocalSolutions) return
+        database.cardsQueries.deleteEvidencesByCardUuid(uuid)
+        database.cardsQueries.deleteRemoteCardByUuid(uuid)
+    }
+
     private fun CardRecord.toDomain(evidences: List<CardEvidence> = emptyList()) = Card(
         uuid = uuid,
         serverId = server_id,
@@ -519,9 +564,8 @@ internal class CardRepositoryImpl(
     )
 
     private companion object {
-        const val FIRST_PAGE = 1
-        const val PAGE_SIZE = 100
+        const val DELTA_PAGE_SIZE = 200
+        const val SUPPORTED_DELTA_SCHEMA = 1
         const val MAX_PAGE_GUARD = 1_000
-        const val MAX_PENDING_LOCAL_WORK = 10_000L
     }
 }

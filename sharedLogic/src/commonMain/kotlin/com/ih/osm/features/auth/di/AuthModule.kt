@@ -5,6 +5,7 @@ import com.ih.osm.core.auth.TokenStorageImpl
 import com.ih.osm.features.auth.data.local.AuthLocalDataSource
 import com.ih.osm.features.auth.data.local.AuthLocalDataSourceImpl
 import com.ih.osm.features.auth.data.remote.AuthApiService
+import com.ih.osm.features.auth.data.remote.PushTokenRegistrar
 import com.ih.osm.features.auth.data.repository.AuthRepositoryImpl
 import com.ih.osm.features.auth.data.repository.SessionRepositoryImpl
 import com.ih.osm.features.auth.domain.repository.AuthRepository
@@ -20,6 +21,7 @@ val authModule = module {
     single<AuthLocalDataSource> { AuthLocalDataSourceImpl(get()) }
     single<SessionRepository> { SessionRepositoryImpl(get(), get()) }
     single { AuthApiService(get(), get()) }
+    single { PushTokenRegistrar(get(), get()) }
     single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
     single { PasswordRecoveryApiService(get()) }
     single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get()) }

@@ -2,15 +2,16 @@ package com.ih.osm.features.cards
 
 import androidx.lifecycle.viewModelScope
 import com.ih.osm.core.feature.viewmodel.GRViewModel
-import com.ih.osm.core.network.NetworkResult
 import com.ih.osm.features.card.domain.model.Card
 import com.ih.osm.features.card.domain.repository.CardRepository
+import com.ih.osm.features.cards.domain.manager.CardSyncManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 class CardListViewModel(
     private val repository: CardRepository,
+    private val cardSyncManager: CardSyncManager,
 ) : GRViewModel<CardListViewModel.UiState, CardListViewModel.Action, CardListViewModel.Event>(
     initialState = UiState(),
 ) {
@@ -72,6 +73,11 @@ class CardListViewModel(
                 publishCards()
             }
         }
+        viewModelScope.launch {
+            cardSyncManager.workStatus.collectLatest { workStatus ->
+                setState { copy(isRefreshing = workStatus.isActive) }
+            }
+        }
     }
 
     override fun processImpl(action: Action) {
@@ -109,7 +115,7 @@ class CardListViewModel(
         publishCards()
 
         if (!scopeChanged) return
-        refresh()
+        setState { copy(isInitialLoading = !hasDatabaseSnapshot) }
     }
 
     private fun refresh() {
@@ -117,26 +123,8 @@ class CardListViewModel(
             if (currentSiteIds.isEmpty()) setState { copy(isInitialLoading = false) }
             return
         }
-        viewModelScope.launch {
-            setState {
-                copy(
-                    isRefreshing = true,
-                    errorMessage = null,
-                )
-            }
-            when (val result = repository.refresh(currentSiteIds.toList())) {
-                is NetworkResult.Success -> setState {
-                    copy(isRefreshing = false, isInitialLoading = false)
-                }
-                is NetworkResult.Failure -> setState {
-                    copy(
-                        isRefreshing = false,
-                        isInitialLoading = false,
-                        errorMessage = result.error.message,
-                    )
-                }
-            }
-        }
+        setState { copy(errorMessage = null) }
+        cardSyncManager.enqueueRemoteChanges(currentSiteIds)
     }
 
     private fun publishCards() {

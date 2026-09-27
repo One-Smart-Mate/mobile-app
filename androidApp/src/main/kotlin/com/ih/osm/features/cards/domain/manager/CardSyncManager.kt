@@ -7,6 +7,8 @@ interface CardSyncManager {
     val workStatus: Flow<CardSyncWorkStatus>
 
     fun enqueueAfterLocalChange()
+    fun enqueueRemoteChanges(siteIds: Collection<Long>)
+    fun enqueueRemoteChanges(siteId: Long) = enqueueRemoteChanges(listOf(siteId))
     fun enqueueManually(): Boolean
     suspend fun cancel()
 }

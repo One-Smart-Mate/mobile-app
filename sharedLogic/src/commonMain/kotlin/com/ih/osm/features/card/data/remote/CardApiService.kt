@@ -27,6 +27,20 @@ internal class CardApiService(
             is NetworkResult.Failure -> result
         }
 
+    suspend fun getCardChanges(
+        siteId: Long,
+        cursor: String?,
+        limit: Int,
+    ): NetworkResult<CardDeltaResponseDto> = when (
+        val result = networkClient.get<CardDeltaApiResponse>("/card/sync/$siteId") {
+            cursor?.takeIf(String::isNotBlank)?.let { parameter("cursor", it) }
+            parameter("limit", limit)
+        }
+    ) {
+        is NetworkResult.Success -> NetworkResult.Success(result.data.data, result.statusCode)
+        is NetworkResult.Failure -> result
+    }
+
     suspend fun syncCards(cards: List<CreateCardRequestDto>): NetworkResult<CardSyncResponseDto> =
         when (
             val result = networkClient.post<SyncCardsRequestDto, CardSyncApiResponse>(

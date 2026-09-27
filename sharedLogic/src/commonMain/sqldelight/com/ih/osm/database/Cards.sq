@@ -67,6 +67,12 @@ CREATE TABLE CardEvidenceRecord (
     is_local INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE TABLE CardSyncCursor (
+    site_id INTEGER NOT NULL PRIMARY KEY,
+    cursor TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
 selectAllCards:
 SELECT * FROM CardRecord
 ORDER BY is_local DESC, site_card_id DESC, creation_date DESC;
@@ -112,6 +118,23 @@ DELETE FROM CardEvidenceRecord;
 
 deleteAllCards:
 DELETE FROM CardRecord;
+
+deleteRemoteCardByUuid:
+DELETE FROM CardRecord
+WHERE uuid = ? AND is_local = 0 AND has_local_solutions = 0;
+
+selectSyncCursor:
+SELECT cursor FROM CardSyncCursor WHERE site_id = ? LIMIT 1;
+
+upsertSyncCursor:
+INSERT OR REPLACE INTO CardSyncCursor(site_id, cursor, updated_at)
+VALUES (?, ?, ?);
+
+deleteSyncCursor:
+DELETE FROM CardSyncCursor WHERE site_id = ?;
+
+deleteAllSyncCursors:
+DELETE FROM CardSyncCursor;
 
 upsertCard:
 INSERT OR REPLACE INTO CardRecord(

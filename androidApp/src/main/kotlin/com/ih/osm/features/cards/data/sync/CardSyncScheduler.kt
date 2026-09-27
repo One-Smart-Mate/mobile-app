@@ -1,8 +1,6 @@
 package com.ih.osm.features.cards.data.sync
 
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -23,6 +21,8 @@ class CardSyncScheduler(
     context: Context,
     private val repository: CardRepository,
     private val syncPreferences: MobileDataSyncPreferences,
+    private val triggerStore: CardSyncTriggerStore,
+    private val networkPolicy: CardSyncNetworkPolicy,
 ) : CardSyncManager {
     private val applicationContext = context.applicationContext
     private val workManager = WorkManager.getInstance(applicationContext)
@@ -46,19 +46,24 @@ class CardSyncScheduler(
         .distinctUntilChanged()
 
     override fun enqueueAfterLocalChange() {
-        if (!applicationContext.hasValidatedInternet()) return
-        enqueuePending()
+        enqueueSync()
+    }
+
+    override fun enqueueRemoteChanges(siteIds: Collection<Long>) {
+        val validSiteIds = siteIds.filter { it > 0 }.distinct()
+        if (validSiteIds.isEmpty()) return
+        triggerStore.addAll(validSiteIds)
+        enqueueSync()
     }
 
     override fun enqueueManually(): Boolean {
-        if (!applicationContext.hasValidatedInternet()) return false
+        if (!networkPolicy.canSynchronizeNow()) return false
         if (repository.pendingCount() == 0L) return false
-        enqueuePending()
+        enqueueSync()
         return true
     }
 
-    private fun enqueuePending() {
-        if (repository.pendingCount() == 0L) return
+    private fun enqueueSync() {
         val request = OneTimeWorkRequestBuilder<CardSyncWorker>()
             .setConstraints(
                 Constraints.Builder()
@@ -75,7 +80,7 @@ class CardSyncScheduler(
 
         workManager.enqueueUniqueWork(
             UNIQUE_WORK_NAME,
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
             request,
         )
     }
@@ -83,14 +88,8 @@ class CardSyncScheduler(
     override suspend fun cancel() {
         withContext(Dispatchers.IO) {
             workManager.cancelUniqueWork(UNIQUE_WORK_NAME).result.get()
+            triggerStore.clear()
         }
-    }
-
-    private fun Context.hasValidatedInternet(): Boolean {
-        val connectivity = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val capabilities = connectivity.getNetworkCapabilities(connectivity.activeNetwork) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
     private companion object {

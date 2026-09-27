@@ -6,8 +6,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -21,7 +19,7 @@ import com.ih.osm.features.card.domain.repository.CardRepository
 import com.ih.osm.features.card.domain.usecase.PendingCardSyncResult
 import com.ih.osm.features.card.domain.usecase.SyncPendingCardsUseCase
 import com.ih.osm.features.card.domain.usecase.SyncPendingSolutionsUseCase
-import com.ih.osm.features.settings.domain.preferences.MobileDataSyncPreferences
+import com.ih.osm.core.network.NetworkResult
 import kotlin.coroutines.cancellation.CancellationException
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -34,30 +32,35 @@ class CardSyncWorker(
     private val syncPendingSolutions: SyncPendingSolutionsUseCase by inject()
     private val repository: CardRepository by inject()
     private val evidenceUploader: ServiceCardEvidenceUploader by inject()
-    private val syncPreferences: MobileDataSyncPreferences by inject()
+    private val triggerStore: CardSyncTriggerStore by inject()
+    private val networkPolicy: CardSyncNetworkPolicy by inject()
     private val notifications = CardSyncNotifications(appContext)
 
     override suspend fun doWork(): Result {
-        if (!applicationContext.hasValidatedInternet()) {
-            notifications.failure(applicationContext.getString(R.string.card_sync_no_internet))
-            return Result.failure()
-        }
-        if (!syncPreferences.allowMobileData.value && !applicationContext.hasValidatedNonCellularInternet()) {
+        if (!networkPolicy.canSynchronizeNow()) {
             return Result.retry()
         }
-        val pendingCards = repository.getPending(MAX_PENDING_WORK).size
-        val pendingSolutions = repository.getPendingSolutions(MAX_PENDING_WORK).sumOf { card ->
+        val pendingWork = repository.getPendingWork(MAX_PENDING_WORK)
+        val pendingCards = pendingWork.count { it.isLocal }
+        val pendingSolutions = pendingWork.sumOf { card ->
             (if (card.provisionalSolutionPending) 1 else 0) +
                 (if (card.definitiveSolutionPending) 1 else 0)
         }
         val pendingEvidences = evidenceUploader.pendingEvidenceCount()
-        val totalOperations = pendingCards + pendingSolutions + pendingEvidences
+        val initialRemoteSites = triggerStore.snapshot()
+        val outboundSites = pendingWork.map { it.siteId }.toSet()
+        val hasOutboundWork = pendingCards + pendingSolutions + pendingEvidences > 0
+        val totalOperations = pendingCards + pendingSolutions + pendingEvidences +
+            (initialRemoteSites.keys + outboundSites).size
+        if (totalOperations == 0) return Result.success()
         setProgress(syncProgressData(completed = 0, total = totalOperations))
-        setForeground(notifications.foreground(completed = 0, total = totalOperations))
+        if (hasOutboundWork) {
+            setForeground(notifications.foreground(completed = 0, total = totalOperations))
+        }
         return try {
             val uploadedEvidences = when (val upload = evidenceUploader.uploadPending { completed, _ ->
                 setProgress(syncProgressData(completed, totalOperations))
-                setForeground(notifications.foreground(completed, totalOperations))
+                if (hasOutboundWork) setForeground(notifications.foreground(completed, totalOperations))
             }) {
                 is EvidenceUploadResult.Success -> upload.uploaded
                 is EvidenceUploadResult.Failure -> {
@@ -68,7 +71,7 @@ class CardSyncWorker(
             val cardResult = syncPendingCards { progress ->
                 val completed = uploadedEvidences + progress.completed
                 setProgress(syncProgressData(completed, totalOperations))
-                setForeground(notifications.foreground(completed, totalOperations))
+                if (hasOutboundWork) setForeground(notifications.foreground(completed, totalOperations))
             }
             when (cardResult) {
                 is PendingCardSyncResult.Failure -> {
@@ -79,7 +82,7 @@ class CardSyncWorker(
                     val solutionResult = syncPendingSolutions { progress ->
                         val completed = uploadedEvidences + pendingCards + progress.completed
                         setProgress(syncProgressData(completed, totalOperations))
-                        setForeground(notifications.foreground(completed, totalOperations))
+                        if (hasOutboundWork) setForeground(notifications.foreground(completed, totalOperations))
                     }
                 ) {
                     is PendingCardSyncResult.Failure -> {
@@ -87,8 +90,25 @@ class CardSyncWorker(
                         Result.failure()
                     }
                     is PendingCardSyncResult.Success -> {
-                        notifications.success(cardResult.synced + solutionResult.synced)
-                        Result.success()
+                        val remoteResult = pullRemoteChanges(
+                            outboundSites = outboundSites,
+                            baseCompleted = uploadedEvidences + pendingCards + pendingSolutions,
+                            totalOperations = totalOperations,
+                            showForeground = hasOutboundWork,
+                        )
+                        when (remoteResult) {
+                            is RemotePullResult.Failure -> {
+                                notifications.failure(remoteResult.message)
+                                if (runAttemptCount < MAX_RETRY_ATTEMPTS) Result.retry() else Result.failure()
+                            }
+                            is RemotePullResult.Success -> {
+                                val uploaded = cardResult.synced + solutionResult.synced
+                                if (uploaded > 0 || remoteResult.changes > 0) {
+                                    notifications.success(uploaded, remoteResult.changes)
+                                }
+                                Result.success()
+                            }
+                        }
                     }
                 }
             }
@@ -99,9 +119,57 @@ class CardSyncWorker(
             Result.failure()
         }
     }
+
+    private suspend fun pullRemoteChanges(
+        outboundSites: Set<Long>,
+        baseCompleted: Int,
+        totalOperations: Int,
+        showForeground: Boolean,
+    ): RemotePullResult {
+        var remoteChanges = 0
+        var completedSites = 0
+        var firstRound = true
+        repeat(MAX_TRIGGER_DRAIN_ROUNDS) {
+            val triggered = triggerStore.snapshot()
+            val sites = buildSet {
+                addAll(triggered.keys)
+                if (firstRound) addAll(outboundSites)
+            }
+            firstRound = false
+            if (sites.isEmpty()) return RemotePullResult.Success(remoteChanges)
+
+            for (siteId in sites) {
+                when (val result = repository.syncChanges(siteId)) {
+                    is NetworkResult.Failure -> return RemotePullResult.Failure(result.error.message)
+                    is NetworkResult.Success -> {
+                        remoteChanges += result.data
+                        completedSites += 1
+                        triggered[siteId]?.let { generation ->
+                            triggerStore.acknowledge(siteId, generation)
+                        }
+                        val completed = (baseCompleted + completedSites).coerceAtMost(totalOperations)
+                        setProgress(syncProgressData(completed, totalOperations))
+                        if (showForeground) setForeground(notifications.foreground(completed, totalOperations))
+                    }
+                }
+            }
+        }
+        return if (triggerStore.snapshot().isEmpty()) {
+            RemotePullResult.Success(remoteChanges)
+        } else {
+            RemotePullResult.Failure("Hay más cambios pendientes por descargar.")
+        }
+    }
+}
+
+private sealed interface RemotePullResult {
+    data class Success(val changes: Int) : RemotePullResult
+    data class Failure(val message: String) : RemotePullResult
 }
 
 private const val MAX_PENDING_WORK = 10_000L
+private const val MAX_TRIGGER_DRAIN_ROUNDS = 3
+private const val MAX_RETRY_ATTEMPTS = 5
 
 private const val CARD_SYNC_COMPLETED = "card-sync-completed"
 private const val CARD_SYNC_TOTAL = "card-sync-total"
@@ -110,23 +178,6 @@ private fun syncProgressData(completed: Int, total: Int) = workDataOf(
     CARD_SYNC_COMPLETED to completed,
     CARD_SYNC_TOTAL to total,
 )
-
-private fun Context.hasValidatedInternet(): Boolean {
-    val connectivity = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val capabilities = connectivity.getNetworkCapabilities(connectivity.activeNetwork) ?: return false
-    return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-}
-
-private fun Context.hasValidatedNonCellularInternet(): Boolean {
-    val connectivity = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val capabilities = connectivity.getNetworkCapabilities(connectivity.activeNetwork) ?: return false
-    val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-    val isNonCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-    return hasInternet && isNonCellular
-}
 
 private class CardSyncNotifications(private val context: Context) {
     private val manager = NotificationManagerCompat.from(context)
@@ -166,7 +217,7 @@ private class CardSyncNotifications(private val context: Context) {
         }
     }
 
-    fun success(count: Int) {
+    fun success(uploadedCount: Int, downloadedCount: Int) {
         runCatching {
             if (ActivityCompat.checkSelfPermission(
                     context,
@@ -180,7 +231,21 @@ private class CardSyncNotifications(private val context: Context) {
                 NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(android.R.drawable.stat_sys_upload_done)
                     .setContentTitle(context.getString(R.string.card_sync_complete_title))
-                    .setContentText(context.resources.getQuantityString(R.plurals.card_sync_complete_body, count, count))
+                    .setContentText(
+                        when {
+                            uploadedCount > 0 -> context.resources.getQuantityString(
+                                R.plurals.card_sync_complete_body,
+                                uploadedCount,
+                                uploadedCount,
+                            )
+                            downloadedCount > 0 -> context.resources.getQuantityString(
+                                R.plurals.card_sync_download_complete_body,
+                                downloadedCount,
+                                downloadedCount,
+                            )
+                            else -> context.getString(R.string.card_sync_up_to_date)
+                        },
+                    )
                     .setAutoCancel(true)
                     .build(),
             )
