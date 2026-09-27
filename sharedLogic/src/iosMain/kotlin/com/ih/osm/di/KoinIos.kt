@@ -10,7 +10,12 @@ import com.ih.osm.features.auth.domain.repository.AuthRepository
 import com.ih.osm.features.auth.domain.session.SessionRepository
 import com.ih.osm.features.catalog.IosCatalogSyncController
 import com.ih.osm.features.card.IosCardListController
+import com.ih.osm.features.card.IosCardSyncController
+import com.ih.osm.features.card.IosCreateCardController
+import com.ih.osm.features.card.domain.create.CreateCardManager
 import com.ih.osm.features.card.domain.repository.CardRepository
+import com.ih.osm.features.card.domain.usecase.SyncPendingCardsUseCase
+import com.ih.osm.features.card.domain.usecase.SyncPendingSolutionsUseCase
 
 fun initKoinIos(
     baseUrl: String,
@@ -41,4 +46,15 @@ fun createIosCatalogSyncController(): IosCatalogSyncController =
 
 fun createIosCardListController(): IosCardListController = IosCardListController(
     repository = KoinPlatform.getKoin().get<CardRepository>(),
+)
+
+fun createIosCreateCardController(): IosCreateCardController = IosCreateCardController(
+    manager = KoinPlatform.getKoin().get<CreateCardManager>(),
+    sessionRepository = KoinPlatform.getKoin().get<SessionRepository>(),
+)
+
+fun createIosCardSyncController(): IosCardSyncController = IosCardSyncController(
+    repository = KoinPlatform.getKoin().get<CardRepository>(),
+    syncPendingCards = KoinPlatform.getKoin().get<SyncPendingCardsUseCase>(),
+    syncPendingSolutions = KoinPlatform.getKoin().get<SyncPendingSolutionsUseCase>(),
 )

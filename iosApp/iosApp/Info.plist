@@ -11,7 +11,14 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.ih.osm.catalog-sync</string>
+		<string>com.ih.osm.card-sync</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>OSM utiliza la cámara para capturar fotos y videos como evidencia de una tarjeta.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>OSM utiliza el micrófono para grabar audio y video como evidencia de una tarjeta.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>OSM accede a tu galería únicamente para adjuntar evidencias seleccionadas por ti.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>processing</string>

@@ -11,17 +11,22 @@ struct MainTabRoot: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: MainTab = .home
-    @State private var presentsCreateNote = false
+    @State private var selectedSiteID: Int64?
     @State private var networkMonitor = NetworkStatusMonitor()
     @State private var catalogSyncViewModel: CatalogSyncViewModel?
     @State private var cardListViewModel: CardListViewModel?
+    @State private var createCardViewModel: CreateCardViewModel?
+    private let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
 
     init(
         user: SessionUser,
         catalogSyncViewModel: CatalogSyncViewModel? = nil,
-        cardListViewModel: CardListViewModel? = nil
+        cardListViewModel: CardListViewModel? = nil,
+        makeCreateCardViewModel: @escaping @MainActor () -> CreateCardViewModel? = { nil }
     ) {
         self.user = user
+        self.makeCreateCardViewModel = makeCreateCardViewModel
+        _selectedSiteID = State(initialValue: user.sites.first?.id)
         _catalogSyncViewModel = State(initialValue: catalogSyncViewModel)
         _cardListViewModel = State(initialValue: cardListViewModel)
     }
@@ -31,14 +36,12 @@ struct MainTabRoot: View {
             NavigationStack {
                 HomeView(
                     user: user,
+                    selectedSiteID: $selectedSiteID,
                     networkStatus: networkMonitor.status,
                     catalogSyncState: catalogSyncViewModel?.state ?? .idle,
-                    onCreateNote: { presentsCreateNote = true },
+                    onCreateNote: presentCreateCard,
                     onOpenNotes: { selectedTab = .cards }
                 )
-                .navigationDestination(isPresented: $presentsCreateNote) {
-                    CreateNoteView()
-                }
             }
             .tabItem { Label(AppStrings.Navigation.home, systemImage: "house") }
             .tag(MainTab.home)
@@ -48,7 +51,7 @@ struct MainTabRoot: View {
                     CardListView(
                         user: user,
                         viewModel: cardListViewModel,
-                        onCreateCard: nil,
+                        onCreateCard: presentCreateCard,
                         onOpenCard: nil,
                         onApplyProvisionalSolution: nil,
                         onApplyDefinitiveSolution: nil
@@ -65,6 +68,18 @@ struct MainTabRoot: View {
                 .tag(MainTab.settings)
         }
         .tint(.osmPrimary)
+        .fullScreenCover(item: $createCardViewModel) { presentedViewModel in
+            NavigationStack {
+                CreateCardView(
+                    viewModel: presentedViewModel,
+                    siteID: selectedSiteID,
+                    onClose: {
+                        presentedViewModel.stop()
+                        createCardViewModel = nil
+                    }
+                )
+            }
+        }
         .task { catalogSyncViewModel?.syncIfNeeded() }
         .onDisappear { cardListViewModel?.stop() }
         .onChange(of: scenePhase) { _, phase in
@@ -73,6 +88,7 @@ struct MainTabRoot: View {
                 catalogSyncViewModel?.syncIfNeeded()
             case .background:
                 catalogSyncViewModel?.appDidEnterBackground()
+                CardSyncBackgroundScheduler.shared.appDidEnterBackground()
             case .inactive:
                 break
             @unknown default:
@@ -80,30 +96,34 @@ struct MainTabRoot: View {
             }
         }
     }
+
+    private func presentCreateCard() {
+        createCardViewModel = makeCreateCardViewModel()
+    }
 }
 
 struct HomeView: View {
     let user: SessionUser
+    @Binding var selectedSiteID: Int64?
     let networkStatus: NetworkConnectionStatus
     let catalogSyncState: CatalogSyncViewState
     let onCreateNote: () -> Void
     let onOpenNotes: () -> Void
 
-    @State private var selectedSiteID: Int64?
-
     init(
         user: SessionUser,
+        selectedSiteID: Binding<Int64?>,
         networkStatus: NetworkConnectionStatus,
         catalogSyncState: CatalogSyncViewState,
         onCreateNote: @escaping () -> Void,
         onOpenNotes: @escaping () -> Void
     ) {
         self.user = user
+        _selectedSiteID = selectedSiteID
         self.networkStatus = networkStatus
         self.catalogSyncState = catalogSyncState
         self.onCreateNote = onCreateNote
         self.onOpenNotes = onOpenNotes
-        _selectedSiteID = State(initialValue: user.sites.first?.id)
     }
 
     var body: some View {

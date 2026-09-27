@@ -17,6 +17,10 @@ struct iOSApp: App {
             CatalogSyncBackgroundScheduler.shared.configure(controller: catalogSyncController)
             CatalogSyncBackgroundScheduler.shared.register()
         }
+        if let cardSyncController = liveDependencies.cardSyncController {
+            CardSyncBackgroundScheduler.shared.configure(controller: cardSyncController)
+            CardSyncBackgroundScheduler.shared.register()
+        }
     }
 
     var body: some Scene {

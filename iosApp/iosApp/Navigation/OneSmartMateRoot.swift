@@ -33,7 +33,8 @@ struct OneSmartMateRoot: View {
             MainTabRoot(
                 user: user,
                 catalogSyncViewModel: dependencies.makeCatalogSyncViewModel(),
-                cardListViewModel: dependencies.makeCardListViewModel()
+                cardListViewModel: dependencies.makeCardListViewModel(),
+                makeCreateCardViewModel: dependencies.makeCreateCardViewModel
             )
             .id(user.id)
         }

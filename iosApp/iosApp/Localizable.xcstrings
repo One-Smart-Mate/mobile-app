@@ -7,6 +7,9 @@
     "%lld" : {
 
     },
+    "%lld/200" : {
+
+    },
     "accessibility.banner.error" : {
       "comment" : "Nombre accesible para un banner de error.",
       "extractionState" : "manual",
@@ -108,6 +111,83 @@
     },
     "Acción secundaria" : {
 
+    },
+    "card_sync.failure.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hay tarjetas pendientes. Intenta sincronizarlas nuevamente."
+          }
+        }
+      }
+    },
+    "card_sync.failure.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron sincronizar las tarjetas"
+          }
+        }
+      }
+    },
+    "card_sync.in_progress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sincronizando tarjetas"
+          }
+        }
+      }
+    },
+    "card_sync.preparing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando información local…"
+          }
+        }
+      }
+    },
+    "card_sync.progress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld elementos"
+          }
+        }
+      }
+    },
+    "card_sync.success.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld elementos se sincronizaron correctamente."
+          }
+        }
+      }
+    },
+    "card_sync.success.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sincronización terminada"
+          }
+        }
+      }
     },
     "cards.actions.definitive" : {
       "extractionState" : "manual",
@@ -640,6 +720,996 @@
     },
     "Correo electrónico" : {
 
+    },
+    "create_card.back" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regresar"
+          }
+        }
+      }
+    },
+    "create_card.classification.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Define el tipo de problema antes de continuar."
+          }
+        }
+      }
+    },
+    "create_card.classification.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clasificación"
+          }
+        }
+      }
+    },
+    "create_card.condition.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condición"
+          }
+        }
+      }
+    },
+    "create_card.condition.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona una condición"
+          }
+        }
+      }
+    },
+    "create_card.condition.safe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segura"
+          }
+        }
+      }
+    },
+    "create_card.condition.unsafe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insegura"
+          }
+        }
+      }
+    },
+    "create_card.continue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar"
+          }
+        }
+      }
+    },
+    "create_card.description.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descripción"
+          }
+        }
+      }
+    },
+    "create_card.description.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Describe el problema…"
+          }
+        }
+      }
+    },
+    "create_card.details.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explica brevemente qué sucede y qué observaste."
+          }
+        }
+      }
+    },
+    "create_card.details.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descripción del problema"
+          }
+        }
+      }
+    },
+    "create_card.due_date.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fecha compromiso"
+          }
+        }
+      }
+    },
+    "create_card.due_date.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona una fecha"
+          }
+        }
+      }
+    },
+    "create_card.error.audio_duration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El audio excede el máximo de %lld segundos."
+          }
+        }
+      }
+    },
+    "create_card.error.audio_limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes adjuntar hasta %lld audios."
+          }
+        }
+      }
+    },
+    "create_card.error.catalogs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faltan catálogos para crear la tarjeta. Sincroniza la información e intenta de nuevo."
+          }
+        }
+      }
+    },
+    "create_card.error.condition" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona la condición de la tarjeta."
+          }
+        }
+      }
+    },
+    "create_card.error.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Describe el problema antes de continuar."
+          }
+        }
+      }
+    },
+    "create_card.error.description_length" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La descripción debe tener máximo 200 caracteres."
+          }
+        }
+      }
+    },
+    "create_card.error.due_date" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona la fecha compromiso."
+          }
+        }
+      }
+    },
+    "create_card.error.due_date_invalid" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona una fecha válida a partir de hoy."
+          }
+        }
+      }
+    },
+    "create_card.error.evidence_import" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo preparar la evidencia. Intenta nuevamente."
+          }
+        }
+      }
+    },
+    "create_card.error.file_size" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada archivo puede pesar máximo %lld MB."
+          }
+        }
+      }
+    },
+    "create_card.error.final_level" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona el último nivel de la ubicación."
+          }
+        }
+      }
+    },
+    "create_card.error.image_limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes adjuntar hasta %lld imágenes."
+          }
+        }
+      }
+    },
+    "create_card.error.invalid_media" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo seleccionado no es una evidencia válida."
+          }
+        }
+      }
+    },
+    "create_card.error.level" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona la ubicación de la tarjeta."
+          }
+        }
+      }
+    },
+    "create_card.error.preclassifier" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona un preclasificador."
+          }
+        }
+      }
+    },
+    "create_card.error.priority" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona una prioridad."
+          }
+        }
+      }
+    },
+    "create_card.error.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar la tarjeta localmente."
+          }
+        }
+      }
+    },
+    "create_card.error.selection" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una selección ya no es válida. Revísala antes de continuar."
+          }
+        }
+      }
+    },
+    "create_card.error.site" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay un sitio disponible para crear la tarjeta."
+          }
+        }
+      }
+    },
+    "create_card.error.total_evidence" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes adjuntar máximo %lld evidencias en total."
+          }
+        }
+      }
+    },
+    "create_card.error.type" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona un tipo de tarjeta."
+          }
+        }
+      }
+    },
+    "create_card.error.video_duration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El video excede el máximo de %lld segundos."
+          }
+        }
+      }
+    },
+    "create_card.error.video_limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes adjuntar hasta %lld videos."
+          }
+        }
+      }
+    },
+    "create_card.evidence.attach_recording" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjuntar grabación"
+          }
+        }
+      }
+    },
+    "create_card.evidence.attached" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evidencias adjuntas"
+          }
+        }
+      }
+    },
+    "create_card.evidence.audio" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio"
+          }
+        }
+      }
+    },
+    "create_card.evidence.audio_maximum" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duración máxima: %lld segundos"
+          }
+        }
+      }
+    },
+    "create_card.evidence.camera" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar cámara"
+          }
+        }
+      }
+    },
+    "create_card.evidence.count" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld evidencias"
+          }
+        }
+      }
+    },
+    "create_card.evidence.count_limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld archivos"
+          }
+        }
+      }
+    },
+    "create_card.evidence.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evidencias"
+          }
+        }
+      }
+    },
+    "create_card.evidence.library" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir de la fototeca"
+          }
+        }
+      }
+    },
+    "create_card.evidence.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin evidencias"
+          }
+        }
+      }
+    },
+    "create_card.evidence.photos" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotos"
+          }
+        }
+      }
+    },
+    "create_card.evidence.processing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando evidencia…"
+          }
+        }
+      }
+    },
+    "create_card.evidence.record_audio" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grabar audio"
+          }
+        }
+      }
+    },
+    "create_card.evidence.remove" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar evidencia"
+          }
+        }
+      }
+    },
+    "create_card.evidence.source" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agregar evidencia"
+          }
+        }
+      }
+    },
+    "create_card.evidence.start_recording" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar grabación"
+          }
+        }
+      }
+    },
+    "create_card.evidence.stop_recording" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener y adjuntar"
+          }
+        }
+      }
+    },
+    "create_card.evidence.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjunta fotos, videos o audios. Podrás sincronizarlos aunque captures la tarjeta sin conexión."
+          }
+        }
+      }
+    },
+    "create_card.evidence.timed_count_limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld archivos · máximo %3$lld s"
+          }
+        }
+      }
+    },
+    "create_card.evidence.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evidencia"
+          }
+        }
+      }
+    },
+    "create_card.evidence.videos" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Videos"
+          }
+        }
+      }
+    },
+    "create_card.level.helper" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avanza por los niveles hasta seleccionar la ubicación final."
+          }
+        }
+      }
+    },
+    "create_card.level.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubicación"
+          }
+        }
+      }
+    },
+    "create_card.level.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona una ubicación"
+          }
+        }
+      }
+    },
+    "create_card.level.root" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicio de ubicaciones"
+          }
+        }
+      }
+    },
+    "create_card.location.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indica exactamente dónde se encontró el problema."
+          }
+        }
+      }
+    },
+    "create_card.location.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubicación"
+          }
+        }
+      }
+    },
+    "create_card.offline_notice" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La tarjeta se guardará primero en este dispositivo y se sincronizará en segundo plano cuando exista conexión."
+          }
+        }
+      }
+    },
+    "create_card.preclassifier.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preclasificador"
+          }
+        }
+      }
+    },
+    "create_card.preclassifier.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona un preclasificador"
+          }
+        }
+      }
+    },
+    "create_card.previous" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atrás"
+          }
+        }
+      }
+    },
+    "create_card.priority.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prioridad"
+          }
+        }
+      }
+    },
+    "create_card.priority.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona una prioridad"
+          }
+        }
+      }
+    },
+    "create_card.review.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirma la información antes de guardar."
+          }
+        }
+      }
+    },
+    "create_card.review.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar tarjeta"
+          }
+        }
+      }
+    },
+    "create_card.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear tarjeta"
+          }
+        }
+      }
+    },
+    "create_card.search_options" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar opciones"
+          }
+        }
+      }
+    },
+    "create_card.select.condition" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar condición"
+          }
+        }
+      }
+    },
+    "create_card.select.due_date" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar fecha"
+          }
+        }
+      }
+    },
+    "create_card.select.level" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar ubicación"
+          }
+        }
+      }
+    },
+    "create_card.select.option" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar opción"
+          }
+        }
+      }
+    },
+    "create_card.select.preclassifier" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar preclasificador"
+          }
+        }
+      }
+    },
+    "create_card.select.priority" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar prioridad"
+          }
+        }
+      }
+    },
+    "create_card.select.type" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar tipo de tarjeta"
+          }
+        }
+      }
+    },
+    "create_card.step.classify" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clasificar"
+          }
+        }
+      }
+    },
+    "create_card.step.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalles"
+          }
+        }
+      }
+    },
+    "create_card.step.evidence" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evidencia"
+          }
+        }
+      }
+    },
+    "create_card.step.location" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubicación"
+          }
+        }
+      }
+    },
+    "create_card.step.review" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar"
+          }
+        }
+      }
+    },
+    "create_card.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva tarjeta"
+          }
+        }
+      }
+    },
+    "create_card.type.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo de tarjeta"
+          }
+        }
+      }
+    },
+    "create_card.type.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona un tipo"
+          }
+        }
+      }
+    },
+    "create_card.use_date" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar esta fecha"
+          }
+        }
+      }
     },
     "create_note.title" : {
       "extractionState" : "manual",
