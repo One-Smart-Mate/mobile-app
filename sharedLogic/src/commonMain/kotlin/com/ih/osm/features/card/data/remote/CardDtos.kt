@@ -35,6 +35,21 @@ internal data class CreateCardEvidenceDto(
 )
 
 @Serializable
+internal data class CardEvidenceUploadApiResponse(
+    val data: CardEvidenceUploadResponseDto,
+    val status: Int? = null,
+    val message: String? = null,
+)
+
+@Serializable
+internal data class CardEvidenceUploadResponseDto(
+    val url: String,
+    val key: String,
+    val contentType: String,
+    val size: Long,
+)
+
+@Serializable
 internal data class SyncCardsRequestDto(
     val cards: List<CreateCardRequestDto>,
 )

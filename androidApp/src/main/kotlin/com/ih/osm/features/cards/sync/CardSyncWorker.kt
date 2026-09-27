@@ -38,6 +38,8 @@ class CardSyncWorker(
     params: WorkerParameters,
 ) : CoroutineWorker(appContext, params), KoinComponent {
     private val syncPendingCards: SyncPendingCardsUseCase by inject()
+    private val repository: CardRepository by inject()
+    private val evidenceUploader: ServiceCardEvidenceUploader by inject()
     private val notifications = CardSyncNotifications(appContext)
 
     override suspend fun doWork(): Result {
@@ -45,12 +47,26 @@ class CardSyncWorker(
             notifications.failure(applicationContext.getString(R.string.card_sync_no_internet))
             return Result.failure()
         }
-        setProgress(syncProgressData(completed = 0, total = 0))
-        setForeground(notifications.foreground(completed = 0, total = 0))
+        val pendingCards = repository.pendingCount().coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+        val pendingEvidences = evidenceUploader.pendingEvidenceCount()
+        val totalOperations = pendingCards + pendingEvidences
+        setProgress(syncProgressData(completed = 0, total = totalOperations))
+        setForeground(notifications.foreground(completed = 0, total = totalOperations))
         return try {
+            val uploadedEvidences = when (val upload = evidenceUploader.uploadPending { completed, _ ->
+                setProgress(syncProgressData(completed, totalOperations))
+                setForeground(notifications.foreground(completed, totalOperations))
+            }) {
+                is EvidenceUploadResult.Success -> upload.uploaded
+                is EvidenceUploadResult.Failure -> {
+                    notifications.failure(upload.message)
+                    return Result.failure()
+                }
+            }
             when (val result = syncPendingCards { progress ->
-                setProgress(syncProgressData(progress.completed, progress.total))
-                setForeground(notifications.foreground(progress.completed, progress.total))
+                val completed = uploadedEvidences + progress.completed
+                setProgress(syncProgressData(completed, totalOperations))
+                setForeground(notifications.foreground(completed, totalOperations))
             }) {
                 is PendingCardSyncResult.Success -> {
                     notifications.success(result.synced)

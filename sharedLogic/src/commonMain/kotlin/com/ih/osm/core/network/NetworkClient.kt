@@ -11,6 +11,7 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.isSuccess
+import io.ktor.http.content.OutgoingContent
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import kotlin.coroutines.cancellation.CancellationException
@@ -28,6 +29,17 @@ internal class NetworkClient(
     suspend inline fun <reified Request, reified Response> post(
         endpoint: String,
         body: Request,
+        noinline configure: HttpRequestBuilder.() -> Unit = {},
+    ): NetworkResult<Response> = safeRequest {
+        httpClient.post(endpoint) {
+            setBody(body)
+            configure()
+        }
+    }
+
+    suspend inline fun <reified Response> postContent(
+        endpoint: String,
+        body: OutgoingContent,
         noinline configure: HttpRequestBuilder.() -> Unit = {},
     ): NetworkResult<Response> = safeRequest {
         httpClient.post(endpoint) {

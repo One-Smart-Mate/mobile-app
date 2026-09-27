@@ -4,6 +4,9 @@ import com.ih.osm.Platform
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.model.UserSite
 import com.ih.osm.features.card.domain.model.Card
+import com.ih.osm.features.card.domain.model.CardEvidence
+import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
+import com.ih.osm.features.card.domain.model.CardEvidenceStage
 import com.ih.osm.features.card.domain.model.CardSyncState
 import com.ih.osm.features.card.domain.repository.CardRepository
 import com.ih.osm.features.cardtype.domain.model.CardType
@@ -57,6 +60,33 @@ enum class CreateCardValidationError {
     SAVE_FAILED,
 }
 
+enum class CreateCardEvidenceErrorReason {
+    IMAGE_LIMIT_REACHED,
+    VIDEO_LIMIT_REACHED,
+    AUDIO_LIMIT_REACHED,
+    VIDEO_DURATION_EXCEEDED,
+    AUDIO_DURATION_EXCEEDED,
+    FILE_TOO_LARGE,
+    INVALID_MEDIA,
+    TOTAL_LIMIT_REACHED,
+    IMPORT_FAILED,
+}
+
+data class CreateCardEvidenceError(
+    val reason: CreateCardEvidenceErrorReason,
+    val limit: Long? = null,
+)
+
+data class CreateCardEvidenceDraft(
+    val id: String,
+    val localPath: String,
+    val displayName: String,
+    val mimeType: String,
+    val mediaType: CardEvidenceMediaType,
+    val durationMillis: Long = 0,
+    val sizeBytes: Long = 0,
+)
+
 data class CreateCardSelectionItem(
     val id: String,
     val title: String,
@@ -82,6 +112,9 @@ data class CreateCardState(
     val selectedLevel: Level? = null,
     val selectedLevelPath: List<Level> = emptyList(),
     val description: String = "",
+    val evidences: List<CreateCardEvidenceDraft> = emptyList(),
+    val evidenceError: CreateCardEvidenceError? = null,
+    val isProcessingEvidence: Boolean = false,
     val activeSheet: CreateCardSheet? = null,
     val sheetQuery: String = "",
     val sheetItems: List<CreateCardSelectionItem> = emptyList(),
@@ -102,6 +135,15 @@ data class CreateCardState(
 
     val responsibleName: String?
         get() = selectedLevel?.ownerName?.takeIf(String::isNotBlank)
+
+    val imageEvidenceCount: Int
+        get() = evidences.count { it.mediaType == CardEvidenceMediaType.IMAGE }
+
+    val videoEvidenceCount: Int
+        get() = evidences.count { it.mediaType == CardEvidenceMediaType.VIDEO }
+
+    val audioEvidenceCount: Int
+        get() = evidences.count { it.mediaType == CardEvidenceMediaType.AUDIO }
 }
 
 sealed interface CreateCardSaveResult {
@@ -242,8 +284,46 @@ class CreateCardManager(
         }
     }
 
+    fun setEvidenceProcessing(processing: Boolean) {
+        mutableState.update { it.copy(isProcessingEvidence = processing) }
+    }
+
+    fun addEvidence(evidence: CreateCardEvidenceDraft): Boolean {
+        val current = mutableState.value
+        val error = current.validateEvidence(evidence)
+        if (error != null) {
+            mutableState.update { it.copy(evidenceError = error, isProcessingEvidence = false) }
+            return false
+        }
+        mutableState.update {
+            it.copy(
+                evidences = it.evidences + evidence,
+                evidenceError = null,
+                isProcessingEvidence = false,
+            )
+        }
+        return true
+    }
+
+    fun removeEvidence(id: String): CreateCardEvidenceDraft? {
+        val removed = mutableState.value.evidences.firstOrNull { it.id == id } ?: return null
+        mutableState.update {
+            it.copy(evidences = it.evidences.filterNot { item -> item.id == id }, evidenceError = null)
+        }
+        return removed
+    }
+
+    fun evidenceImportFailed() {
+        mutableState.update {
+            it.copy(
+                isProcessingEvidence = false,
+                evidenceError = CreateCardEvidenceError(CreateCardEvidenceErrorReason.IMPORT_FAILED),
+            )
+        }
+    }
+
     fun dismissError() {
-        mutableState.update { it.copy(validationError = null) }
+        mutableState.update { it.copy(validationError = null, evidenceError = null) }
     }
 
     fun next(): Boolean {
@@ -323,9 +403,9 @@ class CreateCardManager(
                 mechanicId = level.ownerId.takeIf { level.assignResponsibleOnCreate },
                 mechanicName = level.ownerName.takeIf { level.assignResponsibleOnCreate },
                 comments = current.description.trim(),
-                evidenceAudioCreation = 0,
-                evidenceVideoCreation = 0,
-                evidenceImageCreation = 0,
+                evidenceAudioCreation = current.audioEvidenceCount.toLong(),
+                evidenceVideoCreation = current.videoEvidenceCount.toLong(),
+                evidenceImageCreation = current.imageEvidenceCount.toLong(),
                 location = current.selectedLocation,
                 definitiveSolutionDate = null,
                 isLocal = true,
@@ -336,6 +416,19 @@ class CreateCardManager(
                 customDueDate = current.customDueDate,
                 notifyResponsible = level.notifyResponsible,
                 syncState = CardSyncState.PENDING,
+                evidences = current.evidences.map { evidence ->
+                    CardEvidence(
+                        id = evidence.id,
+                        cardUuid = uuid,
+                        siteId = site.id,
+                        url = evidence.localPath,
+                        typeCode = evidence.mediaType.creationTypeCode(),
+                        stage = CardEvidenceStage.CREATION,
+                        mediaType = evidence.mediaType,
+                        createdAt = now.toString(),
+                        isLocal = true,
+                    )
+                },
             )
             cards.saveLocal(card)
             mutableState.update { it.copy(isSaving = false, createdUuid = uuid) }
@@ -349,15 +442,19 @@ class CreateCardManager(
     }
 
     private fun selectCardType(id: String) {
-        val selected = mutableState.value.cardTypes.firstOrNull { it.id == id } ?: return
+        val current = mutableState.value
+        val selected = current.cardTypes.firstOrNull { it.id == id } ?: return
         mutableState.update {
+            val cardTypeChanged = it.selectedCardType?.id != selected.id
             it.copy(
                 selectedCardType = selected,
-                selectedCardTypeValue = null,
-                selectedPreclassifier = null,
-                selectedPriority = null,
-                selectedLevel = null,
-                selectedLevelPath = emptyList(),
+                selectedCardTypeValue = if (cardTypeChanged) null else it.selectedCardTypeValue,
+                selectedPreclassifier = if (cardTypeChanged) null else it.selectedPreclassifier,
+                selectedPriority = if (cardTypeChanged) null else it.selectedPriority,
+                selectedLevel = if (cardTypeChanged) null else it.selectedLevel,
+                selectedLevelPath = if (cardTypeChanged) emptyList() else it.selectedLevelPath,
+                evidences = if (cardTypeChanged) emptyList() else it.evidences,
+                evidenceError = if (cardTypeChanged) null else it.evidenceError,
                 activeSheet = null,
                 sheetQuery = "",
                 validationError = null,
@@ -485,6 +582,62 @@ class CreateCardManager(
         else -> null
     }
 
+    private fun CreateCardState.validateEvidence(
+        evidence: CreateCardEvidenceDraft,
+    ): CreateCardEvidenceError? {
+        val type = selectedCardType
+            ?: return CreateCardEvidenceError(CreateCardEvidenceErrorReason.INVALID_MEDIA)
+        if (evidence.sizeBytes <= 0L) {
+            return CreateCardEvidenceError(CreateCardEvidenceErrorReason.INVALID_MEDIA)
+        }
+        if (evidence.sizeBytes > MAX_EVIDENCE_FILE_SIZE_BYTES) {
+            return CreateCardEvidenceError(
+                CreateCardEvidenceErrorReason.FILE_TOO_LARGE,
+                MAX_EVIDENCE_FILE_SIZE_BYTES / BYTES_PER_MEGABYTE,
+            )
+        }
+        if (evidences.size >= MAX_TOTAL_EVIDENCES) {
+            return CreateCardEvidenceError(
+                CreateCardEvidenceErrorReason.TOTAL_LIMIT_REACHED,
+                MAX_TOTAL_EVIDENCES.toLong(),
+            )
+        }
+        return when (evidence.mediaType) {
+            CardEvidenceMediaType.IMAGE -> {
+                val limit = type.quantityImagesCreate.orZero()
+                if (imageEvidenceCount >= limit) {
+                    CreateCardEvidenceError(CreateCardEvidenceErrorReason.IMAGE_LIMIT_REACHED, limit)
+                } else {
+                    null
+                }
+            }
+            CardEvidenceMediaType.VIDEO -> {
+                val countLimit = type.quantityVideosCreate.orZero()
+                val durationLimit = type.videosDurationCreate.orZero()
+                when {
+                    evidence.durationMillis <= 0 -> CreateCardEvidenceError(CreateCardEvidenceErrorReason.INVALID_MEDIA)
+                    videoEvidenceCount >= countLimit ->
+                        CreateCardEvidenceError(CreateCardEvidenceErrorReason.VIDEO_LIMIT_REACHED, countLimit)
+                    durationLimit <= 0 || evidence.durationMillis > durationLimit * MILLIS_PER_SECOND ->
+                        CreateCardEvidenceError(CreateCardEvidenceErrorReason.VIDEO_DURATION_EXCEEDED, durationLimit)
+                    else -> null
+                }
+            }
+            CardEvidenceMediaType.AUDIO -> {
+                val countLimit = type.quantityAudiosCreate.orZero()
+                val durationLimit = type.audiosDurationCreate.orZero()
+                when {
+                    evidence.durationMillis <= 0 -> CreateCardEvidenceError(CreateCardEvidenceErrorReason.INVALID_MEDIA)
+                    audioEvidenceCount >= countLimit ->
+                        CreateCardEvidenceError(CreateCardEvidenceErrorReason.AUDIO_LIMIT_REACHED, countLimit)
+                    durationLimit <= 0 || evidence.durationMillis > durationLimit * MILLIS_PER_SECOND ->
+                        CreateCardEvidenceError(CreateCardEvidenceErrorReason.AUDIO_DURATION_EXCEEDED, durationLimit)
+                    else -> null
+                }
+            }
+        }
+    }
+
     private fun CreateCardState.pathTo(levelId: String): List<Level> {
         val byId = levels.associateBy(Level::id)
         val reversed = mutableListOf<Level>()
@@ -514,6 +667,18 @@ class CreateCardManager(
     private companion object {
         const val MAX_DESCRIPTION_LENGTH = 200
         const val MAX_DESCRIPTION_INPUT = 201
+        const val MAX_TOTAL_EVIDENCES = 20
+        const val MAX_EVIDENCE_FILE_SIZE_BYTES = 25L * 1024L * 1024L
+        const val BYTES_PER_MEGABYTE = 1024L * 1024L
+        const val MILLIS_PER_SECOND = 1_000L
         val DATE_PATTERN = Regex("\\d{4}-\\d{2}-\\d{2}")
     }
+}
+
+private fun Long?.orZero(): Long = this ?: 0L
+
+private fun CardEvidenceMediaType.creationTypeCode(): String = when (this) {
+    CardEvidenceMediaType.IMAGE -> "IMCR"
+    CardEvidenceMediaType.VIDEO -> "VICR"
+    CardEvidenceMediaType.AUDIO -> "AUCR"
 }

@@ -1,9 +1,8 @@
 package com.ih.osm.features.carddetail
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
 import android.media.MediaPlayer
 import android.net.Uri
+import android.view.ViewGroup
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,9 +18,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Note
+import androidx.compose.material.icons.outlined.AddAlert
+import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.AudioFile
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Close
@@ -29,6 +32,7 @@ import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Note
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PlayArrow
@@ -37,6 +41,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
@@ -57,14 +62,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ih.osm.R
 import com.ih.osm.designsystem.anatomy.AnatomyCard
@@ -78,6 +88,10 @@ import com.ih.osm.features.card.domain.model.CardEvidence
 import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
 import com.ih.osm.features.card.domain.model.CardEvidenceStage
 import com.ih.osm.features.card.domain.model.CardSyncState
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
+import java.io.File
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -96,6 +110,8 @@ fun CardDetailScreenRoute(
         state = state,
         siteNames = siteNames,
         onBack = onBack,
+        onPrepareEvidence = viewModel::prepareEvidence,
+        onRetryEvidence = viewModel::resolveEvidence,
     )
 }
 
@@ -104,9 +120,12 @@ private fun CardDetailScreen(
     state: CardDetailUiState,
     siteNames: Map<Long, String>,
     onBack: () -> Unit,
+    onPrepareEvidence: () -> Unit,
+    onRetryEvidence: (CardEvidence) -> Unit,
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(CardDetailTab.INFORMATION) }
     var previewImage by remember { mutableStateOf<String?>(null) }
+    var previewVideo by remember { mutableStateOf<String?>(null) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -134,7 +153,10 @@ private fun CardDetailScreen(
                         CardDetailTab.entries.forEach { tab ->
                             Tab(
                                 selected = selectedTab == tab,
-                                onClick = { selectedTab = tab },
+                                onClick = {
+                                    selectedTab = tab
+                                    if (tab == CardDetailTab.EVIDENCE) onPrepareEvidence()
+                                },
                                 text = {
                                     Text(
                                         if (tab == CardDetailTab.INFORMATION) {
@@ -149,7 +171,15 @@ private fun CardDetailScreen(
                     }
                     when (selectedTab) {
                         CardDetailTab.INFORMATION -> InformationTab(card, siteNames[card.siteId])
-                        CardDetailTab.EVIDENCE -> EvidenceTab(card.evidences, onPreviewImage = { previewImage = it })
+                        CardDetailTab.EVIDENCE -> EvidenceTab(
+                            evidences = card.evidences,
+                            evidenceFiles = state.evidenceFiles,
+                            loadingEvidenceIds = state.loadingEvidenceIds,
+                            failedEvidenceIds = state.failedEvidenceIds,
+                            onRetry = onRetryEvidence,
+                            onPreviewImage = { previewImage = it },
+                            onPreviewVideo = { previewVideo = it },
+                        )
                     }
                 }
             }
@@ -158,6 +188,9 @@ private fun CardDetailScreen(
 
     previewImage?.let { url ->
         ImagePreviewDialog(url = url, onDismiss = { previewImage = null })
+    }
+    previewVideo?.let { path ->
+        VideoPreviewDialog(path = path, onDismiss = { previewVideo = null })
     }
 }
 
@@ -221,12 +254,12 @@ private fun InformationTab(card: Card, siteName: String?) {
             ReadOnlySection(stringResource(R.string.card_detail_general_information)) {
                 DetailRow(Icons.Outlined.LocationOn, stringResource(R.string.card_detail_site), siteName ?: card.siteCode.orDash())
                 DetailRow(Icons.Outlined.LocationOn, stringResource(R.string.card_detail_location), card.location.orDash())
-                DetailRow(null, stringResource(R.string.card_detail_type), card.cardTypeName.orDash())
+                DetailRow(Icons.AutoMirrored.Outlined.Note, stringResource(R.string.card_detail_type), card.cardTypeName.orDash())
                 card.cardTypeValue?.takeIf(String::isNotBlank)?.let {
                     DetailRow(null, stringResource(R.string.card_detail_classification), it)
                 }
-                DetailRow(null, stringResource(R.string.card_detail_preclassifier), listOfNotNull(card.preclassifierCode, card.preclassifierDescription).joinToString(" · ").orDash())
-                DetailRow(null, stringResource(R.string.card_detail_priority), listOfNotNull(card.priorityCode, card.priorityDescription).joinToString(" · ").orDash())
+                DetailRow(Icons.Outlined.Archive, stringResource(R.string.card_detail_preclassifier), listOfNotNull(card.preclassifierCode, card.preclassifierDescription).joinToString(" · ").orDash())
+                DetailRow(Icons.Outlined.AddAlert, stringResource(R.string.card_detail_priority), listOfNotNull(card.priorityCode, card.priorityDescription).joinToString(" · ").orDash())
                 DetailRow(Icons.Outlined.CalendarMonth, stringResource(R.string.card_detail_created), card.creationDate.displayDate())
                 DetailRow(Icons.Outlined.CalendarMonth, stringResource(R.string.card_detail_due), card.dueDate.displayDate())
                 DetailRow(Icons.Outlined.Person, stringResource(R.string.card_detail_created_by), card.creatorName.orDash())
@@ -348,9 +381,34 @@ private fun DetailRow(icon: ImageVector?, label: String, value: String) {
 }
 
 @Composable
-private fun EvidenceTab(evidences: List<CardEvidence>, onPreviewImage: (String) -> Unit) {
+private fun EvidenceTab(
+    evidences: List<CardEvidence>,
+    evidenceFiles: Map<String, String>,
+    loadingEvidenceIds: Set<String>,
+    failedEvidenceIds: Set<String>,
+    onRetry: (CardEvidence) -> Unit,
+    onPreviewImage: (String) -> Unit,
+    onPreviewVideo: (String) -> Unit,
+) {
     var activeAudioId by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
+    var pendingAudioId by remember { mutableStateOf<String?>(null) }
+    var pendingVideoId by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(pendingVideoId, evidenceFiles) {
+        pendingVideoId?.let { id ->
+            evidenceFiles[id]?.let { path ->
+                pendingVideoId = null
+                onPreviewVideo(path)
+            }
+        }
+    }
+    LaunchedEffect(pendingAudioId, evidenceFiles) {
+        pendingAudioId?.let { id ->
+            if (evidenceFiles[id] != null) {
+                pendingAudioId = null
+                activeAudioId = id
+            }
+        }
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(20.dp),
@@ -363,10 +421,28 @@ private fun EvidenceTab(evidences: List<CardEvidence>, onPreviewImage: (String) 
                     stage = stage,
                     evidences = stageEvidences,
                     activeAudioId = activeAudioId,
-                    onAudioToggle = { id -> activeAudioId = if (activeAudioId == id) null else id },
+                    onAudioToggle = { evidence ->
+                        if (activeAudioId == evidence.id) {
+                            activeAudioId = null
+                        } else if (evidenceFiles[evidence.id] != null) {
+                            activeAudioId = evidence.id
+                        } else {
+                            pendingAudioId = evidence.id
+                            onRetry(evidence)
+                        }
+                    },
                     onAudioFinished = { activeAudioId = null },
+                    evidenceFiles = evidenceFiles,
+                    loadingEvidenceIds = loadingEvidenceIds,
+                    failedEvidenceIds = failedEvidenceIds,
+                    onRetry = onRetry,
                     onImageClick = onPreviewImage,
-                    onVideoClick = { openMedia(context, it, "video/*") },
+                    onVideoClick = { evidence ->
+                        evidenceFiles[evidence.id]?.let(onPreviewVideo) ?: run {
+                            pendingVideoId = evidence.id
+                            onRetry(evidence)
+                        }
+                    },
                 )
             }
         }
@@ -378,10 +454,14 @@ private fun EvidenceStageSection(
     stage: CardEvidenceStage,
     evidences: List<CardEvidence>,
     activeAudioId: String?,
-    onAudioToggle: (String) -> Unit,
+    onAudioToggle: (CardEvidence) -> Unit,
     onAudioFinished: () -> Unit,
+    evidenceFiles: Map<String, String>,
+    loadingEvidenceIds: Set<String>,
+    failedEvidenceIds: Set<String>,
+    onRetry: (CardEvidence) -> Unit,
     onImageClick: (String) -> Unit,
-    onVideoClick: (String) -> Unit,
+    onVideoClick: (CardEvidence) -> Unit,
 ) {
     ReadOnlySection(stage.title()) {
         if (evidences.isEmpty()) {
@@ -400,15 +480,19 @@ private fun EvidenceStageSection(
             images.chunked(2).forEach { rowItems ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     rowItems.forEach { evidence ->
+                        val localPath = evidenceFiles[evidence.id]
                         Surface(
-                            onClick = { onImageClick(evidence.url) },
+                            onClick = {
+                                if (localPath != null) onImageClick(localPath) else onRetry(evidence)
+                            },
                             modifier = Modifier.weight(1f).aspectRatio(1.35f),
                             shape = MaterialTheme.shapes.medium,
                         ) {
-                            AnatomyImage(
-                                source = AnatomyImageSource.Url(evidence.url),
-                                contentDescription = stringResource(R.string.card_detail_image_description),
-                                modifier = Modifier.fillMaxSize(),
+                            EvidenceThumbnail(
+                                evidence = evidence,
+                                localPath = localPath,
+                                loading = evidence.id in loadingEvidenceIds,
+                                failed = evidence.id in failedEvidenceIds,
                             )
                         }
                     }
@@ -422,21 +506,32 @@ private fun EvidenceStageSection(
             videos.chunked(2).forEach { rowItems ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     rowItems.forEach { evidence ->
+                        val localPath = evidenceFiles[evidence.id]
                         Surface(
-                            onClick = { onVideoClick(evidence.url) },
+                            onClick = {
+                                onVideoClick(evidence)
+                            },
                             modifier = Modifier.weight(1f).aspectRatio(1.5f),
                             shape = MaterialTheme.shapes.medium,
                             color = MaterialTheme.colorScheme.surfaceVariant,
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(Icons.Outlined.Videocam, contentDescription = null, modifier = Modifier.size(32.dp))
-                                Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.primary) {
-                                    Icon(
-                                        Icons.Outlined.PlayArrow,
-                                        contentDescription = stringResource(R.string.card_detail_play_video),
-                                        modifier = Modifier.padding(8.dp).size(22.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                when {
+                                    evidence.id in loadingEvidenceIds -> CircularProgressIndicator(Modifier.size(28.dp))
+                                    evidence.id in failedEvidenceIds -> AnatomyText(
+                                        stringResource(R.string.card_detail_retry_evidence),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.error),
                                     )
+                                    else -> Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.primary) {
+                                        Icon(
+                                            Icons.Outlined.PlayArrow,
+                                            contentDescription = stringResource(R.string.card_detail_play_video),
+                                            modifier = Modifier.padding(8.dp).size(22.dp),
+                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -451,11 +546,41 @@ private fun EvidenceStageSection(
             audios.forEach { evidence ->
                 AudioEvidencePlayer(
                     evidence = evidence,
+                    localPath = evidenceFiles[evidence.id],
+                    loading = evidence.id in loadingEvidenceIds,
+                    failedToLoad = evidence.id in failedEvidenceIds,
                     isActive = activeAudioId == evidence.id,
-                    onToggle = { onAudioToggle(evidence.id) },
+                    onToggle = { onAudioToggle(evidence) },
                     onFinished = onAudioFinished,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun EvidenceThumbnail(
+    evidence: CardEvidence,
+    localPath: String?,
+    loading: Boolean,
+    failed: Boolean,
+) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (localPath != null) {
+            AnatomyImage(
+                source = AnatomyImageSource.Url(Uri.fromFile(File(localPath)).toString()),
+                contentDescription = stringResource(R.string.card_detail_image_description),
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        when {
+            loading -> CircularProgressIndicator(Modifier.size(28.dp))
+            failed -> AnatomyText(
+                stringResource(R.string.card_detail_retry_evidence),
+                style = MaterialTheme.typography.labelSmall,
+                properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.error),
+            )
+            localPath == null -> Icon(Icons.Outlined.Image, contentDescription = null)
         }
     }
 }
@@ -475,21 +600,25 @@ private fun MediaHeading(icon: ImageVector, title: String, count: Int) {
 @Composable
 private fun AudioEvidencePlayer(
     evidence: CardEvidence,
+    localPath: String?,
+    loading: Boolean,
+    failedToLoad: Boolean,
     isActive: Boolean,
     onToggle: () -> Unit,
     onFinished: () -> Unit,
 ) {
-    var prepared by remember(evidence.url) { mutableStateOf(false) }
-    var failed by remember(evidence.url) { mutableStateOf(false) }
-    var duration by remember(evidence.url) { mutableIntStateOf(0) }
-    var position by remember(evidence.url) { mutableIntStateOf(0) }
+    var prepared by remember(localPath) { mutableStateOf(false) }
+    var failed by remember(localPath) { mutableStateOf(false) }
+    var duration by remember(localPath) { mutableIntStateOf(0) }
+    var position by remember(localPath) { mutableIntStateOf(0) }
     val latestActive by rememberUpdatedState(isActive)
     val latestFinished by rememberUpdatedState(onFinished)
-    val player = remember(evidence.url) { MediaPlayer() }
+    val player = remember(localPath) { MediaPlayer() }
 
-    DisposableEffect(player, evidence.url) {
+    DisposableEffect(player, localPath) {
+        if (localPath == null) return@DisposableEffect onDispose { player.release() }
         runCatching {
-            player.setDataSource(evidence.url)
+            player.setDataSource(localPath)
             player.setOnPreparedListener {
                 prepared = true
                 duration = it.duration.coerceAtLeast(0)
@@ -528,7 +657,7 @@ private fun AudioEvidencePlayer(
     ) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(onClick = onToggle, enabled = prepared && !failed) {
+                IconButton(onClick = onToggle, enabled = (!loading && localPath == null) || (prepared && !failed)) {
                     Icon(
                         if (isActive) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
                         contentDescription = stringResource(if (isActive) R.string.card_detail_pause_audio else R.string.card_detail_play_audio),
@@ -557,7 +686,10 @@ private fun AudioEvidencePlayer(
                     properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 )
             }
-            if (failed) {
+            if (loading) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+            }
+            if (failed || failedToLoad) {
                 AnatomyText(
                     text = stringResource(R.string.card_detail_audio_error),
                     style = MaterialTheme.typography.labelSmall,
@@ -570,39 +702,101 @@ private fun AudioEvidencePlayer(
 
 @Composable
 private fun ImagePreviewDialog(url: String, onDismiss: () -> Unit) {
-    Dialog(onDismissRequest = onDismiss) {
+    var scale by remember { mutableStateOf(1f) }
+    var offsetX by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(0f) }
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
         Surface(
-            modifier = Modifier.fillMaxWidth().widthIn(max = 720.dp),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.fillMaxSize(),
+            color = Color.Black,
         ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.card_detail_close))
-                    }
-                }
+            Box(Modifier.fillMaxSize()) {
                 AnatomyImage(
-                    source = AnatomyImageSource.Url(url),
+                    source = AnatomyImageSource.Url(Uri.fromFile(File(url)).toString()),
                     contentDescription = stringResource(R.string.card_detail_image_description),
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                    contentScale = ContentScale.Fit,
+                    shape = MaterialTheme.shapes.extraSmall,
+                    modifier = Modifier.fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTransformGestures { _, pan, zoom, _ ->
+                                scale = (scale * zoom).coerceIn(1f, 5f)
+                                offsetX = if (scale == 1f) 0f else offsetX + pan.x
+                                offsetY = if (scale == 1f) 0f else offsetY + pan.y
+                            }
+                        }
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offsetX,
+                            translationY = offsetY,
+                        ),
                 )
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+                ) {
+                    Icon(
+                        Icons.Outlined.Close,
+                        contentDescription = stringResource(R.string.card_detail_close),
+                        tint = Color.White,
+                    )
+                }
             }
         }
     }
 }
 
-private fun openMedia(context: android.content.Context, url: String, mimeType: String) {
-    try {
-        context.startActivity(Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(Uri.parse(url), mimeType)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        })
-    } catch (_: ActivityNotFoundException) {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+@Composable
+private fun VideoPreviewDialog(path: String, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val player = remember(path) {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(Uri.fromFile(File(path))))
+            prepare()
+            playWhenReady = true
+        }
+    }
+    DisposableEffect(player) { onDispose { player.release() } }
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
+        Box(Modifier.fillMaxSize()) {
+            AndroidView(
+                factory = { viewContext ->
+                    PlayerView(viewContext).apply {
+                        this.player = player
+                        useController = true
+                        keepScreenOn = true
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                        )
+                    }
+                },
+                update = { it.player = player },
+                modifier = Modifier.fillMaxSize(),
+            )
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+            ) {
+                Icon(
+                    Icons.Outlined.Close,
+                    contentDescription = stringResource(R.string.card_detail_close),
+                    tint = Color.White,
+                )
+            }
+        }
     }
 }
 

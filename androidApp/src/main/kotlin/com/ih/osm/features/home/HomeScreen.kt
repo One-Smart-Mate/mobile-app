@@ -527,23 +527,23 @@ private fun QuickActionsGrid(
                 onClick = onCreateNote,
                 modifier = Modifier.weight(1f),
             )
-            QuickActionCard(
-                title = stringResource(R.string.home_action_scan_qr),
-                icon = Icons.Outlined.QrCodeScanner,
-                onClick = {},
-                modifier = Modifier.weight(1f),
-            )
+//            QuickActionCard(
+//                title = stringResource(R.string.home_action_scan_qr),
+//                icon = Icons.Outlined.QrCodeScanner,
+//                onClick = {},
+//                modifier = Modifier.weight(1f),
+//            )
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            QuickActionCard(
-                title = stringResource(R.string.home_action_fast_password),
-                icon = Icons.Outlined.Key,
-                onClick = {},
-                modifier = Modifier.weight(1f),
-            )
+//            QuickActionCard(
+//                title = stringResource(R.string.home_action_fast_password),
+//                icon = Icons.Outlined.Key,
+//                onClick = {},
+//                modifier = Modifier.weight(1f),
+//            )
             QuickActionCard(
                 title = stringResource(R.string.home_action_notes),
                 icon = Icons.Outlined.Description,

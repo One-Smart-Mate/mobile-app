@@ -345,8 +345,7 @@ private fun CardListItem(
         modifier = modifier.fillMaxWidth().widthIn(max = 720.dp),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        shadowElevation = 1.dp,
+
     ) {
         Column(
             modifier = Modifier.padding(16.dp),

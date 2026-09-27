@@ -89,11 +89,16 @@ internal class CardRepositoryImpl(
 
     override suspend fun saveSynced(card: Card) {
         database.transaction {
+            val existingEvidences = database.cardsQueries
+                .selectEvidencesByCardUuid(card.uuid)
+                .executeAsList()
+                .map { it.toDomain() }
             upsert(
                 card.copy(
                     isLocal = false,
                     syncState = CardSyncState.SYNCED,
                     syncError = null,
+                    evidences = card.evidences.ifEmpty { existingEvidences },
                 ),
             )
         }
@@ -108,7 +113,41 @@ internal class CardRepositoryImpl(
     override fun pendingCount(): Long = database.cardsQueries.countPendingCards().executeAsOne()
 
     override fun getPending(limit: Long): List<Card> =
-        database.cardsQueries.selectPendingCards(limit).executeAsList().map { it.toDomain() }
+        database.cardsQueries.selectPendingCards(limit).executeAsList().map { row ->
+            row.toDomain(
+                database.cardsQueries
+                    .selectEvidencesByCardUuid(row.uuid)
+                    .executeAsList()
+                    .map { it.toDomain() },
+            )
+        }
+
+    override fun markEvidenceUploaded(evidenceId: String, remoteUrl: String) {
+        database.cardsQueries.markEvidenceUploaded(remoteUrl, evidenceId)
+    }
+
+    override suspend fun uploadEvidence(
+        siteId: Long,
+        cardUuid: String,
+        evidenceId: String,
+        evidenceType: String,
+        fileName: String,
+        contentType: String,
+        bytes: ByteArray,
+    ): NetworkResult<String> = api.uploadEvidence(
+        siteId = siteId,
+        cardUuid = cardUuid,
+        evidenceId = evidenceId,
+        evidenceType = evidenceType,
+        fileName = fileName,
+        contentType = contentType,
+        bytes = bytes,
+    )
+
+    override suspend fun downloadEvidence(
+        siteId: Long,
+        reference: String,
+    ): NetworkResult<ByteArray> = api.downloadEvidence(siteId, reference)
 
     override fun markSyncing(uuid: String) {
         database.cardsQueries.markCardSyncing(uuid)
@@ -143,7 +182,20 @@ internal class CardRepositoryImpl(
                 cardTypeId = cardTypeId,
                 preclassifierId = preclassifierId,
                 comments = card.comments,
-                evidences = emptyList(),
+                evidences = card.evidences.map { evidence ->
+                    if (evidence.isLocal) {
+                        return NetworkResult.Failure(
+                            com.ih.osm.core.network.NetworkError(
+                                kind = com.ih.osm.core.network.NetworkErrorKind.SERIALIZATION,
+                                message = "The local card still has evidence pending upload.",
+                            ),
+                        )
+                    }
+                    com.ih.osm.features.card.data.remote.CreateCardEvidenceDto(
+                        type = evidence.typeCode,
+                        url = evidence.url,
+                    )
+                },
                 appSo = card.appSo,
                 appVersion = card.appVersion,
                 customDueDate = card.customDueDate,

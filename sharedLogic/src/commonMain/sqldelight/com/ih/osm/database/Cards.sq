@@ -162,6 +162,11 @@ INSERT OR REPLACE INTO CardEvidenceRecord(
     id, card_uuid, site_id, url, type_code, stage, media_type, created_at, is_local
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+markEvidenceUploaded:
+UPDATE CardEvidenceRecord
+SET url = ?, is_local = 0
+WHERE id = ?;
+
 markCardSyncing:
 UPDATE CardRecord
 SET sync_state = 'SYNCING', sync_error = NULL, sync_attempts = sync_attempts + 1

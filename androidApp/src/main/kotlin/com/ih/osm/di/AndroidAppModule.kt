@@ -6,8 +6,11 @@ import com.ih.osm.core.network.NetworkStatusMonitor
 import com.ih.osm.features.auth.login.LoginViewModel
 import com.ih.osm.features.cards.CardListViewModel
 import com.ih.osm.features.cards.sync.CardSyncScheduler
+import com.ih.osm.features.cards.sync.ServiceCardEvidenceUploader
 import com.ih.osm.features.carddetail.CardDetailViewModel
+import com.ih.osm.features.carddetail.EvidenceFileCache
 import com.ih.osm.features.createcard.CreateCardViewModel
+import com.ih.osm.features.createcard.evidence.AndroidEvidenceStorage
 import com.ih.osm.features.home.HomeViewModel
 import com.ih.osm.features.permissions.PermissionHelper
 import com.ih.osm.features.permissions.PermissionsViewModel
@@ -19,6 +22,9 @@ val androidAppModule = module {
     single<NetworkStatusMonitor> { AndroidNetworkStatusMonitor(get()) }
     single { CatalogSyncScheduler(get(), get()) }
     single { CardSyncScheduler(get(), get()) }
+    single { EvidenceFileCache(get(), get()) }
+    single { ServiceCardEvidenceUploader(get(), get()) }
+    single { AndroidEvidenceStorage(get()) }
     single { PermissionHelper(get()) }
     viewModelOf(::AppViewModel)
     viewModelOf(::LoginViewModel)

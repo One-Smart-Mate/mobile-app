@@ -24,6 +24,8 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.material.icons)
     implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
     implementation(libs.koin.android.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)

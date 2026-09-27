@@ -27,6 +27,23 @@ interface CardRepository {
 
     fun getPending(limit: Long = 25): List<Card>
 
+    fun markEvidenceUploaded(evidenceId: String, remoteUrl: String)
+
+    suspend fun uploadEvidence(
+        siteId: Long,
+        cardUuid: String,
+        evidenceId: String,
+        evidenceType: String,
+        fileName: String,
+        contentType: String,
+        bytes: ByteArray,
+    ): NetworkResult<String>
+
+    suspend fun downloadEvidence(
+        siteId: Long,
+        reference: String,
+    ): NetworkResult<ByteArray>
+
     fun markSyncing(uuid: String)
 
     fun markSyncFailed(uuid: String, message: String)
