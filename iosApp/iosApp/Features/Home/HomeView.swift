@@ -1,4 +1,5 @@
 import SwiftUI
+import SharedLogic
 
 enum MainTab: Hashable {
     case home
@@ -17,21 +18,25 @@ struct MainTabRoot: View {
     @State private var cardListViewModel: CardListViewModel?
     @State private var cardNavigationPath: [String] = []
     @State private var createCardViewModel: CreateCardViewModel?
+    @State private var cardSolutionViewModel: CardSolutionViewModel?
     @State private var permissionsViewModel = PermissionsViewModel()
     @State private var cardSyncScheduler = CardSyncBackgroundScheduler.shared
     private let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
     private let makeCardDetailViewModel: @MainActor () -> CardDetailViewModel?
+    private let makeCardSolutionViewModel: @MainActor (String, CardSolutionType) -> CardSolutionViewModel?
 
     init(
         user: SessionUser,
         catalogSyncViewModel: CatalogSyncViewModel? = nil,
         cardListViewModel: CardListViewModel? = nil,
         makeCardDetailViewModel: @escaping @MainActor () -> CardDetailViewModel? = { nil },
-        makeCreateCardViewModel: @escaping @MainActor () -> CreateCardViewModel? = { nil }
+        makeCreateCardViewModel: @escaping @MainActor () -> CreateCardViewModel? = { nil },
+        makeCardSolutionViewModel: @escaping @MainActor (String, CardSolutionType) -> CardSolutionViewModel? = { _, _ in nil }
     ) {
         self.user = user
         self.makeCreateCardViewModel = makeCreateCardViewModel
         self.makeCardDetailViewModel = makeCardDetailViewModel
+        self.makeCardSolutionViewModel = makeCardSolutionViewModel
         _selectedSiteID = State(initialValue: user.sites.first?.id)
         _catalogSyncViewModel = State(initialValue: catalogSyncViewModel)
         _cardListViewModel = State(initialValue: cardListViewModel)
@@ -65,8 +70,8 @@ struct MainTabRoot: View {
                             viewModel: cardListViewModel,
                             onCreateCard: presentCreateCard,
                             onOpenCard: { cardNavigationPath.append($0) },
-                            onApplyProvisionalSolution: nil,
-                            onApplyDefinitiveSolution: nil
+                            onApplyProvisionalSolution: { presentSolution(cardUUID: $0, type: .provisional) },
+                            onApplyDefinitiveSolution: { presentSolution(cardUUID: $0, type: .definitive) }
                         )
                     } else {
                         ProgressView()
@@ -107,8 +112,20 @@ struct MainTabRoot: View {
                 )
             }
         }
+        .fullScreenCover(item: $cardSolutionViewModel) { presentedViewModel in
+            NavigationStack {
+                CardSolutionView(
+                    viewModel: presentedViewModel,
+                    onClose: {
+                        presentedViewModel.stop()
+                        cardSolutionViewModel = nil
+                    }
+                )
+            }
+        }
         .task {
             catalogSyncViewModel?.syncIfNeeded()
+            PushNotificationCoordinator.shared.sessionDidBecomeAvailable()
             await permissionsViewModel.autoPromptIfNeeded()
         }
         .onDisappear { cardListViewModel?.stop() }
@@ -130,6 +147,10 @@ struct MainTabRoot: View {
 
     private func presentCreateCard() {
         createCardViewModel = makeCreateCardViewModel()
+    }
+
+    private func presentSolution(cardUUID: String, type: CardSolutionType) {
+        cardSolutionViewModel = makeCardSolutionViewModel(cardUUID, type)
     }
 }
 

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "703295341497",
+    "project_id": "osm-dev-c2f20",
+    "storage_bucket": "osm-dev-c2f20.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:703295341497:android:cf4b4e21c1a9eeb7dd2c68",
+        "android_client_info": {
+          "package_name": "com.ih.osm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGMKbVdxMgU6VxjnnZZtZv4cBsFMA7oHk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:703295341497:android:8819279035310b38dd2c68",
+        "android_client_info": {
+          "package_name": "com.ih.osm.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGMKbVdxMgU6VxjnnZZtZv4cBsFMA7oHk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

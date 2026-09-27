@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "268265829499",
+    "project_id": "osm-prod-94bd8",
+    "storage_bucket": "osm-prod-94bd8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:268265829499:android:60d39c5794cb7841179ede",
+        "android_client_info": {
+          "package_name": "com.ih.osm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDp9OVSmKmpbpPPcWiAPvOxBDHCdaQfOx0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

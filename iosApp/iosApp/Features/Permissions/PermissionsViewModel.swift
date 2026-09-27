@@ -87,6 +87,7 @@ final class PermissionsViewModel {
             _ = try? await UNUserNotificationCenter.current()
                 .requestAuthorization(options: [.alert, .sound, .badge])
         }
+        PushNotificationCoordinator.shared.enableRemoteNotificationsIfAuthorized()
         if AVCaptureDevice.authorizationStatus(for: .video) == .notDetermined {
             _ = await AVCaptureDevice.requestAccess(for: .video)
         }

@@ -20,13 +20,15 @@ final class CardSyncBackgroundScheduler {
     private let networkMonitor = NWPathMonitor()
     private let networkQueue = DispatchQueue(label: "com.ih.osm.card-sync.network")
     private let retryCountKey = "card-sync.retry-count"
+    private let pendingRemoteSitesKey = "card-sync.pending-remote-sites"
+    private let allowMobileDataKey = "settings.allow-mobile-data"
     private let maximumRetries = 5
     private var controller: IosCardSyncController?
     private var activeTask: Task<Void, Never>?
+    private var remoteSitesReceivedWhileSyncing = Set<Int64>()
     private var backgroundExecution: UIBackgroundTaskIdentifier = .invalid
     private var isRegistered = false
-    private var hasNetwork = false
-    private let notificationDelegate = CardSyncNotificationDelegate()
+    private var canUseCurrentNetwork = false
 
     private(set) var pendingCount = 0
     private(set) var isSyncing = false
@@ -37,7 +39,11 @@ final class CardSyncBackgroundScheduler {
     private init() {
         networkMonitor.pathUpdateHandler = { [weak self] path in
             Task { @MainActor [weak self] in
-                self?.hasNetwork = path.status == .satisfied
+                guard let self else { return }
+                canUseCurrentNetwork = isAllowed(path)
+                if canUseCurrentNetwork && (!pendingRemoteSiteIDs.isEmpty || pendingCount > 0) {
+                    runImmediately()
+                }
             }
         }
         networkMonitor.start(queue: networkQueue)
@@ -55,7 +61,6 @@ final class CardSyncBackgroundScheduler {
 
     func register() {
         guard !isRegistered else { return }
-        UNUserNotificationCenter.current().delegate = notificationDelegate
         isRegistered = BGTaskScheduler.shared.register(
             forTaskWithIdentifier: Self.taskIdentifier,
             using: nil
@@ -72,7 +77,17 @@ final class CardSyncBackgroundScheduler {
     func enqueueAfterLocalChange() {
         schedule(resetRetryCount: true)
         Task { await notificationsAuthorizationIfNeeded() }
-        guard hasNetwork || networkMonitor.currentPath.status == .satisfied else { return }
+        guard isAllowed(networkMonitor.currentPath) else { return }
+        runImmediately()
+    }
+
+    func enqueueRemoteChanges(siteID: Int64) {
+        var sites = pendingRemoteSiteIDs
+        sites.insert(siteID)
+        persistRemoteSiteIDs(sites)
+        if isSyncing { remoteSitesReceivedWhileSyncing.insert(siteID) }
+        schedule(resetRetryCount: true)
+        guard isAllowed(networkMonitor.currentPath) else { return }
         runImmediately()
     }
 
@@ -83,13 +98,19 @@ final class CardSyncBackgroundScheduler {
         runImmediately()
     }
 
+    func networkPolicyDidChange() {
+        canUseCurrentNetwork = isAllowed(networkMonitor.currentPath)
+        if canUseCurrentNetwork { runImmediately() }
+    }
+
     func appDidEnterBackground() {
         guard activeTask != nil else { return }
         schedule()
     }
 
     private func runImmediately() {
-        guard activeTask == nil, let controller, controller.pendingCount() > 0 else { return }
+        guard activeTask == nil, let controller, hasPendingWork(controller) else { return }
+        guard isAllowed(networkMonitor.currentPath) else { return }
         isSyncing = true
         completed = 0
         total = Int(controller.pendingCount())
@@ -105,14 +126,7 @@ final class CardSyncBackgroundScheduler {
             await notificationsAuthorizationIfNeeded()
             await postProgress(completed: 0, total: Int(controller.pendingCount()))
             do {
-                let outcome = try await controller.syncPending { [weak self] progress in
-                    Task { @MainActor [weak self] in
-                        await self?.postProgress(
-                            completed: Int(progress.completed),
-                            total: Int(progress.total)
-                        )
-                    }
-                }
+                let outcome = try await performAllSync(controller: controller)
                 await finish(outcome)
             } catch {
                 guard !Task.isCancelled else { return }
@@ -137,14 +151,12 @@ final class CardSyncBackgroundScheduler {
             total = Int(controller.pendingCount())
             defer { isSyncing = false }
             do {
-                let outcome = try await controller.syncPending { [weak self] progress in
-                    Task { @MainActor [weak self] in
-                        await self?.postProgress(
-                            completed: Int(progress.completed),
-                            total: Int(progress.total)
-                        )
-                    }
+                guard isAllowed(networkMonitor.currentPath) else {
+                    backgroundTask.setTaskCompleted(success: false)
+                    scheduleRetry()
+                    return
                 }
+                let outcome = try await performAllSync(controller: controller)
                 backgroundTask.setTaskCompleted(success: outcome.succeeded)
                 await finish(outcome)
             } catch {
@@ -176,6 +188,77 @@ final class CardSyncBackgroundScheduler {
             )
             if outcome.retryable { scheduleRetry() }
         }
+    }
+
+    private func performAllSync(controller: IosCardSyncController) async throws -> IosCardSyncOutcome {
+        var totalSynced = 0
+        var didRun = false
+        while let siteID = pendingRemoteSiteIDs.sorted().first {
+            let remote = try await controller.syncRemoteChanges(siteId: siteID)
+            didRun = didRun || remote.didRun
+            totalSynced += Int(remote.synced)
+            guard remote.succeeded else {
+                return IosCardSyncOutcome(
+                    succeeded: false,
+                    didRun: didRun,
+                    synced: Int32(totalSynced),
+                    errorMessage: remote.errorMessage,
+                    retryable: remote.retryable
+                )
+            }
+            if remoteSitesReceivedWhileSyncing.remove(siteID) == nil {
+                var remaining = pendingRemoteSiteIDs
+                remaining.remove(siteID)
+                persistRemoteSiteIDs(remaining)
+            }
+        }
+
+        guard controller.pendingCount() > 0 else {
+            return IosCardSyncOutcome(
+                succeeded: true,
+                didRun: didRun,
+                synced: Int32(totalSynced),
+                errorMessage: nil,
+                retryable: false
+            )
+        }
+        let local = try await controller.syncPending { [weak self] progress in
+            Task { @MainActor [weak self] in
+                await self?.postProgress(
+                    completed: Int(progress.completed),
+                    total: Int(progress.total)
+                )
+            }
+        }
+        return IosCardSyncOutcome(
+            succeeded: local.succeeded,
+            didRun: true,
+            synced: Int32(totalSynced + Int(local.synced)),
+            errorMessage: local.errorMessage,
+            retryable: local.retryable
+        )
+    }
+
+    private func hasPendingWork(_ controller: IosCardSyncController) -> Bool {
+        controller.pendingCount() > 0 || !pendingRemoteSiteIDs.isEmpty
+    }
+
+    private var pendingRemoteSiteIDs: Set<Int64> {
+        Set(
+            (UserDefaults.standard.array(forKey: pendingRemoteSitesKey) ?? [])
+                .compactMap { ($0 as? NSNumber)?.int64Value }
+        )
+    }
+
+    private func persistRemoteSiteIDs(_ values: Set<Int64>) {
+        UserDefaults.standard.set(values.sorted(), forKey: pendingRemoteSitesKey)
+    }
+
+    private func isAllowed(_ path: NWPath) -> Bool {
+        guard path.status == .satisfied else { return false }
+        guard path.usesInterfaceType(.cellular) else { return true }
+        if UserDefaults.standard.object(forKey: allowMobileDataKey) == nil { return true }
+        return UserDefaults.standard.bool(forKey: allowMobileDataKey)
     }
 
     private func schedule(resetRetryCount: Bool = false) {
@@ -284,15 +367,5 @@ final class CardSyncBackgroundScheduler {
         content.threadIdentifier = "card-sync"
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
         try? await UNUserNotificationCenter.current().add(request)
-    }
-}
-
-private final class CardSyncNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
-    func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        guard notification.request.content.threadIdentifier == "card-sync" else { return [] }
-        return [.banner, .list, .sound]
     }
 }

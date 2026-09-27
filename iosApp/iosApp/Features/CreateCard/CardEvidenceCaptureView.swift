@@ -6,8 +6,12 @@ import UniformTypeIdentifiers
 import UIKit
 
 struct CardEvidenceCaptureView: View {
-    let state: CreateCardState
-    @Bindable var viewModel: CreateCardViewModel
+    private let evidences: [CreateCardEvidenceDraft]
+    private let limits: CardEvidenceCaptureLimits
+    private let isProcessingEvidence: Bool
+    private let addEvidence: (PreparedCardEvidence) async -> Void
+    private let removeEvidence: (String) async -> Void
+    private let evidenceImportFailed: () -> Void
 
     @State private var requestedMedia: CardEvidenceMediaType?
     @State private var showSourceOptions = false
@@ -19,13 +23,43 @@ struct CardEvidenceCaptureView: View {
 
     private let storage = CardEvidenceStorage.shared
 
+    init(state: CreateCardState, viewModel: CreateCardViewModel) {
+        evidences = state.evidences
+        limits = CardEvidenceCaptureLimits(
+            images: state.selectedCardType?.quantityImagesCreate?.int64Value ?? 0,
+            videos: state.selectedCardType?.quantityVideosCreate?.int64Value ?? 0,
+            audios: state.selectedCardType?.quantityAudiosCreate?.int64Value ?? 0,
+            videoDurationSeconds: state.selectedCardType?.videosDurationCreate?.int64Value ?? 0,
+            audioDurationSeconds: state.selectedCardType?.audiosDurationCreate?.int64Value ?? 0
+        )
+        isProcessingEvidence = state.isProcessingEvidence
+        addEvidence = { await viewModel.addEvidence($0) }
+        removeEvidence = { await viewModel.removeEvidence($0) }
+        evidenceImportFailed = viewModel.evidenceImportFailed
+    }
+
+    init(state: CardSolutionState, viewModel: CardSolutionViewModel) {
+        evidences = state.evidences
+        limits = CardEvidenceCaptureLimits(
+            images: state.evidenceLimits.images,
+            videos: state.evidenceLimits.videos,
+            audios: state.evidenceLimits.audios,
+            videoDurationSeconds: state.evidenceLimits.videoDurationSeconds,
+            audioDurationSeconds: state.evidenceLimits.audioDurationSeconds
+        )
+        isProcessingEvidence = state.isProcessingEvidence
+        addEvidence = { await viewModel.addEvidence($0) }
+        removeEvidence = { await viewModel.removeEvidence($0) }
+        evidenceImportFailed = viewModel.evidenceImportFailed
+    }
+
     var body: some View {
         VStack(spacing: 12) {
             evidenceAction(
                 title: AppStrings.CreateCard.photos,
                 subtitle: limitText(
-                    current: Int64(state.imageEvidenceCount),
-                    maximum: limit(state.selectedCardType?.quantityImagesCreate)
+                    current: evidenceCount(.image),
+                    maximum: limits.images
                 ),
                 systemImage: "camera",
                 mediaType: .image,
@@ -34,9 +68,9 @@ struct CardEvidenceCaptureView: View {
             evidenceAction(
                 title: AppStrings.CreateCard.videos,
                 subtitle: timedLimitText(
-                    current: Int64(state.videoEvidenceCount),
-                    maximum: limit(state.selectedCardType?.quantityVideosCreate),
-                    duration: limit(state.selectedCardType?.videosDurationCreate)
+                    current: evidenceCount(.video),
+                    maximum: limits.videos,
+                    duration: limits.videoDurationSeconds
                 ),
                 systemImage: "video",
                 mediaType: .video,
@@ -45,27 +79,27 @@ struct CardEvidenceCaptureView: View {
             evidenceAction(
                 title: AppStrings.CreateCard.audio,
                 subtitle: timedLimitText(
-                    current: Int64(state.audioEvidenceCount),
-                    maximum: limit(state.selectedCardType?.quantityAudiosCreate),
-                    duration: limit(state.selectedCardType?.audiosDurationCreate)
+                    current: evidenceCount(.audio),
+                    maximum: limits.audios,
+                    duration: limits.audioDurationSeconds
                 ),
                 systemImage: "waveform",
                 mediaType: .audio,
                 enabled: canAdd(.audio)
             )
 
-            if !state.evidences.isEmpty {
+            if !evidences.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(AppStrings.CreateCard.attachedEvidence)
                         .font(.subheadline.weight(.semibold))
-                    ForEach(state.evidences, id: \.id) { evidence in
+                    ForEach(evidences, id: \.id) { evidence in
                         evidenceRow(evidence)
                     }
                 }
                 .padding(.top, 4)
             }
 
-            if isImporting || state.isProcessingEvidence {
+            if isImporting || isProcessingEvidence {
                 HStack(spacing: 10) {
                     ProgressView().tint(Color.osmPrimary)
                     Text(AppStrings.CreateCard.processingEvidence)
@@ -102,7 +136,7 @@ struct CardEvidenceCaptureView: View {
                 CardCameraPicker(
                     mediaType: requestedMedia,
                     maximumVideoDuration: TimeInterval(
-                        limit(state.selectedCardType?.videosDurationCreate)
+                        limits.videoDurationSeconds
                     ),
                     onPicked: { url in
                         showCamera = false
@@ -115,7 +149,7 @@ struct CardEvidenceCaptureView: View {
         }
         .sheet(isPresented: $showAudioRecorder) {
             CardAudioRecorderSheet(
-                maximumSeconds: limit(state.selectedCardType?.audiosDurationCreate),
+                maximumSeconds: limits.audioDurationSeconds,
                 onRecorded: { url in
                     showAudioRecorder = false
                     Task { await importFile(url, as: .audio, removeSource: true) }
@@ -172,7 +206,7 @@ struct CardEvidenceCaptureView: View {
         }
         .buttonStyle(.plain)
         .opacity(enabled ? 1 : 0.55)
-        .disabled(!enabled || isImporting || state.isProcessingEvidence)
+        .disabled(!enabled || isImporting || isProcessingEvidence)
     }
 
     private func evidenceRow(_ evidence: CreateCardEvidenceDraft) -> some View {
@@ -192,7 +226,7 @@ struct CardEvidenceCaptureView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Button(role: .destructive) {
-                Task { await viewModel.removeEvidence(evidence.id) }
+                Task { await removeEvidence(evidence.id) }
             } label: {
                 Image(systemName: "trash")
                     .frame(width: 44, height: 44)
@@ -219,7 +253,7 @@ struct CardEvidenceCaptureView: View {
                 }
                 defer { try? FileManager.default.removeItem(at: transferred.url) }
                 let prepared = try await storage.importFile(from: transferred.url, mediaType: .video)
-                await viewModel.addEvidence(prepared)
+                await addEvidence(prepared)
                 return
             }
             guard let data = try await item.loadTransferable(type: Data.self) else {
@@ -233,9 +267,9 @@ struct CardEvidenceCaptureView: View {
                 mediaType: mediaType,
                 mimeType: type.preferredMIMEType ?? defaultMimeType(for: mediaType)
             )
-            await viewModel.addEvidence(prepared)
+            await addEvidence(prepared)
         } catch {
-            viewModel.evidenceImportFailed()
+            evidenceImportFailed()
         }
     }
 
@@ -247,28 +281,29 @@ struct CardEvidenceCaptureView: View {
         }
         do {
             let prepared = try await storage.importFile(from: url, mediaType: mediaType)
-            await viewModel.addEvidence(prepared)
+            await addEvidence(prepared)
         } catch {
-            viewModel.evidenceImportFailed()
+            evidenceImportFailed()
         }
     }
 
-    private func limit(_ value: KotlinLong?) -> Int64 { value?.int64Value ?? 0 }
-
     private func canAdd(_ mediaType: CardEvidenceMediaType) -> Bool {
-        guard let type = state.selectedCardType else { return false }
         switch mediaType {
         case .image:
-            return limit(type.quantityImagesCreate) > Int64(state.imageEvidenceCount)
+            return limits.images > evidenceCount(.image)
         case .video:
-            return limit(type.quantityVideosCreate) > Int64(state.videoEvidenceCount)
-                && limit(type.videosDurationCreate) > 0
+            return limits.videos > evidenceCount(.video)
+                && limits.videoDurationSeconds > 0
         case .audio:
-            return limit(type.quantityAudiosCreate) > Int64(state.audioEvidenceCount)
-                && limit(type.audiosDurationCreate) > 0
+            return limits.audios > evidenceCount(.audio)
+                && limits.audioDurationSeconds > 0
         default:
             return false
         }
+    }
+
+    private func evidenceCount(_ mediaType: CardEvidenceMediaType) -> Int64 {
+        Int64(evidences.filter { $0.mediaType == mediaType }.count)
     }
 
     private func limitText(current: Int64, maximum: Int64) -> String {
@@ -321,6 +356,14 @@ struct CardEvidenceCaptureView: View {
     }
 
     private enum EvidenceImportError: Error { case missingData }
+}
+
+private struct CardEvidenceCaptureLimits {
+    let images: Int64
+    let videos: Int64
+    let audios: Int64
+    let videoDurationSeconds: Int64
+    let audioDurationSeconds: Int64
 }
 
 private struct PickedVideoFile: Transferable {

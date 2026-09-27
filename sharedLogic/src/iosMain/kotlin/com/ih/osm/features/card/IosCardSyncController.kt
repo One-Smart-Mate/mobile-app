@@ -117,6 +117,28 @@ class IosCardSyncController(
         }
     }
 
+    suspend fun syncRemoteChanges(siteId: Long): IosCardSyncOutcome = mutex.withLock {
+        activeJob = currentCoroutineContext()[Job]
+        try {
+            when (val result = repository.syncChanges(siteId)) {
+                is NetworkResult.Success -> IosCardSyncOutcome(true, true, result.data, null, false)
+                is NetworkResult.Failure -> IosCardSyncOutcome(
+                    succeeded = false,
+                    didRun = true,
+                    synced = 0,
+                    errorMessage = result.error.message,
+                    retryable = true,
+                )
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (throwable: Throwable) {
+            IosCardSyncOutcome(false, true, 0, throwable.message, true)
+        } finally {
+            activeJob = null
+        }
+    }
+
     fun cancelActiveSync() {
         activeJob?.cancel()
     }

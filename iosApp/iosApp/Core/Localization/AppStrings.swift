@@ -244,6 +244,34 @@ enum AppStrings {
         static let failureBody: LocalizedStringResource = "card_sync.failure.body"
     }
 
+    enum CardSolution {
+        static let provisionalTitle: LocalizedStringResource = "card_solution.provisional.title"
+        static let definitiveTitle: LocalizedStringResource = "card_solution.definitive.title"
+        static let provisionalHeading: LocalizedStringResource = "card_solution.provisional.heading"
+        static let definitiveHeading: LocalizedStringResource = "card_solution.definitive.heading"
+        static let provisionalSubtitle: LocalizedStringResource = "card_solution.provisional.subtitle"
+        static let definitiveSubtitle: LocalizedStringResource = "card_solution.definitive.subtitle"
+        static let employee: LocalizedStringResource = "card_solution.employee.label"
+        static let employeePlaceholder: LocalizedStringResource = "card_solution.employee.placeholder"
+        static let employeeSearch: LocalizedStringResource = "card_solution.employee.search"
+        static let employeeSheetTitle: LocalizedStringResource = "card_solution.employee.sheet_title"
+        static let commentsPlaceholder: LocalizedStringResource = "card_solution.comments.placeholder"
+        static let evidenceTitle: LocalizedStringResource = "card_solution.evidence.title"
+        static let evidenceSubtitle: LocalizedStringResource = "card_solution.evidence.subtitle"
+        static let offlineNotice: LocalizedStringResource = "card_solution.offline_notice"
+        static let saveProvisional: LocalizedStringResource = "card_solution.provisional.save"
+        static let saveDefinitive: LocalizedStringResource = "card_solution.definitive.save"
+        static let errorNotFound: LocalizedStringResource = "card_solution.error.not_found"
+        static let errorClosed: LocalizedStringResource = "card_solution.error.closed"
+        static let errorApplied: LocalizedStringResource = "card_solution.error.applied"
+        static let errorCardType: LocalizedStringResource = "card_solution.error.card_type"
+        static let errorEmployee: LocalizedStringResource = "card_solution.error.employee"
+        static let errorComments: LocalizedStringResource = "card_solution.error.comments"
+        static let errorCommentsLength: LocalizedStringResource = "card_solution.error.comments_length"
+        static let errorEvidenceProcessing: LocalizedStringResource = "card_solution.error.evidence_processing"
+        static let errorSave: LocalizedStringResource = "card_solution.error.save"
+    }
+
     enum CardDetail {
         static let title: LocalizedStringResource = "card_detail.title"
         static let notFound: LocalizedStringResource = "card_detail.not_found"

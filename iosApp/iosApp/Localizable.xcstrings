@@ -23,6 +23,9 @@
     "%lld/200" : {
 
     },
+    "%lld/500" : {
+
+    },
     "accessibility.banner.error" : {
       "comment" : "Nombre accesible para un banner de error.",
       "extractionState" : "manual",
@@ -605,6 +608,281 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usuario"
+          }
+        }
+      }
+    },
+    "card_solution.comments.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Describe la solución aplicada..."
+          }
+        }
+      }
+    },
+    "card_solution.definitive.heading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solución definitiva"
+          }
+        }
+      }
+    },
+    "card_solution.definitive.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicar solución definitiva"
+          }
+        }
+      }
+    },
+    "card_solution.definitive.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registra la corrección final para resolver y cerrar la tarjeta."
+          }
+        }
+      }
+    },
+    "card_solution.definitive.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solución definitiva"
+          }
+        }
+      }
+    },
+    "card_solution.employee.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Responsable de la solución"
+          }
+        }
+      }
+    },
+    "card_solution.employee.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona una persona"
+          }
+        }
+      }
+    },
+    "card_solution.employee.search" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar por nombre o correo"
+          }
+        }
+      }
+    },
+    "card_solution.employee.sheet_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar responsable"
+          }
+        }
+      }
+    },
+    "card_solution.error.applied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta solución ya fue aplicada."
+          }
+        }
+      }
+    },
+    "card_solution.error.card_type" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No están disponibles las reglas del tipo de tarjeta. Sincroniza los catálogos e inténtalo de nuevo."
+          }
+        }
+      }
+    },
+    "card_solution.error.closed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La tarjeta ya está cerrada."
+          }
+        }
+      }
+    },
+    "card_solution.error.comments" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Describe la solución aplicada antes de continuar."
+          }
+        }
+      }
+    },
+    "card_solution.error.comments_length" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La descripción no puede superar 500 caracteres."
+          }
+        }
+      }
+    },
+    "card_solution.error.employee" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona al responsable de la solución."
+          }
+        }
+      }
+    },
+    "card_solution.error.evidence_processing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espera a que termine de procesarse la evidencia."
+          }
+        }
+      }
+    },
+    "card_solution.error.not_found" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encontró la tarjeta en este dispositivo."
+          }
+        }
+      }
+    },
+    "card_solution.error.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No fue posible guardar la solución. Inténtalo nuevamente."
+          }
+        }
+      }
+    },
+    "card_solution.evidence.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjunta fotos, videos o audios respetando los límites de esta tarjeta."
+          }
+        }
+      }
+    },
+    "card_solution.evidence.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evidencias"
+          }
+        }
+      }
+    },
+    "card_solution.offline_notice" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La solución se guarda primero en el dispositivo y se sincroniza en segundo plano cuando la conexión permitida esté disponible."
+          }
+        }
+      }
+    },
+    "card_solution.provisional.heading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solución provisional"
+          }
+        }
+      }
+    },
+    "card_solution.provisional.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicar solución provisional"
+          }
+        }
+      }
+    },
+    "card_solution.provisional.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Documenta la acción temporal aplicada mientras llega la solución definitiva."
+          }
+        }
+      }
+    },
+    "card_solution.provisional.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solución provisional"
           }
         }
       }

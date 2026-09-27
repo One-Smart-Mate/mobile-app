@@ -8,15 +8,19 @@ import com.ih.osm.features.auth.IosAuthController
 import com.ih.osm.features.auth.IosSessionController
 import com.ih.osm.features.auth.domain.repository.AuthRepository
 import com.ih.osm.features.auth.domain.session.SessionRepository
+import com.ih.osm.features.auth.data.remote.PushTokenRegistrar
 import com.ih.osm.features.catalog.IosCatalogSyncController
 import com.ih.osm.features.card.IosCardListController
 import com.ih.osm.features.card.IosCardDetailController
 import com.ih.osm.features.card.IosCardSyncController
+import com.ih.osm.features.card.IosCardSolutionController
 import com.ih.osm.features.card.IosCreateCardController
 import com.ih.osm.features.card.domain.create.CreateCardManager
 import com.ih.osm.features.card.domain.repository.CardRepository
+import com.ih.osm.features.card.domain.solution.CardSolutionManager
 import com.ih.osm.features.card.domain.usecase.SyncPendingCardsUseCase
 import com.ih.osm.features.card.domain.usecase.SyncPendingSolutionsUseCase
+import com.ih.osm.features.notifications.IosPushNotificationController
 
 fun initKoinIos(
     baseUrl: String,
@@ -58,8 +62,18 @@ fun createIosCreateCardController(): IosCreateCardController = IosCreateCardCont
     sessionRepository = KoinPlatform.getKoin().get<SessionRepository>(),
 )
 
+fun createIosCardSolutionController(): IosCardSolutionController = IosCardSolutionController(
+    manager = KoinPlatform.getKoin().get<CardSolutionManager>(),
+    sessionRepository = KoinPlatform.getKoin().get<SessionRepository>(),
+)
+
 fun createIosCardSyncController(): IosCardSyncController = IosCardSyncController(
     repository = KoinPlatform.getKoin().get<CardRepository>(),
     syncPendingCards = KoinPlatform.getKoin().get<SyncPendingCardsUseCase>(),
     syncPendingSolutions = KoinPlatform.getKoin().get<SyncPendingSolutionsUseCase>(),
+)
+
+fun createIosPushNotificationController(): IosPushNotificationController = IosPushNotificationController(
+    registrar = KoinPlatform.getKoin().get<PushTokenRegistrar>(),
+    sessionRepository = KoinPlatform.getKoin().get<SessionRepository>(),
 )

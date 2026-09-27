@@ -8,6 +8,7 @@ struct AppDependencies {
     let makeCardListViewModel: @MainActor () -> CardListViewModel?
     let makeCardDetailViewModel: @MainActor () -> CardDetailViewModel?
     let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
+    let makeCardSolutionViewModel: @MainActor (String, CardSolutionType) -> CardSolutionViewModel?
     let catalogSyncController: IosCatalogSyncController?
     let cardSyncController: IosCardSyncController?
 
@@ -63,6 +64,14 @@ struct AppDependencies {
                     syncScheduler: .shared
                 )
             },
+            makeCardSolutionViewModel: { cardUUID, type in
+                CardSolutionViewModel(
+                    cardUUID: cardUUID,
+                    type: type,
+                    controller: KoinIosKt.createIosCardSolutionController(),
+                    syncScheduler: .shared
+                )
+            },
             catalogSyncController: catalogSyncController,
             cardSyncController: cardSyncController
         )
@@ -84,6 +93,7 @@ struct AppDependencies {
             makeCardListViewModel: { nil },
             makeCardDetailViewModel: { nil },
             makeCreateCardViewModel: { nil },
+            makeCardSolutionViewModel: { _, _ in nil },
             catalogSyncController: nil,
             cardSyncController: nil
         )

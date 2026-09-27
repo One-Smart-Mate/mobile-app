@@ -3,6 +3,7 @@ import SharedLogic
 
 @main
 struct iOSApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     private let dependencies: AppDependencies
 
     init() {
@@ -13,6 +14,9 @@ struct iOSApp: App {
         )
         let liveDependencies = AppDependencies.live()
         dependencies = liveDependencies
+        PushNotificationCoordinator.shared.configure(
+            controller: KoinIosKt.createIosPushNotificationController()
+        )
         if let catalogSyncController = liveDependencies.catalogSyncController {
             CatalogSyncBackgroundScheduler.shared.configure(controller: catalogSyncController)
             CatalogSyncBackgroundScheduler.shared.register()
