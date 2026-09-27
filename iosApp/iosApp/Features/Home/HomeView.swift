@@ -15,19 +15,23 @@ struct MainTabRoot: View {
     @State private var networkMonitor = NetworkStatusMonitor()
     @State private var catalogSyncViewModel: CatalogSyncViewModel?
     @State private var cardListViewModel: CardListViewModel?
+    @State private var cardNavigationPath: [String] = []
     @State private var createCardViewModel: CreateCardViewModel?
     @State private var permissionsViewModel = PermissionsViewModel()
     @State private var cardSyncScheduler = CardSyncBackgroundScheduler.shared
     private let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
+    private let makeCardDetailViewModel: @MainActor () -> CardDetailViewModel?
 
     init(
         user: SessionUser,
         catalogSyncViewModel: CatalogSyncViewModel? = nil,
         cardListViewModel: CardListViewModel? = nil,
+        makeCardDetailViewModel: @escaping @MainActor () -> CardDetailViewModel? = { nil },
         makeCreateCardViewModel: @escaping @MainActor () -> CreateCardViewModel? = { nil }
     ) {
         self.user = user
         self.makeCreateCardViewModel = makeCreateCardViewModel
+        self.makeCardDetailViewModel = makeCardDetailViewModel
         _selectedSiteID = State(initialValue: user.sites.first?.id)
         _catalogSyncViewModel = State(initialValue: catalogSyncViewModel)
         _cardListViewModel = State(initialValue: cardListViewModel)
@@ -53,18 +57,31 @@ struct MainTabRoot: View {
             .tabItem { Label(AppStrings.Navigation.home, systemImage: "house") }
             .tag(MainTab.home)
 
-            NavigationStack {
-                if let cardListViewModel {
-                    CardListView(
-                        user: user,
-                        viewModel: cardListViewModel,
-                        onCreateCard: presentCreateCard,
-                        onOpenCard: nil,
-                        onApplyProvisionalSolution: nil,
-                        onApplyDefinitiveSolution: nil
-                    )
-                } else {
-                    ProgressView()
+            NavigationStack(path: $cardNavigationPath) {
+                Group {
+                    if let cardListViewModel {
+                        CardListView(
+                            user: user,
+                            viewModel: cardListViewModel,
+                            onCreateCard: presentCreateCard,
+                            onOpenCard: { cardNavigationPath.append($0) },
+                            onApplyProvisionalSolution: nil,
+                            onApplyDefinitiveSolution: nil
+                        )
+                    } else {
+                        ProgressView()
+                    }
+                }
+                .navigationDestination(for: String.self) { uuid in
+                    if let detailViewModel = makeCardDetailViewModel() {
+                        CardDetailView(
+                            uuid: uuid,
+                            siteNames: Dictionary(uniqueKeysWithValues: user.sites.map { ($0.id, $0.name) }),
+                            viewModel: detailViewModel
+                        )
+                    } else {
+                        ContentUnavailableView(AppStrings.CardDetail.notFound, systemImage: "doc.text.magnifyingglass")
+                    }
                 }
             }
             .tabItem { Label(AppStrings.Navigation.cards, systemImage: "doc.text") }

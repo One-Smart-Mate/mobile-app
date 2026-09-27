@@ -10,6 +10,7 @@ import com.ih.osm.features.auth.domain.repository.AuthRepository
 import com.ih.osm.features.auth.domain.session.SessionRepository
 import com.ih.osm.features.catalog.IosCatalogSyncController
 import com.ih.osm.features.card.IosCardListController
+import com.ih.osm.features.card.IosCardDetailController
 import com.ih.osm.features.card.IosCardSyncController
 import com.ih.osm.features.card.IosCreateCardController
 import com.ih.osm.features.card.domain.create.CreateCardManager
@@ -45,6 +46,10 @@ fun createIosCatalogSyncController(): IosCatalogSyncController =
     KoinPlatform.getKoin().get<IosCatalogSyncController>()
 
 fun createIosCardListController(): IosCardListController = IosCardListController(
+    repository = KoinPlatform.getKoin().get<CardRepository>(),
+)
+
+fun createIosCardDetailController(): IosCardDetailController = IosCardDetailController(
     repository = KoinPlatform.getKoin().get<CardRepository>(),
 )
 

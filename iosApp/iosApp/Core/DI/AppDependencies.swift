@@ -6,6 +6,7 @@ struct AppDependencies {
     let makeLoginViewModel: @MainActor () -> LoginViewModel
     let makeCatalogSyncViewModel: @MainActor () -> CatalogSyncViewModel?
     let makeCardListViewModel: @MainActor () -> CardListViewModel?
+    let makeCardDetailViewModel: @MainActor () -> CardDetailViewModel?
     let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
     let catalogSyncController: IosCatalogSyncController?
     let cardSyncController: IosCardSyncController?
@@ -53,6 +54,9 @@ struct AppDependencies {
             makeCardListViewModel: {
                 CardListViewModel(controller: cardListController)
             },
+            makeCardDetailViewModel: {
+                CardDetailViewModel(controller: KoinIosKt.createIosCardDetailController())
+            },
             makeCreateCardViewModel: {
                 CreateCardViewModel(
                     controller: KoinIosKt.createIosCreateCardController(),
@@ -78,6 +82,7 @@ struct AppDependencies {
             makeLoginViewModel: { LoginViewModel() },
             makeCatalogSyncViewModel: { nil },
             makeCardListViewModel: { nil },
+            makeCardDetailViewModel: { nil },
             makeCreateCardViewModel: { nil },
             catalogSyncController: nil,
             cardSyncController: nil

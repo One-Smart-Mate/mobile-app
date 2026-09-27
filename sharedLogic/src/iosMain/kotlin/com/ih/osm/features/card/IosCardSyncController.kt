@@ -149,6 +149,7 @@ class IosCardSyncController(
             ) {
                 is NetworkResult.Failure -> return UploadResult.Failure(result.error.message, uploaded)
                 is NetworkResult.Success -> {
+                    IosEvidenceFileCache.adopt(evidence, evidence.url)
                     repository.markEvidenceUploaded(evidence.id, result.data)
                     NSFileManager.defaultManager.removeItemAtPath(evidence.url, error = null)
                     uploaded += 1
