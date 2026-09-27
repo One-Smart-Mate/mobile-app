@@ -45,7 +45,7 @@ class CardSyncScheduler(
         }
         .distinctUntilChanged()
 
-    override fun enqueueAfterCardCreated() {
+    override fun enqueueAfterLocalChange() {
         if (!applicationContext.hasValidatedInternet()) return
         enqueuePending()
     }

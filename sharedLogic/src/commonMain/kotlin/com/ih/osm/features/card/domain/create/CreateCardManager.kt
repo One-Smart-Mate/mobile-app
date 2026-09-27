@@ -4,6 +4,8 @@ import com.ih.osm.Platform
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.model.UserSite
 import com.ih.osm.features.card.domain.model.Card
+import com.ih.osm.features.card.domain.evidence.CardEvidenceLimits
+import com.ih.osm.features.card.domain.evidence.validateEvidenceDraft
 import com.ih.osm.features.card.domain.model.CardEvidence
 import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
 import com.ih.osm.features.card.domain.model.CardEvidenceStage
@@ -587,55 +589,17 @@ class CreateCardManager(
     ): CreateCardEvidenceError? {
         val type = selectedCardType
             ?: return CreateCardEvidenceError(CreateCardEvidenceErrorReason.INVALID_MEDIA)
-        if (evidence.sizeBytes <= 0L) {
-            return CreateCardEvidenceError(CreateCardEvidenceErrorReason.INVALID_MEDIA)
-        }
-        if (evidence.sizeBytes > MAX_EVIDENCE_FILE_SIZE_BYTES) {
-            return CreateCardEvidenceError(
-                CreateCardEvidenceErrorReason.FILE_TOO_LARGE,
-                MAX_EVIDENCE_FILE_SIZE_BYTES / BYTES_PER_MEGABYTE,
-            )
-        }
-        if (evidences.size >= MAX_TOTAL_EVIDENCES) {
-            return CreateCardEvidenceError(
-                CreateCardEvidenceErrorReason.TOTAL_LIMIT_REACHED,
-                MAX_TOTAL_EVIDENCES.toLong(),
-            )
-        }
-        return when (evidence.mediaType) {
-            CardEvidenceMediaType.IMAGE -> {
-                val limit = type.quantityImagesCreate.orZero()
-                if (imageEvidenceCount >= limit) {
-                    CreateCardEvidenceError(CreateCardEvidenceErrorReason.IMAGE_LIMIT_REACHED, limit)
-                } else {
-                    null
-                }
-            }
-            CardEvidenceMediaType.VIDEO -> {
-                val countLimit = type.quantityVideosCreate.orZero()
-                val durationLimit = type.videosDurationCreate.orZero()
-                when {
-                    evidence.durationMillis <= 0 -> CreateCardEvidenceError(CreateCardEvidenceErrorReason.INVALID_MEDIA)
-                    videoEvidenceCount >= countLimit ->
-                        CreateCardEvidenceError(CreateCardEvidenceErrorReason.VIDEO_LIMIT_REACHED, countLimit)
-                    durationLimit <= 0 || evidence.durationMillis > durationLimit * MILLIS_PER_SECOND ->
-                        CreateCardEvidenceError(CreateCardEvidenceErrorReason.VIDEO_DURATION_EXCEEDED, durationLimit)
-                    else -> null
-                }
-            }
-            CardEvidenceMediaType.AUDIO -> {
-                val countLimit = type.quantityAudiosCreate.orZero()
-                val durationLimit = type.audiosDurationCreate.orZero()
-                when {
-                    evidence.durationMillis <= 0 -> CreateCardEvidenceError(CreateCardEvidenceErrorReason.INVALID_MEDIA)
-                    audioEvidenceCount >= countLimit ->
-                        CreateCardEvidenceError(CreateCardEvidenceErrorReason.AUDIO_LIMIT_REACHED, countLimit)
-                    durationLimit <= 0 || evidence.durationMillis > durationLimit * MILLIS_PER_SECOND ->
-                        CreateCardEvidenceError(CreateCardEvidenceErrorReason.AUDIO_DURATION_EXCEEDED, durationLimit)
-                    else -> null
-                }
-            }
-        }
+        return validateEvidenceDraft(
+            evidence = evidence,
+            current = evidences,
+            limits = CardEvidenceLimits(
+                images = type.quantityImagesCreate.orZero(),
+                videos = type.quantityVideosCreate.orZero(),
+                audios = type.quantityAudiosCreate.orZero(),
+                videoDurationSeconds = type.videosDurationCreate.orZero(),
+                audioDurationSeconds = type.audiosDurationCreate.orZero(),
+            ),
+        )
     }
 
     private fun CreateCardState.pathTo(levelId: String): List<Level> {
@@ -667,10 +631,6 @@ class CreateCardManager(
     private companion object {
         const val MAX_DESCRIPTION_LENGTH = 200
         const val MAX_DESCRIPTION_INPUT = 201
-        const val MAX_TOTAL_EVIDENCES = 20
-        const val MAX_EVIDENCE_FILE_SIZE_BYTES = 25L * 1024L * 1024L
-        const val BYTES_PER_MEGABYTE = 1024L * 1024L
-        const val MILLIS_PER_SECOND = 1_000L
         val DATE_PATTERN = Regex("\\d{4}-\\d{2}-\\d{2}")
     }
 }

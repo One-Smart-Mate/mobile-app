@@ -38,6 +38,30 @@ internal class CardApiService(
             is NetworkResult.Failure -> result
         }
 
+    suspend fun updateProvisionalSolution(
+        request: UpdateProvisionalSolutionRequestDto,
+    ): NetworkResult<CardDto> = when (
+        val result = networkClient.put<UpdateProvisionalSolutionRequestDto, CardMutationApiResponse>(
+            endpoint = "/card/update/provisional-solution",
+            body = request,
+        )
+    ) {
+        is NetworkResult.Success -> NetworkResult.Success(result.data.data, result.statusCode)
+        is NetworkResult.Failure -> result
+    }
+
+    suspend fun updateDefinitiveSolution(
+        request: UpdateDefinitiveSolutionRequestDto,
+    ): NetworkResult<CardDto> = when (
+        val result = networkClient.put<UpdateDefinitiveSolutionRequestDto, CardMutationApiResponse>(
+            endpoint = "/card/update/definitive-solution",
+            body = request,
+        )
+    ) {
+        is NetworkResult.Success -> NetworkResult.Success(result.data.data, result.statusCode)
+        is NetworkResult.Failure -> result
+    }
+
     suspend fun uploadEvidence(
         siteId: Long,
         cardUuid: String,

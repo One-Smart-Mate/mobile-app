@@ -2,6 +2,7 @@ package com.ih.osm.features.card.domain.repository
 
 import com.ih.osm.core.network.NetworkResult
 import com.ih.osm.features.card.domain.model.Card
+import com.ih.osm.features.card.domain.solution.CardSolutionType
 import kotlinx.coroutines.flow.Flow
 
 interface CardRepository {
@@ -9,6 +10,8 @@ interface CardRepository {
     fun observeCards(): Flow<List<Card>>
 
     fun observeCard(uuid: String): Flow<Card?>
+
+    fun getCard(uuid: String): Card?
 
     /**
      * Downloads a complete snapshot first and only then updates the database.
@@ -21,11 +24,19 @@ interface CardRepository {
 
     suspend fun saveSynced(card: Card)
 
+    suspend fun saveLocalSolution(card: Card)
+
+    suspend fun saveSolutionSynced(localCard: Card, remoteCard: Card, type: CardSolutionType)
+
     fun observePendingCount(): Flow<Long>
 
     fun pendingCount(): Long
 
     fun getPending(limit: Long = 25): List<Card>
+
+    fun getPendingWork(limit: Long = 25): List<Card>
+
+    fun getPendingSolutions(limit: Long = 25): List<Card>
 
     fun markEvidenceUploaded(evidenceId: String, remoteUrl: String)
 
@@ -49,6 +60,8 @@ interface CardRepository {
     fun markSyncFailed(uuid: String, message: String)
 
     suspend fun sync(cards: List<Card>): NetworkResult<List<CardSyncOutcome>>
+
+    suspend fun syncSolution(card: Card, type: CardSolutionType): NetworkResult<Card>
 }
 
 data class CardSyncOutcome(

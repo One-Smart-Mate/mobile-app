@@ -43,9 +43,13 @@ CREATE TABLE CardRecord (
     sync_attempts INTEGER NOT NULL DEFAULT 0,
     provisional_solution_date TEXT,
     provisional_solution_comments TEXT,
+    provisional_solution_user_id TEXT,
     provisional_solution_user_name TEXT,
+    provisional_solution_pending INTEGER NOT NULL DEFAULT 0,
     definitive_solution_comments TEXT,
+    definitive_solution_user_id TEXT,
     definitive_solution_user_name TEXT,
+    definitive_solution_pending INTEGER NOT NULL DEFAULT 0,
     manager_name TEXT,
     manager_close_date TEXT,
     manager_comments TEXT
@@ -79,8 +83,20 @@ WHERE is_local = 1
 ORDER BY creation_date
 LIMIT ?;
 
+selectPendingWork:
+SELECT * FROM CardRecord
+WHERE is_local = 1 OR has_local_solutions = 1
+ORDER BY creation_date
+LIMIT ?;
+
+selectPendingSolutions:
+SELECT * FROM CardRecord
+WHERE has_local_solutions = 1
+ORDER BY creation_date
+LIMIT ?;
+
 countPendingCards:
-SELECT COUNT(*) FROM CardRecord WHERE is_local = 1;
+SELECT COUNT(*) FROM CardRecord WHERE is_local = 1 OR has_local_solutions = 1;
 
 deleteRemoteCardsBySite:
 DELETE FROM CardRecord WHERE site_id = ? AND is_local = 0;
@@ -143,9 +159,13 @@ INSERT OR REPLACE INTO CardRecord(
     sync_attempts,
     provisional_solution_date,
     provisional_solution_comments,
+    provisional_solution_user_id,
     provisional_solution_user_name,
+    provisional_solution_pending,
     definitive_solution_comments,
+    definitive_solution_user_id,
     definitive_solution_user_name,
+    definitive_solution_pending,
     manager_name,
     manager_close_date,
     manager_comments
@@ -157,7 +177,7 @@ INSERT OR REPLACE INTO CardRecord(
     ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?,
-    ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 );
 
 insertEvidence:
@@ -178,4 +198,4 @@ WHERE uuid = ? AND is_local = 1;
 markCardSyncFailed:
 UPDATE CardRecord
 SET sync_state = 'FAILED', sync_error = ?
-WHERE uuid = ? AND is_local = 1;
+WHERE uuid = ? AND (is_local = 1 OR has_local_solutions = 1);

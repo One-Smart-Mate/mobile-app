@@ -95,8 +95,9 @@ fun SettingsScreenRoute(
 
     PermissionsBottomSheetHost(
         autoPrompt = false,
-        showRequestKey = state.permissionsRequestKey,
+        isRequested = state.showPermissions,
         onPermissionsChanged = { viewModel.process(SettingsViewModel.Action.RefreshPermissions) },
+        onDismissed = { viewModel.process(SettingsViewModel.Action.DismissPermissions) },
     )
 
     if (state.showAccountInformation) {

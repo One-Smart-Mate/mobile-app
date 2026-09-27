@@ -9,6 +9,7 @@ import com.ih.osm.features.cards.data.sync.CardSyncScheduler
 import com.ih.osm.features.cards.data.sync.ServiceCardEvidenceUploader
 import com.ih.osm.features.cards.domain.manager.CardSyncManager
 import com.ih.osm.features.carddetail.CardDetailViewModel
+import com.ih.osm.features.cardsolution.CardSolutionViewModel
 import com.ih.osm.features.carddetail.data.cache.EvidenceFileCache
 import com.ih.osm.features.carddetail.domain.cache.EvidenceCache
 import com.ih.osm.features.catalog.data.sync.CatalogSyncScheduler
@@ -43,6 +44,7 @@ val androidAppModule = module {
     viewModelOf(::CardListViewModel)
     viewModelOf(::CardDetailViewModel)
     viewModelOf(::CreateCardViewModel)
+    viewModelOf(::CardSolutionViewModel)
     viewModelOf(::HomeViewModel)
     viewModelOf(::PermissionsViewModel)
     viewModelOf(::SettingsViewModel)

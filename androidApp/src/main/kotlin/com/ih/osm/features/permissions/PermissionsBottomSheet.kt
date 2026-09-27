@@ -64,8 +64,9 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun PermissionsBottomSheetHost(
     autoPrompt: Boolean = true,
-    showRequestKey: Int = 0,
+    isRequested: Boolean = false,
     onPermissionsChanged: () -> Unit = {},
+    onDismissed: () -> Unit = {},
     viewModel: PermissionsViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
@@ -75,19 +76,21 @@ fun PermissionsBottomSheetHost(
     ) {
         viewModel.process(PermissionsViewModel.Action.RuntimeRequestFinished)
         onPermissionsChanged()
+        if (!viewModel.getStateValue().showSheet) onDismissed()
     }
     val settingsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
         viewModel.process(PermissionsViewModel.Action.RuntimeRequestFinished)
         onPermissionsChanged()
+        if (!viewModel.getStateValue().showSheet) onDismissed()
     }
 
     LaunchedEffect(autoPrompt) {
         if (autoPrompt) viewModel.process(PermissionsViewModel.Action.Initialize)
     }
-    LaunchedEffect(showRequestKey) {
-        if (showRequestKey > 0) viewModel.process(PermissionsViewModel.Action.Show)
+    LaunchedEffect(isRequested) {
+        if (isRequested) viewModel.process(PermissionsViewModel.Action.Show)
     }
     LaunchedEffect(viewModel) {
         viewModel.getEventFlow().collectLatest { event ->
@@ -108,8 +111,14 @@ fun PermissionsBottomSheetHost(
     if (state.showSheet) {
         PermissionsBottomSheet(
             state = state,
-            onContinue = { viewModel.process(PermissionsViewModel.Action.Continue) },
-            onNotNow = { viewModel.process(PermissionsViewModel.Action.NotNow) },
+            onContinue = {
+                viewModel.process(PermissionsViewModel.Action.Continue)
+                if (!viewModel.getStateValue().showSheet) onDismissed()
+            },
+            onNotNow = {
+                viewModel.process(PermissionsViewModel.Action.NotNow)
+                onDismissed()
+            },
         )
     }
 }

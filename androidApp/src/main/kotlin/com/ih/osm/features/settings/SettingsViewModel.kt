@@ -17,8 +17,8 @@ data class SettingsUiState(
     val missingPermissionCount: Int = 0,
     val allowMobileData: Boolean = true,
     val showAccountInformation: Boolean = false,
+    val showPermissions: Boolean = false,
     val showPendingLogoutWarning: Boolean = false,
-    val permissionsRequestKey: Int = 0,
     val isLoggingOut: Boolean = false,
     val logoutFailed: Boolean = false,
 )
@@ -39,6 +39,7 @@ class SettingsViewModel(
         data object ShowAccountInformation : Action
         data object DismissAccountInformation : Action
         data object ShowPermissions : Action
+        data object DismissPermissions : Action
         data object RefreshPermissions : Action
         data class SetAllowMobileData(val allow: Boolean) : Action
         data class RequestLogout(val user: AuthenticatedUser) : Action
@@ -73,7 +74,11 @@ class SettingsViewModel(
             Action.DismissAccountInformation -> setState { copy(showAccountInformation = false) }
             Action.ShowPermissions -> {
                 refreshPermissions()
-                setState { copy(permissionsRequestKey = permissionsRequestKey + 1) }
+                setState { copy(showPermissions = true) }
+            }
+            Action.DismissPermissions -> {
+                refreshPermissions()
+                setState { copy(showPermissions = false) }
             }
             Action.RefreshPermissions -> refreshPermissions()
             is Action.SetAllowMobileData -> {

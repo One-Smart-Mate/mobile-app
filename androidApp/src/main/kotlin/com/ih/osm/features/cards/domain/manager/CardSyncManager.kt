@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface CardSyncManager {
     val workStatus: Flow<CardSyncWorkStatus>
 
-    fun enqueueAfterCardCreated()
+    fun enqueueAfterLocalChange()
     fun enqueueManually(): Boolean
     suspend fun cancel()
 }

@@ -10,6 +10,9 @@ import com.ih.osm.database.CardRecord
 import com.ih.osm.database.CardEvidenceRecord
 import com.ih.osm.features.card.data.remote.CardApiService
 import com.ih.osm.features.card.data.remote.CreateCardRequestDto
+import com.ih.osm.features.card.data.remote.CreateCardEvidenceDto
+import com.ih.osm.features.card.data.remote.UpdateDefinitiveSolutionRequestDto
+import com.ih.osm.features.card.data.remote.UpdateProvisionalSolutionRequestDto
 import com.ih.osm.features.card.domain.model.Card
 import com.ih.osm.features.card.domain.model.CardEvidence
 import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
@@ -17,6 +20,7 @@ import com.ih.osm.features.card.domain.model.CardEvidenceStage
 import com.ih.osm.features.card.domain.model.CardSyncState
 import com.ih.osm.features.card.domain.repository.CardSyncOutcome
 import com.ih.osm.features.card.domain.repository.CardRepository
+import com.ih.osm.features.card.domain.solution.CardSolutionType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -39,6 +43,15 @@ internal class CardRepositoryImpl(
     ) { card, evidences ->
         card?.toDomain(evidences.map { it.toDomain() })
     }
+
+    override fun getCard(uuid: String): Card? = database.cardsQueries
+        .selectCardByUuid(uuid)
+        .executeAsOneOrNull()
+        ?.let { row ->
+            row.toDomain(
+                database.cardsQueries.selectEvidencesByCardUuid(uuid).executeAsList().map { it.toDomain() },
+            )
+        }
 
     override suspend fun refresh(siteIds: List<Long>): NetworkResult<Unit> {
         if (siteIds.isEmpty()) return NetworkResult.Success(Unit, statusCode = 200)
@@ -67,9 +80,17 @@ internal class CardRepositoryImpl(
 
         database.transaction {
             snapshots.forEach { (siteId, cards) ->
+                val pendingSolutions = database.cardsQueries
+                    .selectPendingSolutions(MAX_PENDING_LOCAL_WORK)
+                    .executeAsList()
+                    .filter { it.site_id == siteId }
+                    .associate { row -> row.uuid to withEvidences(row) }
                 database.cardsQueries.deleteRemoteEvidencesBySite(siteId)
                 database.cardsQueries.deleteRemoteCardsBySite(siteId)
-                cards.forEach(::upsert)
+                cards.forEach { remote ->
+                    val pending = pendingSolutions[remote.uuid]
+                    upsert(if (pending == null) remote else remote.preservePendingSolutions(pending))
+                }
             }
         }
         return NetworkResult.Success(Unit, lastStatusCode)
@@ -89,18 +110,62 @@ internal class CardRepositoryImpl(
 
     override suspend fun saveSynced(card: Card) {
         database.transaction {
-            val existingEvidences = database.cardsQueries
-                .selectEvidencesByCardUuid(card.uuid)
-                .executeAsList()
-                .map { it.toDomain() }
+            val existing = getCard(card.uuid)
+            val existingEvidences = existing?.evidences.orEmpty()
+            val merged = if (existing?.hasLocalSolutions == true) {
+                card.preservePendingSolutions(existing)
+            } else {
+                card.copy(evidences = card.evidences.ifEmpty { existingEvidences })
+            }
             upsert(
-                card.copy(
+                merged.copy(
                     isLocal = false,
-                    syncState = CardSyncState.SYNCED,
+                    syncState = if (merged.hasLocalSolutions) CardSyncState.PENDING else CardSyncState.SYNCED,
                     syncError = null,
-                    evidences = card.evidences.ifEmpty { existingEvidences },
                 ),
             )
+        }
+    }
+
+    override suspend fun saveLocalSolution(card: Card) {
+        database.transaction { upsert(card.copy(hasLocalSolutions = true, syncError = null)) }
+    }
+
+    override suspend fun saveSolutionSynced(
+        localCard: Card,
+        remoteCard: Card,
+        type: CardSolutionType,
+    ) {
+        database.transaction {
+            val provisionalPending = localCard.provisionalSolutionPending && type != CardSolutionType.PROVISIONAL
+            val definitivePending = localCard.definitiveSolutionPending && type != CardSolutionType.DEFINITIVE
+            val pendingStages = buildSet {
+                if (provisionalPending) add(CardEvidenceStage.PROVISIONAL_SOLUTION)
+                if (definitivePending) add(CardEvidenceStage.DEFINITIVE_SOLUTION)
+            }
+            val pendingEvidence = localCard.evidences.filter { it.stage in pendingStages }
+            val serverEvidence = remoteCard.evidences.ifEmpty {
+                localCard.evidences.filterNot { evidence -> evidence.stage in pendingStages }
+            }
+            val merged = remoteCard.copy(
+                status = if (definitivePending) "R" else if (provisionalPending) "P" else remoteCard.status,
+                isLocal = false,
+                hasLocalSolutions = provisionalPending || definitivePending,
+                syncState = if (provisionalPending || definitivePending) CardSyncState.PENDING else CardSyncState.SYNCED,
+                syncError = null,
+                provisionalSolutionDate = if (provisionalPending) localCard.provisionalSolutionDate else remoteCard.provisionalSolutionDate,
+                provisionalSolutionComments = if (provisionalPending) localCard.provisionalSolutionComments else remoteCard.provisionalSolutionComments,
+                provisionalSolutionUserId = if (provisionalPending) localCard.provisionalSolutionUserId else null,
+                provisionalSolutionUserName = if (provisionalPending) localCard.provisionalSolutionUserName else remoteCard.provisionalSolutionUserName,
+                provisionalSolutionPending = provisionalPending,
+                definitiveSolutionDate = if (definitivePending) localCard.definitiveSolutionDate else remoteCard.definitiveSolutionDate,
+                definitiveSolutionComments = if (definitivePending) localCard.definitiveSolutionComments else remoteCard.definitiveSolutionComments,
+                definitiveSolutionUserId = if (definitivePending) localCard.definitiveSolutionUserId else null,
+                definitiveSolutionUserName = if (definitivePending) localCard.definitiveSolutionUserName else remoteCard.definitiveSolutionUserName,
+                definitiveSolutionPending = definitivePending,
+                evidences = (serverEvidence + pendingEvidence).distinctBy(CardEvidence::id),
+            )
+            upsert(merged)
         }
     }
 
@@ -113,14 +178,13 @@ internal class CardRepositoryImpl(
     override fun pendingCount(): Long = database.cardsQueries.countPendingCards().executeAsOne()
 
     override fun getPending(limit: Long): List<Card> =
-        database.cardsQueries.selectPendingCards(limit).executeAsList().map { row ->
-            row.toDomain(
-                database.cardsQueries
-                    .selectEvidencesByCardUuid(row.uuid)
-                    .executeAsList()
-                    .map { it.toDomain() },
-            )
-        }
+        database.cardsQueries.selectPendingCards(limit).executeAsList().map(::withEvidences)
+
+    override fun getPendingWork(limit: Long): List<Card> =
+        database.cardsQueries.selectPendingWork(limit).executeAsList().map(::withEvidences)
+
+    override fun getPendingSolutions(limit: Long): List<Card> =
+        database.cardsQueries.selectPendingSolutions(limit).executeAsList().map(::withEvidences)
 
     override fun markEvidenceUploaded(evidenceId: String, remoteUrl: String) {
         database.cardsQueries.markEvidenceUploaded(remoteUrl, evidenceId)
@@ -182,7 +246,7 @@ internal class CardRepositoryImpl(
                 cardTypeId = cardTypeId,
                 preclassifierId = preclassifierId,
                 comments = card.comments,
-                evidences = card.evidences.map { evidence ->
+                evidences = card.evidences.filter { it.stage == CardEvidenceStage.CREATION }.map { evidence ->
                     if (evidence.isLocal) {
                         return NetworkResult.Failure(
                             com.ih.osm.core.network.NetworkError(
@@ -217,6 +281,62 @@ internal class CardRepositoryImpl(
                 },
                 statusCode = result.statusCode,
             )
+        }
+    }
+
+    override suspend fun syncSolution(card: Card, type: CardSolutionType): NetworkResult<Card> {
+        val serverId = card.serverId?.toLongOrNull()
+            ?: return NetworkResult.Failure(
+                com.ih.osm.core.network.NetworkError(
+                    kind = com.ih.osm.core.network.NetworkErrorKind.SERIALIZATION,
+                    message = "La tarjeta todavía no tiene un identificador remoto.",
+                ),
+            )
+        val stage = if (type == CardSolutionType.PROVISIONAL) {
+            CardEvidenceStage.PROVISIONAL_SOLUTION
+        } else {
+            CardEvidenceStage.DEFINITIVE_SOLUTION
+        }
+        val evidences = card.evidences.filter { it.stage == stage }.map { evidence ->
+            if (evidence.isLocal) {
+                return NetworkResult.Failure(
+                    com.ih.osm.core.network.NetworkError(
+                        kind = com.ih.osm.core.network.NetworkErrorKind.SERIALIZATION,
+                        message = "La solución todavía tiene evidencia pendiente de subir.",
+                    ),
+                )
+            }
+            CreateCardEvidenceDto(evidence.typeCode, evidence.url)
+        }
+        val result = when (type) {
+            CardSolutionType.PROVISIONAL -> {
+                val employeeId = card.provisionalSolutionUserId?.toLongOrNull()
+                    ?: return missingSolutionUser()
+                api.updateProvisionalSolution(
+                    UpdateProvisionalSolutionRequestDto(
+                        cardId = serverId,
+                        userProvisionalSolutionId = employeeId,
+                        comments = card.provisionalSolutionComments.orEmpty(),
+                        evidences = evidences,
+                    ),
+                )
+            }
+            CardSolutionType.DEFINITIVE -> {
+                val employeeId = card.definitiveSolutionUserId?.toLongOrNull()
+                    ?: return missingSolutionUser()
+                api.updateDefinitiveSolution(
+                    UpdateDefinitiveSolutionRequestDto(
+                        cardId = serverId,
+                        userDefinitiveSolutionId = employeeId,
+                        comments = card.definitiveSolutionComments.orEmpty(),
+                        evidences = evidences,
+                    ),
+                )
+            }
+        }
+        return when (result) {
+            is NetworkResult.Failure -> result
+            is NetworkResult.Success -> NetworkResult.Success(result.data.toDomain(card.siteId), result.statusCode)
         }
     }
 
@@ -266,9 +386,13 @@ internal class CardRepositoryImpl(
             sync_attempts = card.syncAttempts,
             provisional_solution_date = card.provisionalSolutionDate,
             provisional_solution_comments = card.provisionalSolutionComments,
+            provisional_solution_user_id = card.provisionalSolutionUserId,
             provisional_solution_user_name = card.provisionalSolutionUserName,
+            provisional_solution_pending = if (card.provisionalSolutionPending) 1L else 0L,
             definitive_solution_comments = card.definitiveSolutionComments,
+            definitive_solution_user_id = card.definitiveSolutionUserId,
             definitive_solution_user_name = card.definitiveSolutionUserName,
+            definitive_solution_pending = if (card.definitiveSolutionPending) 1L else 0L,
             manager_name = card.managerName,
             manager_close_date = card.managerCloseDate,
             manager_comments = card.managerComments,
@@ -334,9 +458,13 @@ internal class CardRepositoryImpl(
         syncAttempts = sync_attempts,
         provisionalSolutionDate = provisional_solution_date,
         provisionalSolutionComments = provisional_solution_comments,
+        provisionalSolutionUserId = provisional_solution_user_id,
         provisionalSolutionUserName = provisional_solution_user_name,
+        provisionalSolutionPending = provisional_solution_pending != 0L,
         definitiveSolutionComments = definitive_solution_comments,
+        definitiveSolutionUserId = definitive_solution_user_id,
         definitiveSolutionUserName = definitive_solution_user_name,
+        definitiveSolutionPending = definitive_solution_pending != 0L,
         managerName = manager_name,
         managerCloseDate = manager_close_date,
         managerComments = manager_comments,
@@ -357,9 +485,43 @@ internal class CardRepositoryImpl(
         isLocal = is_local != 0L,
     )
 
+    private fun withEvidences(row: CardRecord): Card = row.toDomain(
+        database.cardsQueries.selectEvidencesByCardUuid(row.uuid).executeAsList().map { it.toDomain() },
+    )
+
+    private fun Card.preservePendingSolutions(local: Card): Card {
+        val pendingStages = buildSet {
+            if (local.provisionalSolutionPending) add(CardEvidenceStage.PROVISIONAL_SOLUTION)
+            if (local.definitiveSolutionPending) add(CardEvidenceStage.DEFINITIVE_SOLUTION)
+        }
+        return copy(
+            status = local.status,
+            hasLocalSolutions = true,
+            provisionalSolutionDate = if (local.provisionalSolutionPending) local.provisionalSolutionDate else provisionalSolutionDate,
+            provisionalSolutionComments = if (local.provisionalSolutionPending) local.provisionalSolutionComments else provisionalSolutionComments,
+            provisionalSolutionUserId = local.provisionalSolutionUserId,
+            provisionalSolutionUserName = if (local.provisionalSolutionPending) local.provisionalSolutionUserName else provisionalSolutionUserName,
+            provisionalSolutionPending = local.provisionalSolutionPending,
+            definitiveSolutionDate = if (local.definitiveSolutionPending) local.definitiveSolutionDate else definitiveSolutionDate,
+            definitiveSolutionComments = if (local.definitiveSolutionPending) local.definitiveSolutionComments else definitiveSolutionComments,
+            definitiveSolutionUserId = local.definitiveSolutionUserId,
+            definitiveSolutionUserName = if (local.definitiveSolutionPending) local.definitiveSolutionUserName else definitiveSolutionUserName,
+            definitiveSolutionPending = local.definitiveSolutionPending,
+            evidences = (evidences + local.evidences.filter { it.stage in pendingStages }).distinctBy(CardEvidence::id),
+        )
+    }
+
+    private fun missingSolutionUser(): NetworkResult.Failure = NetworkResult.Failure(
+        com.ih.osm.core.network.NetworkError(
+            kind = com.ih.osm.core.network.NetworkErrorKind.SERIALIZATION,
+            message = "La solución no tiene un usuario responsable válido.",
+        ),
+    )
+
     private companion object {
         const val FIRST_PAGE = 1
         const val PAGE_SIZE = 100
         const val MAX_PAGE_GUARD = 1_000
+        const val MAX_PENDING_LOCAL_WORK = 10_000L
     }
 }

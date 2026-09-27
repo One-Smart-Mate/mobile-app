@@ -18,13 +18,13 @@ class ServiceCardEvidenceUploader(
     private val repository: CardRepository,
     private val evidenceCache: EvidenceCache,
 ) {
-    fun pendingEvidenceCount(): Int = repository.getPending(MAX_PENDING_CARDS)
+    fun pendingEvidenceCount(): Int = repository.getPendingWork(MAX_PENDING_CARDS)
         .sumOf { card -> card.evidences.count { it.isLocal } }
 
     suspend fun uploadPending(
         onProgress: suspend (completed: Int, total: Int) -> Unit,
     ): EvidenceUploadResult {
-        val pending = repository.getPending(MAX_PENDING_CARDS)
+        val pending = repository.getPendingWork(MAX_PENDING_CARDS)
             .flatMap { card -> card.evidences.filter { it.isLocal }.map { card to it } }
         if (pending.isEmpty()) return EvidenceUploadResult.Success(0)
         var uploaded = 0

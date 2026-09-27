@@ -106,7 +106,7 @@ class CreateCardViewModel(
         viewModelScope.launch {
             when (val result = manager.save()) {
                 is CreateCardSaveResult.Success -> {
-                    cardSyncManager.enqueueAfterCardCreated()
+                    cardSyncManager.enqueueAfterLocalChange()
                     sendNewEvent(Event.Created(result.uuid))
                 }
                 is CreateCardSaveResult.Failure,

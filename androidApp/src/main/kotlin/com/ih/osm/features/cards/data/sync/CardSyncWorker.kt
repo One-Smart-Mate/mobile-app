@@ -20,6 +20,7 @@ import com.ih.osm.R
 import com.ih.osm.features.card.domain.repository.CardRepository
 import com.ih.osm.features.card.domain.usecase.PendingCardSyncResult
 import com.ih.osm.features.card.domain.usecase.SyncPendingCardsUseCase
+import com.ih.osm.features.card.domain.usecase.SyncPendingSolutionsUseCase
 import com.ih.osm.features.settings.domain.preferences.MobileDataSyncPreferences
 import kotlin.coroutines.cancellation.CancellationException
 import org.koin.core.component.KoinComponent
@@ -30,6 +31,7 @@ class CardSyncWorker(
     params: WorkerParameters,
 ) : CoroutineWorker(appContext, params), KoinComponent {
     private val syncPendingCards: SyncPendingCardsUseCase by inject()
+    private val syncPendingSolutions: SyncPendingSolutionsUseCase by inject()
     private val repository: CardRepository by inject()
     private val evidenceUploader: ServiceCardEvidenceUploader by inject()
     private val syncPreferences: MobileDataSyncPreferences by inject()
@@ -43,9 +45,13 @@ class CardSyncWorker(
         if (!syncPreferences.allowMobileData.value && !applicationContext.hasValidatedNonCellularInternet()) {
             return Result.retry()
         }
-        val pendingCards = repository.pendingCount().coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+        val pendingCards = repository.getPending(MAX_PENDING_WORK).size
+        val pendingSolutions = repository.getPendingSolutions(MAX_PENDING_WORK).sumOf { card ->
+            (if (card.provisionalSolutionPending) 1 else 0) +
+                (if (card.definitiveSolutionPending) 1 else 0)
+        }
         val pendingEvidences = evidenceUploader.pendingEvidenceCount()
-        val totalOperations = pendingCards + pendingEvidences
+        val totalOperations = pendingCards + pendingSolutions + pendingEvidences
         setProgress(syncProgressData(completed = 0, total = totalOperations))
         setForeground(notifications.foreground(completed = 0, total = totalOperations))
         return try {
@@ -59,18 +65,31 @@ class CardSyncWorker(
                     return Result.failure()
                 }
             }
-            when (val result = syncPendingCards { progress ->
+            val cardResult = syncPendingCards { progress ->
                 val completed = uploadedEvidences + progress.completed
                 setProgress(syncProgressData(completed, totalOperations))
                 setForeground(notifications.foreground(completed, totalOperations))
-            }) {
-                is PendingCardSyncResult.Success -> {
-                    notifications.success(result.synced)
-                    Result.success()
-                }
+            }
+            when (cardResult) {
                 is PendingCardSyncResult.Failure -> {
-                    notifications.failure(result.message)
+                    notifications.failure(cardResult.message)
                     Result.failure()
+                }
+                is PendingCardSyncResult.Success -> when (
+                    val solutionResult = syncPendingSolutions { progress ->
+                        val completed = uploadedEvidences + pendingCards + progress.completed
+                        setProgress(syncProgressData(completed, totalOperations))
+                        setForeground(notifications.foreground(completed, totalOperations))
+                    }
+                ) {
+                    is PendingCardSyncResult.Failure -> {
+                        notifications.failure(solutionResult.message)
+                        Result.failure()
+                    }
+                    is PendingCardSyncResult.Success -> {
+                        notifications.success(cardResult.synced + solutionResult.synced)
+                        Result.success()
+                    }
                 }
             }
         } catch (cancellation: CancellationException) {
@@ -81,6 +100,8 @@ class CardSyncWorker(
         }
     }
 }
+
+private const val MAX_PENDING_WORK = 10_000L
 
 private const val CARD_SYNC_COMPLETED = "card-sync-completed"
 private const val CARD_SYNC_TOTAL = "card-sync-total"

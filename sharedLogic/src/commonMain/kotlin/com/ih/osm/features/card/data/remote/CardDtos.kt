@@ -35,6 +35,29 @@ internal data class CreateCardEvidenceDto(
 )
 
 @Serializable
+internal data class UpdateProvisionalSolutionRequestDto(
+    val cardId: Long,
+    val userProvisionalSolutionId: Long,
+    val comments: String,
+    val evidences: List<CreateCardEvidenceDto>,
+)
+
+@Serializable
+internal data class UpdateDefinitiveSolutionRequestDto(
+    val cardId: Long,
+    val userDefinitiveSolutionId: Long,
+    val comments: String,
+    val evidences: List<CreateCardEvidenceDto>,
+)
+
+@Serializable
+internal data class CardMutationApiResponse(
+    val data: CardDto,
+    val status: Int? = null,
+    val message: String? = null,
+)
+
+@Serializable
 internal data class CardEvidenceUploadApiResponse(
     val data: CardEvidenceUploadResponseDto,
     val status: Int? = null,
@@ -129,9 +152,11 @@ internal data class CardDto(
     val cardLocation: String? = null,
     val cardProvisionalSolutionDate: String? = null,
     val commentsAtCardProvisionalSolution: String? = null,
+    val userProvisionalSolutionId: JsonElement? = null,
     val userProvisionalSolutionName: String? = null,
     val cardDefinitiveSolutionDate: String? = null,
     val commentsAtCardDefinitiveSolution: String? = null,
+    val userDefinitiveSolutionId: JsonElement? = null,
     val userDefinitiveSolutionName: String? = null,
     val managerName: String? = null,
     val cardManagerCloseDate: String? = null,
@@ -182,8 +207,10 @@ internal data class CardDto(
             updatedAt = updatedAt,
             provisionalSolutionDate = cardProvisionalSolutionDate,
             provisionalSolutionComments = commentsAtCardProvisionalSolution,
+            provisionalSolutionUserId = userProvisionalSolutionId.asString(),
             provisionalSolutionUserName = userProvisionalSolutionName,
             definitiveSolutionComments = commentsAtCardDefinitiveSolution,
+            definitiveSolutionUserId = userDefinitiveSolutionId.asString(),
             definitiveSolutionUserName = userDefinitiveSolutionName,
             managerName = managerName,
             managerCloseDate = cardManagerCloseDate,

@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.MicNone
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
@@ -40,11 +41,15 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,6 +70,7 @@ import com.ih.osm.designsystem.preview.PreviewScreen
 import com.ih.osm.designsystem.theme.OneSmartMateTheme
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.card.domain.model.Card
+import com.ih.osm.features.card.domain.solution.CardSolutionType
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -75,6 +81,7 @@ fun CardListScreenRoute(
     user: AuthenticatedUser,
     onCreateCard: () -> Unit,
     onCardClick: (String) -> Unit,
+    onSolutionClick: (String, CardSolutionType) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CardListViewModel = koinViewModel(),
 ) {
@@ -94,6 +101,7 @@ fun CardListScreenRoute(
         onAction = viewModel::process,
         onCreateCard = onCreateCard,
         onCardClick = onCardClick,
+        onSolutionClick = onSolutionClick,
         modifier = modifier,
     )
 }
@@ -105,8 +113,10 @@ fun CardListScreen(
     onAction: (CardListViewModel.Action) -> Unit,
     onCreateCard: () -> Unit,
     onCardClick: (String) -> Unit,
+    onSolutionClick: (String, CardSolutionType) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var actionCard by remember { mutableStateOf<Card?>(null) }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -157,11 +167,22 @@ fun CardListScreen(
                         card = card,
                         siteName = uiState.siteNames[card.siteId],
                         onClick = { onCardClick(card.uuid) },
+                        onActions = { actionCard = card },
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
                     )
                 }
             }
         }
+    }
+    actionCard?.let { card ->
+        CardActionsBottomSheet(
+            card = card,
+            onDismiss = { actionCard = null },
+            onSolution = { type ->
+                actionCard = null
+                onSolutionClick(card.uuid, type)
+            },
+        )
     }
 }
 
@@ -336,6 +357,7 @@ private fun CardListItem(
     card: Card,
     siteName: String?,
     onClick: () -> Unit,
+    onActions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val overdue = card.isOpen && card.isOverdue()
@@ -367,12 +389,14 @@ private fun CardListItem(
                     ),
                 )
                 StatusPill(card = card, overdue = overdue)
-                Icon(
-                    Icons.Outlined.ChevronRight,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                IconButton(onClick = onActions, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        Icons.Outlined.MoreVert,
+                        contentDescription = stringResource(R.string.card_actions),
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -464,6 +488,93 @@ private fun CardListItem(
                 EvidenceCount(Icons.Outlined.MicNone, card.evidenceAudioCreation)
                 EvidenceCount(Icons.Outlined.Videocam, card.evidenceVideoCreation)
             }
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun CardActionsBottomSheet(
+    card: Card,
+    onDismiss: () -> Unit,
+    onSolution: (CardSolutionType) -> Unit,
+) {
+    val provisionalAvailable = card.isOpen && !card.provisionalSolutionPending &&
+        card.provisionalSolutionDate.isNullOrBlank() && card.provisionalSolutionUserName.isNullOrBlank()
+    val definitiveAvailable = card.isOpen && !card.definitiveSolutionPending &&
+        card.definitiveSolutionDate.isNullOrBlank()
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            AnatomyText(
+                text = stringResource(R.string.card_actions),
+                style = MaterialTheme.typography.titleLarge,
+                properties = AnatomyTextProperties(fontWeight = FontWeight.Bold),
+            )
+            AnatomyText(
+                text = stringResource(R.string.card_actions_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            )
+            if (provisionalAvailable) {
+                CardActionItem(
+                    title = stringResource(R.string.card_actions_provisional),
+                    support = stringResource(R.string.card_actions_provisional_support),
+                    onClick = { onSolution(CardSolutionType.PROVISIONAL) },
+                )
+            }
+            if (definitiveAvailable) {
+                CardActionItem(
+                    title = stringResource(R.string.card_actions_definitive),
+                    support = stringResource(R.string.card_actions_definitive_support),
+                    onClick = { onSolution(CardSolutionType.DEFINITIVE) },
+                )
+            }
+            if (!provisionalAvailable && !definitiveAvailable) {
+                AnatomyText(
+                    text = stringResource(R.string.card_actions_unavailable),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    properties = AnatomyTextProperties(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CardActionItem(title: String, support: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier = Modifier.size(38.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.AutoMirrored.Outlined.Assignment, null, tint = MaterialTheme.colorScheme.primary)
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                AnatomyText(title, style = MaterialTheme.typography.bodyLarge, properties = AnatomyTextProperties(fontWeight = FontWeight.SemiBold))
+                AnatomyText(support, style = MaterialTheme.typography.bodySmall, properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant))
+            }
+            Icon(Icons.Outlined.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -637,6 +748,7 @@ private fun CardListScreenPreview() {
             onAction = {},
             onCreateCard = {},
             onCardClick = {},
+            onSolutionClick = { _, _ -> },
         )
     }
 }
