@@ -109,7 +109,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
         PushNotificationCoordinator.shared.configureFirebase()
-        if FirebaseApp.app() != nil { Messaging.messaging().delegate = self }
+        if FirebaseApp.app() != nil {
+            CrashReportingCoordinator.configure()
+            Messaging.messaging().delegate = self
+        }
         return true
     }
 
