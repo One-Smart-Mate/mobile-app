@@ -79,6 +79,11 @@ final class CatalogSyncBackgroundScheduler {
         UserDefaults.standard.removeObject(forKey: retryCountStorageKey)
     }
 
+    func cancelAll() {
+        controller?.cancelActiveSync()
+        cancelPending()
+    }
+
     func scheduleRetry() {
         let retryCount = UserDefaults.standard.integer(forKey: retryCountStorageKey) + 1
         UserDefaults.standard.set(retryCount, forKey: retryCountStorageKey)

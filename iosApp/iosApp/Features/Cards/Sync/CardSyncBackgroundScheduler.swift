@@ -100,7 +100,30 @@ final class CardSyncBackgroundScheduler {
 
     func networkPolicyDidChange() {
         canUseCurrentNetwork = isAllowed(networkMonitor.currentPath)
-        if canUseCurrentNetwork { runImmediately() }
+        if canUseCurrentNetwork {
+            runImmediately()
+        } else if networkMonitor.currentPath.usesInterfaceType(.cellular) {
+            activeTask?.cancel()
+            controller?.cancelActiveSync()
+        }
+    }
+
+    func cancelAll() {
+        activeTask?.cancel()
+        activeTask = nil
+        controller?.cancelActiveSync()
+        BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: Self.taskIdentifier)
+        UserDefaults.standard.removeObject(forKey: retryCountKey)
+        UserDefaults.standard.removeObject(forKey: pendingRemoteSitesKey)
+        remoteSitesReceivedWhileSyncing.removeAll()
+        isSyncing = false
+        completed = 0
+        total = 0
+        lastError = nil
+        endBackgroundExecution()
+        UNUserNotificationCenter.current().removeDeliveredNotifications(
+            withIdentifiers: ["card-sync-progress"]
+        )
     }
 
     func appDidEnterBackground() {

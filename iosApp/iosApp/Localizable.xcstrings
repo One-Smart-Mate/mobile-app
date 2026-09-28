@@ -3156,6 +3156,248 @@
         }
       }
     },
+    "settings.account.section" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuenta"
+          }
+        }
+      }
+    },
+    "settings.account_information.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Información de la cuenta"
+          }
+        }
+      }
+    },
+    "settings.application.section" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicación"
+          }
+        }
+      }
+    },
+    "settings.close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
+          }
+        }
+      }
+    },
+    "settings.company" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empresa"
+          }
+        }
+      }
+    },
+    "settings.email" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correo"
+          }
+        }
+      }
+    },
+    "settings.information" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Información"
+          }
+        }
+      }
+    },
+    "settings.information.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datos de tu cuenta y sesión"
+          }
+        }
+      }
+    },
+    "settings.logout" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar sesión"
+          }
+        }
+      }
+    },
+    "settings.logout.error" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No fue posible cerrar la sesión. Inténtalo nuevamente."
+          }
+        }
+      }
+    },
+    "settings.logout.warning.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes %lld tarjetas o soluciones pendientes de sincronizar. Si cierras sesión, se eliminarán de este dispositivo."
+          }
+        }
+      }
+    },
+    "settings.logout.warning.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Cerrar sesión?"
+          }
+        }
+      }
+    },
+    "settings.mobile_data" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar datos móviles"
+          }
+        }
+      }
+    },
+    "settings.mobile_data.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir sincronizaciones sin Wi-Fi"
+          }
+        }
+      }
+    },
+    "settings.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre"
+          }
+        }
+      }
+    },
+    "settings.permissions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permisos"
+          }
+        }
+      }
+    },
+    "settings.permissions.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa los accesos del dispositivo"
+          }
+        }
+      }
+    },
+    "settings.permissions.pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pendientes"
+          }
+        }
+      }
+    },
+    "settings.roles" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Roles"
+          }
+        }
+      }
+    },
+    "settings.roles.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin roles asignados"
+          }
+        }
+      }
+    },
+    "settings.sites" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sites"
+          }
+        }
+      }
+    },
+    "settings.sites.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin sites asignados"
+          }
+        }
+      }
+    },
     "settings.title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3163,6 +3405,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes"
+          }
+        }
+      }
+    },
+    "settings.version" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión de la app"
           }
         }
       }

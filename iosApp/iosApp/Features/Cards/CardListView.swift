@@ -11,6 +11,7 @@ struct CardListView: View {
 
     @State private var showsAdvancedFilters = false
     @State private var actionCard: Card?
+    @State private var pendingSolutionAction: PendingSolutionAction?
 
     var body: some View {
         List {
@@ -125,30 +126,32 @@ struct CardListView: View {
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
-        .confirmationDialog(
-            AppStrings.Cards.actionsTitle,
+        .sheet(
             isPresented: Binding(
                 get: { actionCard != nil },
                 set: { if !$0 { actionCard = nil } }
             ),
-            titleVisibility: .visible,
-            presenting: actionCard
-        ) { card in
-            if card.allowsProvisionalSolution, let onApplyProvisionalSolution {
-                Button(AppStrings.Cards.provisionalSolution) {
-                    actionCard = nil
-                    onApplyProvisionalSolution(card.uuid)
-                }
+            onDismiss: performPendingSolutionAction
+        ) {
+            if let card = actionCard {
+                CardActionsSheet(
+                    allowsProvisional: card.allowsProvisionalSolution
+                        && onApplyProvisionalSolution != nil,
+                    allowsDefinitive: card.allowsDefinitiveSolution
+                        && onApplyDefinitiveSolution != nil,
+                    onSelect: { type in
+                        pendingSolutionAction = PendingSolutionAction(
+                            cardUUID: card.uuid,
+                            type: type
+                        )
+                        actionCard = nil
+                    },
+                    onCancel: { actionCard = nil }
+                )
+                .presentationDetents([.height(310)])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Color.osmSurface)
             }
-            if card.allowsDefinitiveSolution, let onApplyDefinitiveSolution {
-                Button(AppStrings.Cards.definitiveSolution) {
-                    actionCard = nil
-                    onApplyDefinitiveSolution(card.uuid)
-                }
-            }
-            Button(AppStrings.Common.cancel, role: .cancel) { actionCard = nil }
-        } message: { _ in
-            Text(AppStrings.Cards.actionsSubtitle)
         }
         .task { viewModel.start(user: user) }
     }
@@ -156,6 +159,19 @@ struct CardListView: View {
     private func hasSolutionNavigation(for card: Card) -> Bool {
         (card.allowsProvisionalSolution && onApplyProvisionalSolution != nil)
             || (card.allowsDefinitiveSolution && onApplyDefinitiveSolution != nil)
+    }
+
+    private func performPendingSolutionAction() {
+        guard let action = pendingSolutionAction else { return }
+        pendingSolutionAction = nil
+        switch action.type {
+        case .provisional:
+            onApplyProvisionalSolution?(action.cardUUID)
+        case .definitive:
+            onApplyDefinitiveSolution?(action.cardUUID)
+        default:
+            break
+        }
     }
 
     private var cardCountHeader: some View {
@@ -205,6 +221,70 @@ struct CardListView: View {
             .foregroundStyle(Color.osmPrimary)
             .accessibilityLabel(AppStrings.Cards.filters)
         }
+    }
+}
+
+private struct PendingSolutionAction {
+    let cardUUID: String
+    let type: CardSolutionType
+}
+
+private struct CardActionsSheet: View {
+    let allowsProvisional: Bool
+    let allowsDefinitive: Bool
+    let onSelect: (CardSolutionType) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(AppStrings.Cards.actionsTitle)
+                    .font(.title2.weight(.bold))
+                Text(AppStrings.Cards.actionsSubtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.osmOnSurfaceVariant)
+            }
+
+            if allowsProvisional {
+                actionButton(
+                    AppStrings.Cards.provisionalSolution,
+                    icon: "wrench.and.screwdriver",
+                    type: .provisional
+                )
+            }
+            if allowsDefinitive {
+                actionButton(
+                    AppStrings.Cards.definitiveSolution,
+                    icon: "checkmark.seal",
+                    type: .definitive
+                )
+            }
+
+            Button(AppStrings.Common.cancel, action: onCancel)
+                .font(.body.weight(.semibold))
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.osmSurface)
+    }
+
+    private func actionButton(
+        _ title: LocalizedStringResource,
+        icon: String,
+        type: CardSolutionType
+    ) -> some View {
+        Button { onSelect(type) } label: {
+            Label(title, systemImage: icon)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.osmPrimary)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(Color.osmPrimaryContainer.opacity(0.7))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 }
 

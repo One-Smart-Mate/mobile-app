@@ -325,6 +325,29 @@ enum AppStrings {
 
     enum Settings {
         static let title: LocalizedStringResource = "settings.title"
+        static let accountSection: LocalizedStringResource = "settings.account.section"
+        static let applicationSection: LocalizedStringResource = "settings.application.section"
+        static let information: LocalizedStringResource = "settings.information"
+        static let informationDescription: LocalizedStringResource = "settings.information.description"
+        static let permissions: LocalizedStringResource = "settings.permissions"
+        static let permissionsDescription: LocalizedStringResource = "settings.permissions.description"
+        static let permissionsPending: LocalizedStringResource = "settings.permissions.pending"
+        static let mobileData: LocalizedStringResource = "settings.mobile_data"
+        static let mobileDataDescription: LocalizedStringResource = "settings.mobile_data.description"
+        static let version: LocalizedStringResource = "settings.version"
+        static let logout: LocalizedStringResource = "settings.logout"
+        static let accountInformationTitle: LocalizedStringResource = "settings.account_information.title"
+        static let name: LocalizedStringResource = "settings.name"
+        static let email: LocalizedStringResource = "settings.email"
+        static let company: LocalizedStringResource = "settings.company"
+        static let sites: LocalizedStringResource = "settings.sites"
+        static let roles: LocalizedStringResource = "settings.roles"
+        static let noSites: LocalizedStringResource = "settings.sites.empty"
+        static let noRoles: LocalizedStringResource = "settings.roles.empty"
+        static let close: LocalizedStringResource = "settings.close"
+        static let logoutWarningTitle: LocalizedStringResource = "settings.logout.warning.title"
+        static let logoutWarningBody: LocalizedStringResource = "settings.logout.warning.body"
+        static let logoutError: LocalizedStringResource = "settings.logout.error"
     }
 
     enum CreateNote {

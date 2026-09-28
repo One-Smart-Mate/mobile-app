@@ -64,6 +64,11 @@ internal object IosEvidenceFileCache {
         trim()
     }
 
+    fun clearAll() {
+        val manager = NSFileManager.defaultManager
+        manager.removeItemAtPath(cacheDirectory(), error = null)
+    }
+
     private fun cachePath(evidence: CardEvidence): String {
         val extension = when (evidence.mediaType) {
             CardEvidenceMediaType.IMAGE -> "jpg"

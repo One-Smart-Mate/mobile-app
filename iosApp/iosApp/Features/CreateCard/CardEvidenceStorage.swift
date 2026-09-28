@@ -81,6 +81,18 @@ actor CardEvidenceStorage {
         try? fileManager.removeItem(atPath: path)
     }
 
+    func clearAll() {
+        guard let root = try? fileManager.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: false
+        ) else { return }
+        let directory = root.appendingPathComponent("CardEvidence", isDirectory: true)
+        guard fileManager.fileExists(atPath: directory.path) else { return }
+        try? fileManager.removeItem(at: directory)
+    }
+
     private func pendingDirectory() throws -> URL {
         let root = try fileManager.url(
             for: .applicationSupportDirectory,

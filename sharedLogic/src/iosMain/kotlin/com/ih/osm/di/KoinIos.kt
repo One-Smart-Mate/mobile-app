@@ -21,6 +21,8 @@ import com.ih.osm.features.card.domain.solution.CardSolutionManager
 import com.ih.osm.features.card.domain.usecase.SyncPendingCardsUseCase
 import com.ih.osm.features.card.domain.usecase.SyncPendingSolutionsUseCase
 import com.ih.osm.features.notifications.IosPushNotificationController
+import com.ih.osm.features.settings.IosSettingsController
+import com.ih.osm.database.AppDatabase
 
 fun initKoinIos(
     baseUrl: String,
@@ -76,4 +78,10 @@ fun createIosCardSyncController(): IosCardSyncController = IosCardSyncController
 fun createIosPushNotificationController(): IosPushNotificationController = IosPushNotificationController(
     registrar = KoinPlatform.getKoin().get<PushTokenRegistrar>(),
     sessionRepository = KoinPlatform.getKoin().get<SessionRepository>(),
+)
+
+fun createIosSettingsController(): IosSettingsController = IosSettingsController(
+    database = KoinPlatform.getKoin().get<AppDatabase>(),
+    repository = KoinPlatform.getKoin().get<CardRepository>(),
+    authRepository = KoinPlatform.getKoin().get<AuthRepository>(),
 )

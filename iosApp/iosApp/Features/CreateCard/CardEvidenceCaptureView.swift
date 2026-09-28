@@ -18,6 +18,7 @@ struct CardEvidenceCaptureView: View {
     @State private var showCamera = false
     @State private var showAudioRecorder = false
     @State private var showPhotoPicker = false
+    @State private var pendingSourceAction: EvidenceSourceAction?
     @State private var pickedItem: PhotosPickerItem?
     @State private var isImporting = false
 
@@ -110,16 +111,21 @@ struct CardEvidenceCaptureView: View {
                 .padding(.top, 4)
             }
         }
-        .confirmationDialog(
-            AppStrings.CreateCard.evidenceSource,
+        .sheet(
             isPresented: $showSourceOptions,
-            titleVisibility: .visible
+            onDismiss: performPendingSourceAction
         ) {
-            if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                Button(AppStrings.CreateCard.camera) { showCamera = true }
-            }
-            Button(AppStrings.CreateCard.photoLibrary) { showPhotoPicker = true }
-            Button(AppStrings.Common.cancel, role: .cancel) {}
+            EvidenceSourceSheet(
+                cameraAvailable: UIImagePickerController.isSourceTypeAvailable(.camera),
+                onSelect: { action in
+                    pendingSourceAction = action
+                    showSourceOptions = false
+                },
+                onCancel: { showSourceOptions = false }
+            )
+            .presentationDetents([.height(285)])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(Color.osmSurface)
         }
         .photosPicker(
             isPresented: $showPhotoPicker,
@@ -158,6 +164,17 @@ struct CardEvidenceCaptureView: View {
             )
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
+        }
+    }
+
+    private func performPendingSourceAction() {
+        guard let action = pendingSourceAction else { return }
+        pendingSourceAction = nil
+        switch action {
+        case .camera:
+            showCamera = true
+        case .photoLibrary:
+            showPhotoPicker = true
         }
     }
 
@@ -356,6 +373,62 @@ struct CardEvidenceCaptureView: View {
     }
 
     private enum EvidenceImportError: Error { case missingData }
+}
+
+private enum EvidenceSourceAction {
+    case camera
+    case photoLibrary
+}
+
+private struct EvidenceSourceSheet: View {
+    let cameraAvailable: Bool
+    let onSelect: (EvidenceSourceAction) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(AppStrings.CreateCard.evidenceSource)
+                .font(.title2.weight(.bold))
+
+            if cameraAvailable {
+                sourceButton(
+                    AppStrings.CreateCard.camera,
+                    icon: "camera",
+                    action: .camera
+                )
+            }
+            sourceButton(
+                AppStrings.CreateCard.photoLibrary,
+                icon: "photo.on.rectangle",
+                action: .photoLibrary
+            )
+
+            Button(AppStrings.Common.cancel, action: onCancel)
+                .font(.body.weight(.semibold))
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.osmSurface)
+    }
+
+    private func sourceButton(
+        _ title: LocalizedStringResource,
+        icon: String,
+        action: EvidenceSourceAction
+    ) -> some View {
+        Button { onSelect(action) } label: {
+            Label(title, systemImage: icon)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.osmPrimary)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(Color.osmPrimaryContainer.opacity(0.7))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 private struct CardEvidenceCaptureLimits {

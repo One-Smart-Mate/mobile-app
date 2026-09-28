@@ -20,6 +20,7 @@ struct MainTabRoot: View {
     @State private var createCardViewModel: CreateCardViewModel?
     @State private var cardSolutionViewModel: CardSolutionViewModel?
     @State private var permissionsViewModel = PermissionsViewModel()
+    @State private var settingsViewModel: SettingsViewModel?
     @State private var cardSyncScheduler = CardSyncBackgroundScheduler.shared
     private let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
     private let makeCardDetailViewModel: @MainActor () -> CardDetailViewModel?
@@ -31,7 +32,8 @@ struct MainTabRoot: View {
         cardListViewModel: CardListViewModel? = nil,
         makeCardDetailViewModel: @escaping @MainActor () -> CardDetailViewModel? = { nil },
         makeCreateCardViewModel: @escaping @MainActor () -> CreateCardViewModel? = { nil },
-        makeCardSolutionViewModel: @escaping @MainActor (String, CardSolutionType) -> CardSolutionViewModel? = { _, _ in nil }
+        makeCardSolutionViewModel: @escaping @MainActor (String, CardSolutionType) -> CardSolutionViewModel? = { _, _ in nil },
+        settingsViewModel: SettingsViewModel? = nil
     ) {
         self.user = user
         self.makeCreateCardViewModel = makeCreateCardViewModel
@@ -40,6 +42,7 @@ struct MainTabRoot: View {
         _selectedSiteID = State(initialValue: user.sites.first?.id)
         _catalogSyncViewModel = State(initialValue: catalogSyncViewModel)
         _cardListViewModel = State(initialValue: cardListViewModel)
+        _settingsViewModel = State(initialValue: settingsViewModel)
     }
 
     var body: some View {
@@ -92,7 +95,20 @@ struct MainTabRoot: View {
             .tabItem { Label(AppStrings.Navigation.cards, systemImage: "doc.text") }
             .tag(MainTab.cards)
 
-            NavigationStack { SettingsView() }
+            NavigationStack {
+                if let settingsViewModel {
+                    SettingsView(
+                        user: user,
+                        viewModel: settingsViewModel,
+                        permissionsViewModel: permissionsViewModel
+                    )
+                } else {
+                    ContentUnavailableView(
+                        AppStrings.Settings.title,
+                        systemImage: "gearshape"
+                    )
+                }
+            }
                 .tabItem { Label(AppStrings.Navigation.settings, systemImage: "gearshape") }
                 .tag(MainTab.settings)
         }
@@ -128,7 +144,10 @@ struct MainTabRoot: View {
             PushNotificationCoordinator.shared.sessionDidBecomeAvailable()
             await permissionsViewModel.autoPromptIfNeeded()
         }
-        .onDisappear { cardListViewModel?.stop() }
+        .onDisappear {
+            cardListViewModel?.stop()
+            settingsViewModel?.stop()
+        }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
