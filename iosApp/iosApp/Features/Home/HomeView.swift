@@ -58,8 +58,8 @@ struct MainTabRoot: View {
                     cardSyncCompleted: cardSyncScheduler.completed,
                     cardSyncTotal: cardSyncScheduler.total,
                     onSyncPendingCards: cardSyncScheduler.syncManually,
-                    onCreateNote: presentCreateCard,
-                    onOpenNotes: { selectedTab = .cards }
+                    onCreateCard: presentCreateCard,
+                    onOpenCards: { selectedTab = .cards }
                 )
             }
             .tabItem { Label(AppStrings.Navigation.home, systemImage: "house") }
@@ -183,8 +183,9 @@ struct HomeView: View {
     let cardSyncCompleted: Int
     let cardSyncTotal: Int
     let onSyncPendingCards: () -> Void
-    let onCreateNote: () -> Void
-    let onOpenNotes: () -> Void
+    let onCreateCard: () -> Void
+    let onOpenCards: () -> Void
+    @State private var showsTransientCatalogSyncState = false
 
     init(
         user: SessionUser,
@@ -196,8 +197,8 @@ struct HomeView: View {
         cardSyncCompleted: Int,
         cardSyncTotal: Int,
         onSyncPendingCards: @escaping () -> Void,
-        onCreateNote: @escaping () -> Void,
-        onOpenNotes: @escaping () -> Void
+        onCreateCard: @escaping () -> Void,
+        onOpenCards: @escaping () -> Void
     ) {
         self.user = user
         _selectedSiteID = selectedSiteID
@@ -208,8 +209,8 @@ struct HomeView: View {
         self.cardSyncCompleted = cardSyncCompleted
         self.cardSyncTotal = cardSyncTotal
         self.onSyncPendingCards = onSyncPendingCards
-        self.onCreateNote = onCreateNote
-        self.onOpenNotes = onOpenNotes
+        self.onCreateCard = onCreateCard
+        self.onOpenCards = onOpenCards
     }
 
     var body: some View {
@@ -230,8 +231,8 @@ struct HomeView: View {
                 NetworkStatusBadge(status: networkStatus)
                     .padding(.top, OSMSpacing.sm)
 
-                if catalogSyncState != .idle {
-                    CatalogSyncStatusCard(state: catalogSyncState)
+                if displayedCatalogSyncState != .idle {
+                    CatalogSyncStatusCard(state: displayedCatalogSyncState)
                         .padding(.top, OSMSpacing.sm)
                 }
 
@@ -261,9 +262,9 @@ struct HomeView: View {
                     spacing: OSMSpacing.sm
                 ) {
                     QuickActionCard(
-                        title: AppStrings.Home.newNote,
+                        title: AppStrings.Home.newCard,
                         systemImage: "note.text.badge.plus",
-                        action: onCreateNote
+                        action: onCreateCard
                     )
                     QuickActionCard(
                         title: AppStrings.Home.scanQR,
@@ -276,9 +277,9 @@ struct HomeView: View {
                         action: {}
                     )
                     QuickActionCard(
-                        title: AppStrings.Home.notes,
+                        title: AppStrings.Home.cards,
                         systemImage: "doc.text",
-                        action: onOpenNotes
+                        action: onOpenCards
                     )
                 }
             }
@@ -288,6 +289,19 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Color.osmBackground.ignoresSafeArea())
+        .task(id: isTransientCatalogSyncState) {
+            showsTransientCatalogSyncState = false
+            guard isTransientCatalogSyncState else { return }
+
+            do {
+                try await Task.sleep(for: .milliseconds(500))
+            } catch {
+                return
+            }
+
+            guard !Task.isCancelled else { return }
+            showsTransientCatalogSyncState = true
+        }
         .onChange(of: user.sites) { _, sites in
             if !sites.contains(where: { $0.id == selectedSiteID }) {
                 selectedSiteID = sites.first?.id
@@ -297,6 +311,26 @@ struct HomeView: View {
 
     private var selectedSite: SessionSite? {
         user.sites.first { $0.id == selectedSiteID } ?? user.sites.first
+    }
+
+    private var isTransientCatalogSyncState: Bool {
+        switch catalogSyncState {
+        case .waitingForNetwork, .downloading:
+            true
+        case .idle, .failed:
+            false
+        }
+    }
+
+    private var displayedCatalogSyncState: CatalogSyncViewState {
+        switch catalogSyncState {
+        case .failed:
+            catalogSyncState
+        case .waitingForNetwork, .downloading:
+            showsTransientCatalogSyncState ? catalogSyncState : .idle
+        case .idle:
+            catalogSyncState
+        }
     }
 
     private var header: some View {

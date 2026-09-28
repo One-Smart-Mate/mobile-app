@@ -74,10 +74,10 @@ enum AppStrings {
     enum Home {
         static let greeting: LocalizedStringResource = "home.greeting"
         static let quickActions: LocalizedStringResource = "home.quick_actions"
-        static let newNote: LocalizedStringResource = "home.action.new_note"
+        static let newCard: LocalizedStringResource = "home.action.new_card"
         static let scanQR: LocalizedStringResource = "home.action.scan_qr"
         static let fastPassword: LocalizedStringResource = "home.action.fast_password"
-        static let notes: LocalizedStringResource = "home.action.notes"
+        static let cards: LocalizedStringResource = "home.action.cards"
         static let pendingCardsTitle: LocalizedStringResource = "home.pending_cards.title"
         static let pendingCardsBody: LocalizedStringResource = "home.pending_cards.body"
         static let pendingCardsAction: LocalizedStringResource = "home.pending_cards.action"

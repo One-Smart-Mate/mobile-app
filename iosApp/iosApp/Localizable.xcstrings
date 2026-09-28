@@ -2517,24 +2517,24 @@
         }
       }
     },
-    "home.action.new_note" : {
+    "home.action.new_card" : {
       "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nueva nota"
+            "value" : "Nueva tarjeta"
           }
         }
       }
     },
-    "home.action.notes" : {
+    "home.action.cards" : {
       "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Notas"
+            "value" : "Tarjetas"
           }
         }
       }
