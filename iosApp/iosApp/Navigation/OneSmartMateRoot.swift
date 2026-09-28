@@ -1,8 +1,13 @@
 import SwiftUI
 
 struct OneSmartMateRoot: View {
+    private enum SignedOutRoute: Hashable {
+        case forgotPassword(email: String)
+    }
+
     let dependencies: AppDependencies
     @State private var sessionViewModel: SessionViewModel
+    @State private var signedOutPath: [SignedOutRoute] = []
 
     init(dependencies: AppDependencies) {
         self.dependencies = dependencies
@@ -26,8 +31,21 @@ struct OneSmartMateRoot: View {
                     .accessibilityLabel(AppStrings.Session.loading)
             }
         case .signedOut:
-            NavigationStack {
-                LoginView(viewModel: dependencies.makeLoginViewModel())
+            NavigationStack(path: $signedOutPath) {
+                LoginView(
+                    viewModel: dependencies.makeLoginViewModel { email in
+                        signedOutPath.append(.forgotPassword(email: email))
+                    }
+                )
+                .navigationDestination(for: SignedOutRoute.self) { route in
+                    switch route {
+                    case let .forgotPassword(email):
+                        ForgotPasswordView(
+                            viewModel: dependencies.makeForgotPasswordViewModel(email),
+                            onClose: closePasswordRecovery
+                        )
+                    }
+                }
             }
         case let .signedIn(user):
             MainTabRoot(
@@ -41,6 +59,11 @@ struct OneSmartMateRoot: View {
             )
             .id(user.id)
         }
+    }
+
+    private func closePasswordRecovery() {
+        guard !signedOutPath.isEmpty else { return }
+        signedOutPath.removeLast()
     }
 }
 

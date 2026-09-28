@@ -31,6 +31,42 @@ enum AppStrings {
         static let genericError: LocalizedStringResource = "login.error.generic"
     }
 
+    enum PasswordRecovery {
+        static let screenTitle: LocalizedStringResource = "forgot_password.screen_title"
+        static let back: LocalizedStringResource = "forgot_password.back"
+        static let step: LocalizedStringResource = "forgot_password.step"
+        static let emailTitle: LocalizedStringResource = "forgot_password.email.title"
+        static let emailSubtitle: LocalizedStringResource = "forgot_password.email.subtitle"
+        static let codeTitle: LocalizedStringResource = "forgot_password.code.title"
+        static let codeSubtitle: LocalizedStringResource = "forgot_password.code.subtitle"
+        static let codeSentTo: LocalizedStringResource = "forgot_password.code.sent_to"
+        static let codeLabel: LocalizedStringResource = "forgot_password.code.label"
+        static let codePlaceholder: LocalizedStringResource = "forgot_password.code.placeholder"
+        static let passwordTitle: LocalizedStringResource = "forgot_password.password.title"
+        static let passwordSubtitle: LocalizedStringResource = "forgot_password.password.subtitle"
+        static let newPassword: LocalizedStringResource = "forgot_password.password.new"
+        static let passwordPlaceholder: LocalizedStringResource = "forgot_password.password.placeholder"
+        static let confirmPassword: LocalizedStringResource = "forgot_password.password.confirm"
+        static let confirmPlaceholder: LocalizedStringResource = "forgot_password.password.confirm_placeholder"
+        static let successTitle: LocalizedStringResource = "forgot_password.success.title"
+        static let successSubtitle: LocalizedStringResource = "forgot_password.success.subtitle"
+        static let successSupport: LocalizedStringResource = "forgot_password.success.support"
+        static let sendCode: LocalizedStringResource = "forgot_password.action.send_code"
+        static let verifyCode: LocalizedStringResource = "forgot_password.action.verify_code"
+        static let updatePassword: LocalizedStringResource = "forgot_password.action.update_password"
+        static let backToLogin: LocalizedStringResource = "forgot_password.action.back_to_login"
+        static let resend: LocalizedStringResource = "forgot_password.action.resend"
+        static let resendCountdown: LocalizedStringResource = "forgot_password.action.resend_countdown"
+        static let codeSent: LocalizedStringResource = "forgot_password.message.code_sent"
+        static let codeInvalid: LocalizedStringResource = "forgot_password.error.code_invalid"
+        static let codeExpired: LocalizedStringResource = "forgot_password.error.code_expired"
+        static let confirmationRequired: LocalizedStringResource = "forgot_password.error.confirmation_required"
+        static let passwordsDoNotMatch: LocalizedStringResource = "forgot_password.error.passwords_do_not_match"
+        static let tooManyAttempts: LocalizedStringResource = "forgot_password.error.too_many_attempts"
+        static let noConnection: LocalizedStringResource = "forgot_password.error.no_connection"
+        static let requestFailed: LocalizedStringResource = "forgot_password.error.request_failed"
+    }
+
     enum Session {
         static let loading: LocalizedStringResource = "session.loading"
     }

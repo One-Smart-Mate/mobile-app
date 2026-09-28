@@ -3,7 +3,10 @@ import SharedLogic
 
 struct AppDependencies {
     let makeSessionViewModel: @MainActor () -> SessionViewModel
-    let makeLoginViewModel: @MainActor () -> LoginViewModel
+    let makeLoginViewModel: @MainActor (
+        _ passwordResetHandler: @escaping LoginViewModel.PasswordResetHandler
+    ) -> LoginViewModel
+    let makeForgotPasswordViewModel: @MainActor (String) -> ForgotPasswordViewModel
     let makeCatalogSyncViewModel: @MainActor () -> CatalogSyncViewModel?
     let makeCardListViewModel: @MainActor () -> CardListViewModel?
     let makeCardDetailViewModel: @MainActor () -> CardDetailViewModel?
@@ -33,7 +36,7 @@ struct AppDependencies {
                     stopObservation: controller.stop
                 )
             },
-            makeLoginViewModel: {
+            makeLoginViewModel: { passwordResetHandler in
                 LoginViewModel(loginHandler: { credentials in
                     let outcome = try await authController.authenticate(
                         email: credentials.email,
@@ -45,7 +48,13 @@ struct AppDependencies {
                                 ?? String(localized: AppStrings.Login.genericError)
                         )
                     }
-                })
+                }, passwordResetHandler: passwordResetHandler)
+            },
+            makeForgotPasswordViewModel: { email in
+                ForgotPasswordViewModel(
+                    initialEmail: email,
+                    controller: KoinIosKt.createIosPasswordRecoveryController()
+                )
             },
             makeCatalogSyncViewModel: {
                 CatalogSyncViewModel(
@@ -92,7 +101,12 @@ struct AppDependencies {
                     stopObservation: {}
                 )
             },
-            makeLoginViewModel: { LoginViewModel() },
+            makeLoginViewModel: { passwordResetHandler in
+                LoginViewModel(passwordResetHandler: passwordResetHandler)
+            },
+            makeForgotPasswordViewModel: { email in
+                ForgotPasswordViewModel(initialEmail: email)
+            },
             makeCatalogSyncViewModel: { nil },
             makeCardListViewModel: { nil },
             makeCardDetailViewModel: { nil },

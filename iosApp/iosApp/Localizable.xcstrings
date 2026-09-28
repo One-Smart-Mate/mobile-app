@@ -2630,6 +2630,369 @@
     "Ingresa tu contraseña" : {
 
     },
+    "forgot_password.action.back_to_login" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a iniciar sesión"
+          }
+        }
+      }
+    },
+    "forgot_password.action.resend" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reenviar código"
+          }
+        }
+      }
+    },
+    "forgot_password.action.resend_countdown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reenviar código en %llds"
+          }
+        }
+      }
+    },
+    "forgot_password.action.send_code" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar código"
+          }
+        }
+      }
+    },
+    "forgot_password.action.update_password" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar contraseña"
+          }
+        }
+      }
+    },
+    "forgot_password.action.verify_code" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificar código"
+          }
+        }
+      }
+    },
+    "forgot_password.back" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver"
+          }
+        }
+      }
+    },
+    "forgot_password.code.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de verificación"
+          }
+        }
+      }
+    },
+    "forgot_password.code.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ABC123"
+          }
+        }
+      }
+    },
+    "forgot_password.code.sent_to" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código enviado a %@"
+          }
+        }
+      }
+    },
+    "forgot_password.code.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa el código de 6 caracteres que enviamos a tu cuenta."
+          }
+        }
+      }
+    },
+    "forgot_password.code.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifica tu correo"
+          }
+        }
+      }
+    },
+    "forgot_password.email.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa tu correo y te enviaremos un código de verificación."
+          }
+        }
+      }
+    },
+    "forgot_password.email.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recupera tu acceso"
+          }
+        }
+      }
+    },
+    "forgot_password.error.code_expired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El código venció. Solicita uno nuevo para continuar."
+          }
+        }
+      }
+    },
+    "forgot_password.error.code_invalid" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa un código válido de 6 caracteres."
+          }
+        }
+      }
+    },
+    "forgot_password.error.confirmation_required" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirma tu nueva contraseña."
+          }
+        }
+      }
+    },
+    "forgot_password.error.no_connection" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pudimos conectarnos. Revisa tu conexión e inténtalo nuevamente."
+          }
+        }
+      }
+    },
+    "forgot_password.error.passwords_do_not_match" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las contraseñas no coinciden."
+          }
+        }
+      }
+    },
+    "forgot_password.error.request_failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No fue posible completar la solicitud. Inténtalo nuevamente."
+          }
+        }
+      }
+    },
+    "forgot_password.error.too_many_attempts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Realizaste demasiados intentos. Espera unos minutos antes de continuar."
+          }
+        }
+      }
+    },
+    "forgot_password.message.code_sent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si la cuenta existe, recibirás un código de recuperación."
+          }
+        }
+      }
+    },
+    "forgot_password.password.confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmar contraseña"
+          }
+        }
+      }
+    },
+    "forgot_password.password.confirm_placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repite tu nueva contraseña"
+          }
+        }
+      }
+    },
+    "forgot_password.password.new" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva contraseña"
+          }
+        }
+      }
+    },
+    "forgot_password.password.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa tu nueva contraseña"
+          }
+        }
+      }
+    },
+    "forgot_password.password.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa al menos 8 caracteres para proteger tu cuenta."
+          }
+        }
+      }
+    },
+    "forgot_password.password.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea una contraseña"
+          }
+        }
+      }
+    },
+    "forgot_password.screen_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperar contraseña"
+          }
+        }
+      }
+    },
+    "forgot_password.step" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paso %lld de %lld"
+          }
+        }
+      }
+    },
+    "forgot_password.success.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya puedes acceder nuevamente a One Smart Mate."
+          }
+        }
+      }
+    },
+    "forgot_password.success.support" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu nueva contraseña quedó guardada correctamente. Vuelve al inicio de sesión para continuar."
+          }
+        }
+      }
+    },
+    "forgot_password.success.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contraseña actualizada"
+          }
+        }
+      }
+    },
     "login.brand.name" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -2,23 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>DevelopmentApiBaseURL</key>
-	<string>$(OSM_DEV_API_BASE_URL)</string>
-	<key>ProductionApiBaseURL</key>
-	<string>$(OSM_PROD_API_BASE_URL)</string>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.ih.osm.catalog-sync</string>
 		<string>com.ih.osm.card-sync</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>OSM utiliza la cámara para capturar fotos y videos como evidencia de una tarjeta.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>OSM utiliza el micrófono para grabar audio y video como evidencia de una tarjeta.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>OSM accede a tu galería únicamente para adjuntar evidencias seleccionadas por ti.</string>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>DevelopmentApiBaseURL</key>
+	<string>$(OSM_DEV_API_BASE_URL)</string>
+	<key>ProductionApiBaseURL</key>
+	<string>$(OSM_PROD_API_BASE_URL)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>processing</string>

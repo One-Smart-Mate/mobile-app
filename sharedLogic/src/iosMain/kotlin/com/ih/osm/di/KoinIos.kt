@@ -5,8 +5,10 @@ import com.ih.osm.core.config.AppEnvironment
 import org.koin.core.context.startKoin
 import org.koin.mp.KoinPlatform
 import com.ih.osm.features.auth.IosAuthController
+import com.ih.osm.features.auth.IosPasswordRecoveryController
 import com.ih.osm.features.auth.IosSessionController
 import com.ih.osm.features.auth.domain.repository.AuthRepository
+import com.ih.osm.features.auth.passwordrecovery.domain.manager.PasswordRecoveryManager
 import com.ih.osm.features.auth.domain.session.SessionRepository
 import com.ih.osm.features.auth.data.remote.PushTokenRegistrar
 import com.ih.osm.features.catalog.IosCatalogSyncController
@@ -43,6 +45,11 @@ fun initKoinIos(
 fun createIosAuthController(): IosAuthController = IosAuthController(
     authRepository = KoinPlatform.getKoin().get<AuthRepository>(),
 )
+
+fun createIosPasswordRecoveryController(): IosPasswordRecoveryController =
+    IosPasswordRecoveryController(
+        manager = KoinPlatform.getKoin().get<PasswordRecoveryManager>(),
+    )
 
 fun createIosSessionController(): IosSessionController = IosSessionController(
     sessionRepository = KoinPlatform.getKoin().get<SessionRepository>(),
