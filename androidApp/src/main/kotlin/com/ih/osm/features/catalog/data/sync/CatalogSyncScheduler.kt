@@ -15,6 +15,7 @@ import com.ih.osm.features.catalog.domain.model.CatalogKind
 import com.ih.osm.features.catalog.domain.model.CatalogSyncPlan
 import com.ih.osm.features.catalog.domain.model.CatalogSyncStatus
 import com.ih.osm.features.catalog.domain.usecase.BuildCatalogSyncPlanUseCase
+import com.ih.osm.features.settings.domain.preferences.MobileDataSyncPreferences
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +25,7 @@ import kotlinx.coroutines.withContext
 class CatalogSyncScheduler(
     context: Context,
     private val buildCatalogSyncPlan: BuildCatalogSyncPlanUseCase,
+    private val syncPreferences: MobileDataSyncPreferences,
 ) : CatalogSyncManager {
     private val workManager = WorkManager.getInstance(context.applicationContext)
 
@@ -34,13 +36,15 @@ class CatalogSyncScheduler(
         enqueue(user, plan, ExistingWorkPolicy.KEEP)
     }
 
-    override fun enqueueManual(user: AuthenticatedUser, catalogs: Set<CatalogKind>) {
+    override fun enqueueManual(user: AuthenticatedUser, catalogs: Set<CatalogKind>): Boolean {
         val plan = buildCatalogSyncPlan.manual(
             userId = user.id,
             siteIds = user.sites.map { it.id },
             catalogs = catalogs,
         )
-        if (!plan.isEmpty) enqueue(user, plan, ExistingWorkPolicy.REPLACE)
+        if (plan.isEmpty) return false
+        enqueue(user, plan, ExistingWorkPolicy.KEEP)
+        return true
     }
 
     override fun observe(user: AuthenticatedUser): Flow<CatalogSyncStatus> =
@@ -72,7 +76,13 @@ class CatalogSyncScheduler(
             )
             .setConstraints(
                 Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .setRequiredNetworkType(
+                        if (syncPreferences.allowMobileData.value) {
+                            NetworkType.CONNECTED
+                        } else {
+                            NetworkType.UNMETERED
+                        },
+                    )
                     .build(),
             )
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)

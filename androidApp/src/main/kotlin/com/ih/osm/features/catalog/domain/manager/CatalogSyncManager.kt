@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface CatalogSyncManager {
     suspend fun enqueueIfNeeded(user: AuthenticatedUser)
-    fun enqueueManual(user: AuthenticatedUser, catalogs: Set<CatalogKind>)
+    fun enqueueManual(user: AuthenticatedUser, catalogs: Set<CatalogKind>): Boolean
     fun observe(user: AuthenticatedUser): Flow<CatalogSyncStatus>
     suspend fun cancel(user: AuthenticatedUser)
 }

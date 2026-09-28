@@ -36,8 +36,8 @@ import org.koin.dsl.module
 
 val androidAppModule = module {
     single<NetworkStatusMonitor> { AndroidNetworkStatusMonitor(get()) }
-    single<CatalogSyncManager> { CatalogSyncScheduler(get(), get()) }
     single<MobileDataSyncPreferences> { SharedPreferencesMobileDataSyncPreferences(get()) }
+    single<CatalogSyncManager> { CatalogSyncScheduler(get(), get(), get()) }
     single { CardSyncTriggerStore(get()) }
     single { CardSyncNetworkPolicy(get(), get()) }
     single<CardSyncManager> { CardSyncScheduler(get(), get(), get(), get(), get()) }

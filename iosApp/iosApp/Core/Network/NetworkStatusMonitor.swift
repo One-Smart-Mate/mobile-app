@@ -1,7 +1,7 @@
 import Network
 import Observation
 
-enum NetworkConnectionStatus: Sendable {
+enum NetworkConnectionStatus: Sendable, Equatable {
     case wifiConnected
     case wifiNoInternet
     case cellularConnected

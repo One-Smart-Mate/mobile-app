@@ -15,6 +15,8 @@ final class CatalogSyncBackgroundScheduler {
     private let pendingCatalogKeysStorageKey = "catalog-sync.pending-catalog-keys"
     private let retryCountStorageKey = "catalog-sync.retry-count"
     private let maximumRetryCount = 3
+    private let networkMonitor = NetworkStatusMonitor()
+    private let networkPolicy = CatalogSyncNetworkPolicy()
     private var controller: IosCatalogSyncController?
     private var isRegistered = false
 
@@ -94,6 +96,11 @@ final class CatalogSyncBackgroundScheduler {
     private func handle(_ backgroundTask: BGProcessingTask) {
         guard let controller else {
             backgroundTask.setTaskCompleted(success: false)
+            return
+        }
+        guard networkPolicy.blockReason(for: networkMonitor.status) == nil else {
+            backgroundTask.setTaskCompleted(success: false)
+            schedule()
             return
         }
 

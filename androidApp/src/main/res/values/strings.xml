@@ -53,6 +53,14 @@
     <string name="home_action_scan_qr">Leer código QR</string>
     <string name="home_action_fast_password">Fast password</string>
     <string name="home_action_notes">Notas</string>
+    <string name="home_catalog_sync_title">Catálogos de la aplicación</string>
+    <string name="home_catalog_sync_body">Actualiza tipos de tarjeta, preclasificadores, prioridades, niveles y usuarios.</string>
+    <string name="home_catalog_sync_action">Sincronizar catálogos</string>
+    <string name="home_catalog_sync_confirm_title">¿Sincronizar catálogos?</string>
+    <string name="home_catalog_sync_confirm_body">Se descargará la información más reciente para usarla dentro y fuera de línea.</string>
+    <string name="home_catalog_sync_confirm_action">Sincronizar</string>
+    <string name="home_catalog_sync_mobile_data_disabled">Para sincronizar sin Wi-Fi, habilita el uso de datos móviles desde Ajustes.</string>
+    <string name="home_catalog_sync_no_internet">Necesitas una conexión a internet para sincronizar los catálogos.</string>
     <string name="network_wifi_connected">Wi-Fi con internet</string>
     <string name="network_wifi_no_internet">Wi-Fi sin internet</string>
     <string name="network_mobile_connected">Datos móviles con internet</string>

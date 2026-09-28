@@ -31,10 +31,12 @@ import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.SignalCellularAlt
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material.icons.outlined.WifiOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,9 +60,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ih.osm.R
 import com.ih.osm.core.network.NetworkConnectionStatus
-import com.ih.osm.core.network.NetworkStatusMonitor
 import com.ih.osm.designsystem.anatomy.AnatomyCard
 import com.ih.osm.designsystem.anatomy.AnatomyCardStyle
+import com.ih.osm.designsystem.anatomy.AnatomyBanner
+import com.ih.osm.designsystem.anatomy.AnatomyBannerType
 import com.ih.osm.designsystem.anatomy.AnatomyDropdown
 import com.ih.osm.designsystem.anatomy.AnatomyImage
 import com.ih.osm.designsystem.anatomy.AnatomyImageSource
@@ -71,11 +74,9 @@ import com.ih.osm.designsystem.theme.OneSmartMateTheme
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.model.UserSite
 import com.ih.osm.features.catalog.domain.model.CatalogKind
-import com.ih.osm.features.catalog.domain.manager.CatalogSyncManager
 import com.ih.osm.features.catalog.domain.model.CatalogSyncStatus
 import com.ih.osm.features.permissions.PermissionsBottomSheetHost
 import kotlinx.coroutines.delay
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -84,15 +85,10 @@ fun HomeScreenRoute(
     onCreateCard: (Long) -> Unit,
     onOpenNotes: () -> Unit,
     modifier: Modifier = Modifier,
-    networkStatusMonitor: NetworkStatusMonitor = koinInject(),
-    catalogSyncManager: CatalogSyncManager = koinInject(),
     viewModel: HomeViewModel = koinViewModel(),
 ) {
-    val networkStatus by networkStatusMonitor.status.collectAsStateWithLifecycle()
-    val cardSyncState by viewModel.getStateFlow().collectAsStateWithLifecycle()
-    val catalogSyncState by catalogSyncManager.observe(user).collectAsStateWithLifecycle(
-        initialValue = CatalogSyncStatus.Idle,
-    )
+    val state by viewModel.getStateFlow().collectAsStateWithLifecycle()
+    val catalogSyncState = state.catalogSyncStatus
     val isTransientSyncState = catalogSyncState is CatalogSyncStatus.WaitingForNetwork ||
         catalogSyncState is CatalogSyncStatus.Downloading
     var showTransientSyncState by remember { mutableStateOf(false) }
@@ -100,6 +96,9 @@ fun HomeScreenRoute(
         mutableStateOf(user.sites.firstOrNull()?.id)
     }
 
+    LaunchedEffect(user) {
+        viewModel.process(HomeViewModel.Action.BindUser(user))
+    }
     LaunchedEffect(user.sites) {
         if (user.sites.none { it.id == selectedSiteId }) {
             selectedSiteId = user.sites.firstOrNull()?.id
@@ -120,20 +119,29 @@ fun HomeScreenRoute(
     HomeScreen(
         user = user,
         selectedSite = selectedSite,
-        networkStatus = networkStatus,
+        networkStatus = state.networkStatus,
         catalogSyncState = when {
             catalogSyncState is CatalogSyncStatus.Failed -> catalogSyncState
             showTransientSyncState -> catalogSyncState
             else -> CatalogSyncStatus.Idle
         },
+        isCatalogSyncBusy = state.isCatalogSyncBusy(),
+        showCatalogSyncConfirmation = state.showCatalogSyncConfirmation,
+        banner = state.banner,
         onSiteSelected = { selectedSiteId = it.id },
         onCreateNote = { selectedSite?.let { onCreateCard(it.id) } },
         onOpenNotes = onOpenNotes,
-        pendingCardCount = cardSyncState.pendingCount,
-        isCardSyncing = cardSyncState.isSyncing,
-        cardSyncCompleted = cardSyncState.completed,
-        cardSyncTotal = cardSyncState.total,
+        pendingCardCount = state.pendingCount,
+        isCardSyncing = state.isSyncing,
+        cardSyncCompleted = state.completed,
+        cardSyncTotal = state.total,
         onSyncPendingCards = { viewModel.process(HomeViewModel.Action.SyncPendingCards) },
+        onRequestCatalogSync = { viewModel.process(HomeViewModel.Action.RequestCatalogSync) },
+        onConfirmCatalogSync = { viewModel.process(HomeViewModel.Action.ConfirmCatalogSync) },
+        onDismissCatalogSyncConfirmation = {
+            viewModel.process(HomeViewModel.Action.DismissCatalogSyncConfirmation)
+        },
+        onDismissBanner = { viewModel.process(HomeViewModel.Action.DismissBanner) },
         modifier = modifier,
     )
 
@@ -148,6 +156,9 @@ fun HomeScreen(
     selectedSite: UserSite?,
     networkStatus: NetworkConnectionStatus,
     catalogSyncState: CatalogSyncStatus,
+    isCatalogSyncBusy: Boolean,
+    showCatalogSyncConfirmation: Boolean,
+    banner: HomeBanner?,
     onSiteSelected: (UserSite) -> Unit,
     onCreateNote: () -> Unit,
     onOpenNotes: () -> Unit,
@@ -156,6 +167,10 @@ fun HomeScreen(
     cardSyncCompleted: Int,
     cardSyncTotal: Int,
     onSyncPendingCards: () -> Unit,
+    onRequestCatalogSync: () -> Unit,
+    onConfirmCatalogSync: () -> Unit,
+    onDismissCatalogSyncConfirmation: () -> Unit,
+    onDismissBanner: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -182,10 +197,21 @@ fun HomeScreen(
 
             NetworkStatusBadge(status = networkStatus)
 
-            if (catalogSyncState !is CatalogSyncStatus.Idle) {
+            if (banner != null) {
                 Spacer(Modifier.height(12.dp))
-                CatalogSyncStatusCard(catalogSyncState)
+                AnatomyBanner(
+                    message = stringResource(banner.messageResource()),
+                    type = AnatomyBannerType.ERROR,
+                    onDismiss = onDismissBanner,
+                )
             }
+
+            Spacer(Modifier.height(12.dp))
+            ManualCatalogSyncCard(
+                state = catalogSyncState,
+                isBusy = isCatalogSyncBusy,
+                onClick = onRequestCatalogSync,
+            )
 
             if (pendingCardCount > 0) {
                 Spacer(Modifier.height(12.dp))
@@ -213,6 +239,13 @@ fun HomeScreen(
             )
             Spacer(Modifier.height(16.dp))
         }
+    }
+
+    if (showCatalogSyncConfirmation) {
+        CatalogSyncConfirmationDialog(
+            onDismiss = onDismissCatalogSyncConfirmation,
+            onConfirm = onConfirmCatalogSync,
+        )
     }
 }
 
@@ -301,16 +334,22 @@ private fun PendingCardsSyncCard(
 }
 
 @Composable
-private fun CatalogSyncStatusCard(state: CatalogSyncStatus) {
+private fun ManualCatalogSyncCard(
+    state: CatalogSyncStatus,
+    isBusy: Boolean,
+    onClick: () -> Unit,
+) {
     val isFailure = state is CatalogSyncStatus.Failed
-    val title = when (state) {
-        CatalogSyncStatus.Idle -> ""
+    val status = when (state) {
+        CatalogSyncStatus.Idle -> stringResource(R.string.home_catalog_sync_action)
         CatalogSyncStatus.WaitingForNetwork -> stringResource(R.string.catalog_sync_waiting)
         is CatalogSyncStatus.Downloading -> state.catalog.catalogLabel()
-        is CatalogSyncStatus.Failed -> stringResource(R.string.catalog_sync_failed)
+        is CatalogSyncStatus.Failed -> state.message ?: stringResource(R.string.catalog_sync_failed)
     }
 
     AnatomyCard(
+        onClick = onClick,
+        enabled = !isBusy,
         style = AnatomyCardStyle.FILLED,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
     ) {
@@ -326,13 +365,17 @@ private fun CatalogSyncStatusCard(state: CatalogSyncStatus) {
             )
             Column(modifier = Modifier.weight(1f)) {
                 AnatomyText(
-                    text = stringResource(R.string.catalog_sync_title),
+                    text = stringResource(R.string.home_catalog_sync_title),
                     style = MaterialTheme.typography.labelLarge,
                     properties = AnatomyTextProperties(fontWeight = FontWeight.SemiBold),
                 )
                 Spacer(Modifier.height(2.dp))
                 AnatomyText(
-                    text = (state as? CatalogSyncStatus.Failed)?.message ?: title,
+                    text = if (state is CatalogSyncStatus.Idle) {
+                        stringResource(R.string.home_catalog_sync_body)
+                    } else {
+                        status
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     properties = AnatomyTextProperties(
                         color = if (isFailure) {
@@ -342,20 +385,87 @@ private fun CatalogSyncStatusCard(state: CatalogSyncStatus) {
                         },
                     ),
                 )
-                Spacer(Modifier.height(9.dp))
+                Spacer(Modifier.height(5.dp))
+                if (state is CatalogSyncStatus.Idle) {
+                    AnatomyText(
+                        text = status,
+                        style = MaterialTheme.typography.labelMedium,
+                        properties = AnatomyTextProperties(
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                    )
+                }
                 when (state) {
-                    CatalogSyncStatus.WaitingForNetwork -> LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    is CatalogSyncStatus.Downloading -> LinearProgressIndicator(
-                        progress = { state.progress },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    CatalogSyncStatus.WaitingForNetwork -> {
+                        Spacer(Modifier.height(7.dp))
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                    is CatalogSyncStatus.Downloading -> {
+                        Spacer(Modifier.height(7.dp))
+                        LinearProgressIndicator(
+                            progress = { state.progress },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     else -> Unit
                 }
             }
         }
     }
+}
+
+@Composable
+private fun CatalogSyncConfirmationDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.CloudDownload,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        },
+        title = {
+            AnatomyText(
+                text = stringResource(R.string.home_catalog_sync_confirm_title),
+                style = MaterialTheme.typography.titleLarge,
+                properties = AnatomyTextProperties(fontWeight = FontWeight.Bold),
+            )
+        },
+        text = {
+            AnatomyText(
+                text = stringResource(R.string.home_catalog_sync_confirm_body),
+                style = MaterialTheme.typography.bodyMedium,
+                properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            )
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                AnatomyText(stringResource(R.string.settings_cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                AnatomyText(
+                    text = stringResource(R.string.home_catalog_sync_confirm_action),
+                    properties = AnatomyTextProperties(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                )
+            }
+        },
+    )
+}
+
+private fun HomeBanner.messageResource(): Int = when (this) {
+    HomeBanner.MOBILE_DATA_DISABLED -> R.string.home_catalog_sync_mobile_data_disabled
+    HomeBanner.NO_INTERNET -> R.string.home_catalog_sync_no_internet
+    HomeBanner.CATALOG_SYNC_FAILED -> R.string.catalog_sync_failed
 }
 
 @Composable
@@ -625,6 +735,9 @@ private fun HomeScreenPreview() {
             selectedSite = previewUser.sites.first(),
             networkStatus = NetworkConnectionStatus.WIFI_CONNECTED,
             catalogSyncState = CatalogSyncStatus.Downloading(0.45f, CatalogKind.LEVELS),
+            isCatalogSyncBusy = true,
+            showCatalogSyncConfirmation = false,
+            banner = null,
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},
@@ -633,6 +746,10 @@ private fun HomeScreenPreview() {
             cardSyncCompleted = 1,
             cardSyncTotal = 2,
             onSyncPendingCards = {},
+            onRequestCatalogSync = {},
+            onConfirmCatalogSync = {},
+            onDismissCatalogSyncConfirmation = {},
+            onDismissBanner = {},
         )
     }
 }
@@ -646,6 +763,9 @@ private fun HomeScreenLandscapePreview() {
             selectedSite = previewUser.sites.first(),
             networkStatus = NetworkConnectionStatus.CELLULAR_CONNECTED,
             catalogSyncState = CatalogSyncStatus.Downloading(0.7f, CatalogKind.EMPLOYEES),
+            isCatalogSyncBusy = true,
+            showCatalogSyncConfirmation = false,
+            banner = null,
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},
@@ -654,6 +774,10 @@ private fun HomeScreenLandscapePreview() {
             cardSyncCompleted = 0,
             cardSyncTotal = 0,
             onSyncPendingCards = {},
+            onRequestCatalogSync = {},
+            onConfirmCatalogSync = {},
+            onDismissCatalogSyncConfirmation = {},
+            onDismissBanner = {},
         )
     }
 }

@@ -117,6 +117,14 @@ enum AppStrings {
         static let priorities: LocalizedStringResource = "catalog_sync.priorities"
         static let levels: LocalizedStringResource = "catalog_sync.levels"
         static let employees: LocalizedStringResource = "catalog_sync.employees"
+        static let manualTitle: LocalizedStringResource = "catalog_sync.manual.title"
+        static let manualBody: LocalizedStringResource = "catalog_sync.manual.body"
+        static let manualAction: LocalizedStringResource = "catalog_sync.manual.action"
+        static let manualConfirmTitle: LocalizedStringResource = "catalog_sync.manual.confirm.title"
+        static let manualConfirmBody: LocalizedStringResource = "catalog_sync.manual.confirm.body"
+        static let manualConfirmAction: LocalizedStringResource = "catalog_sync.manual.confirm.action"
+        static let mobileDataDisabled: LocalizedStringResource = "catalog_sync.error.mobile_data_disabled"
+        static let noInternet: LocalizedStringResource = "catalog_sync.error.no_internet"
     }
 
     enum Network {

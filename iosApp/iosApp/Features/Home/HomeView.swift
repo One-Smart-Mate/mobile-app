@@ -22,6 +22,8 @@ struct MainTabRoot: View {
     @State private var permissionsViewModel = PermissionsViewModel()
     @State private var settingsViewModel: SettingsViewModel?
     @State private var cardSyncScheduler = CardSyncBackgroundScheduler.shared
+    @State private var catalogSyncNetworkError: CatalogSyncNetworkBlockReason?
+    private let catalogSyncNetworkPolicy = CatalogSyncNetworkPolicy()
     private let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
     private let makeCardDetailViewModel: @MainActor () -> CardDetailViewModel?
     private let makeCardSolutionViewModel: @MainActor (String, CardSolutionType) -> CardSolutionViewModel?
@@ -58,6 +60,9 @@ struct MainTabRoot: View {
                     cardSyncCompleted: cardSyncScheduler.completed,
                     cardSyncTotal: cardSyncScheduler.total,
                     onSyncPendingCards: cardSyncScheduler.syncManually,
+                    catalogSyncNetworkError: catalogSyncNetworkError,
+                    onDismissCatalogSyncError: { catalogSyncNetworkError = nil },
+                    onSyncCatalogs: syncCatalogsManually,
                     onCreateCard: presentCreateCard,
                     onOpenCards: { selectedTab = .cards }
                 )
@@ -140,7 +145,7 @@ struct MainTabRoot: View {
             }
         }
         .task {
-            catalogSyncViewModel?.syncIfNeeded()
+            syncCatalogsIfAllowed()
             PushNotificationCoordinator.shared.sessionDidBecomeAvailable()
             await permissionsViewModel.autoPromptIfNeeded()
         }
@@ -151,7 +156,7 @@ struct MainTabRoot: View {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
-                catalogSyncViewModel?.syncIfNeeded()
+                syncCatalogsIfAllowed()
                 Task { await permissionsViewModel.refresh() }
             case .background:
                 catalogSyncViewModel?.appDidEnterBackground()
@@ -162,10 +167,31 @@ struct MainTabRoot: View {
                 break
             }
         }
+        .onChange(of: networkMonitor.status) { _, status in
+            guard catalogSyncNetworkPolicy.blockReason(for: status) == nil else { return }
+            catalogSyncNetworkError = nil
+            catalogSyncViewModel?.syncIfNeeded()
+        }
     }
 
     private func presentCreateCard() {
         createCardViewModel = makeCreateCardViewModel()
+    }
+
+    private func syncCatalogsManually() {
+        guard let catalogSyncViewModel else { return }
+        if let reason = catalogSyncNetworkPolicy.blockReason(for: networkMonitor.status) {
+            catalogSyncNetworkError = reason
+            return
+        }
+
+        catalogSyncNetworkError = nil
+        catalogSyncViewModel.syncManually(Set(CatalogSyncSelection.allCases))
+    }
+
+    private func syncCatalogsIfAllowed() {
+        guard catalogSyncNetworkPolicy.blockReason(for: networkMonitor.status) == nil else { return }
+        catalogSyncViewModel?.syncIfNeeded()
     }
 
     private func presentSolution(cardUUID: String, type: CardSolutionType) {
@@ -183,9 +209,13 @@ struct HomeView: View {
     let cardSyncCompleted: Int
     let cardSyncTotal: Int
     let onSyncPendingCards: () -> Void
+    let catalogSyncNetworkError: CatalogSyncNetworkBlockReason?
+    let onDismissCatalogSyncError: () -> Void
+    let onSyncCatalogs: () -> Void
     let onCreateCard: () -> Void
     let onOpenCards: () -> Void
     @State private var showsTransientCatalogSyncState = false
+    @State private var showsCatalogSyncConfirmation = false
 
     init(
         user: SessionUser,
@@ -197,6 +227,9 @@ struct HomeView: View {
         cardSyncCompleted: Int,
         cardSyncTotal: Int,
         onSyncPendingCards: @escaping () -> Void,
+        catalogSyncNetworkError: CatalogSyncNetworkBlockReason?,
+        onDismissCatalogSyncError: @escaping () -> Void,
+        onSyncCatalogs: @escaping () -> Void,
         onCreateCard: @escaping () -> Void,
         onOpenCards: @escaping () -> Void
     ) {
@@ -209,6 +242,9 @@ struct HomeView: View {
         self.cardSyncCompleted = cardSyncCompleted
         self.cardSyncTotal = cardSyncTotal
         self.onSyncPendingCards = onSyncPendingCards
+        self.catalogSyncNetworkError = catalogSyncNetworkError
+        self.onDismissCatalogSyncError = onDismissCatalogSyncError
+        self.onSyncCatalogs = onSyncCatalogs
         self.onCreateCard = onCreateCard
         self.onOpenCards = onOpenCards
     }
@@ -231,10 +267,21 @@ struct HomeView: View {
                 NetworkStatusBadge(status: networkStatus)
                     .padding(.top, OSMSpacing.sm)
 
-                if displayedCatalogSyncState != .idle {
-                    CatalogSyncStatusCard(state: displayedCatalogSyncState)
+                if let catalogSyncNetworkError {
+                    AnatomyBanner(
+                        message: String(localized: catalogSyncNetworkError.message),
+                        type: .error,
+                        onDismiss: onDismissCatalogSyncError
+                    )
                         .padding(.top, OSMSpacing.sm)
                 }
+
+                ManualCatalogSyncCard(
+                    state: displayedCatalogSyncState,
+                    isBusy: isCatalogSyncBusy,
+                    action: { showsCatalogSyncConfirmation = true }
+                )
+                .padding(.top, OSMSpacing.sm)
 
                 if pendingCardCount > 0 {
                     PendingCardsSyncCard(
@@ -289,6 +336,17 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Color.osmBackground.ignoresSafeArea())
+        .alert(
+            AppStrings.CatalogSync.manualConfirmTitle,
+            isPresented: $showsCatalogSyncConfirmation
+        ) {
+            Button(AppStrings.Common.cancel, role: .cancel) {}
+            Button(AppStrings.CatalogSync.manualConfirmAction) {
+                onSyncCatalogs()
+            }
+        } message: {
+            Text(AppStrings.CatalogSync.manualConfirmBody)
+        }
         .task(id: isTransientCatalogSyncState) {
             showsTransientCatalogSyncState = false
             guard isTransientCatalogSyncState else { return }
@@ -330,6 +388,15 @@ struct HomeView: View {
             showsTransientCatalogSyncState ? catalogSyncState : .idle
         case .idle:
             catalogSyncState
+        }
+    }
+
+    private var isCatalogSyncBusy: Bool {
+        switch catalogSyncState {
+        case .waitingForNetwork, .downloading:
+            true
+        case .idle, .failed:
+            false
         }
     }
 
@@ -525,11 +592,13 @@ private struct NetworkStatusBadge: View {
     }
 }
 
-private struct CatalogSyncStatusCard: View {
+private struct ManualCatalogSyncCard: View {
     let state: CatalogSyncViewState
+    let isBusy: Bool
+    let action: () -> Void
 
     var body: some View {
-        AnatomyCard(variant: .filled) {
+        AnatomyCard(variant: .filled, action: action) {
             HStack(alignment: .top, spacing: OSMSpacing.sm) {
                 Image(systemName: isFailure ? "icloud.slash" : "icloud.and.arrow.down")
                     .font(.system(size: 20, weight: .medium))
@@ -537,13 +606,19 @@ private struct CatalogSyncStatusCard: View {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: OSMSpacing.xs) {
-                    Text(AppStrings.CatalogSync.title)
+                    Text(AppStrings.CatalogSync.manualTitle)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color.osmOnSurface)
 
                     Text(statusText)
                         .font(.caption)
                         .foregroundStyle(isFailure ? Color.osmError : Color.osmOnSurfaceVariant)
+
+                    if case .idle = state {
+                        Text(AppStrings.CatalogSync.manualAction)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.osmPrimary)
+                    }
 
                     switch state {
                     case .waitingForNetwork:
@@ -560,6 +635,8 @@ private struct CatalogSyncStatusCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .allowsHitTesting(!isBusy)
+        .opacity(isBusy ? 0.9 : 1)
     }
 
     private var isFailure: Bool {
@@ -570,7 +647,7 @@ private struct CatalogSyncStatusCard: View {
     private var statusText: String {
         switch state {
         case .idle:
-            return ""
+            return String(localized: AppStrings.CatalogSync.manualBody)
         case .waitingForNetwork:
             return String(localized: AppStrings.CatalogSync.waiting)
         case let .downloading(_, catalogKey):
@@ -594,6 +671,17 @@ private struct CatalogSyncStatusCard: View {
             AppStrings.CatalogSync.employees
         default:
             AppStrings.CatalogSync.starting
+        }
+    }
+}
+
+private extension CatalogSyncNetworkBlockReason {
+    var message: LocalizedStringResource {
+        switch self {
+        case .mobileDataDisabled:
+            AppStrings.CatalogSync.mobileDataDisabled
+        case .noInternet:
+            AppStrings.CatalogSync.noInternet
         }
     }
 }

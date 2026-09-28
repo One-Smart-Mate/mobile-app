@@ -1385,6 +1385,28 @@
         }
       }
     },
+    "catalog_sync.error.mobile_data_disabled" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para sincronizar sin Wi-Fi, habilita el uso de datos móviles desde Ajustes."
+          }
+        }
+      }
+    },
+    "catalog_sync.error.no_internet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Necesitas una conexión a internet para sincronizar los catálogos."
+          }
+        }
+      }
+    },
     "catalog_sync.failed" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1403,6 +1425,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Descargando niveles"
+          }
+        }
+      }
+    },
+    "catalog_sync.manual.action" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sincronizar catálogos"
+          }
+        }
+      }
+    },
+    "catalog_sync.manual.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualiza tipos de tarjeta, preclasificadores, prioridades, niveles y usuarios."
+          }
+        }
+      }
+    },
+    "catalog_sync.manual.confirm.action" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sincronizar"
+          }
+        }
+      }
+    },
+    "catalog_sync.manual.confirm.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se descargará la información más reciente para usarla dentro y fuera de línea."
+          }
+        }
+      }
+    },
+    "catalog_sync.manual.confirm.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Sincronizar catálogos?"
+          }
+        }
+      }
+    },
+    "catalog_sync.manual.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catálogos de la aplicación"
           }
         }
       }
