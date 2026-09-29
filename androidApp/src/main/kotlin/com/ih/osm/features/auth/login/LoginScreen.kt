@@ -1,5 +1,7 @@
 package com.ih.osm.features.auth.login
 
+import android.os.SystemClock
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,12 +26,19 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ih.osm.R
+import com.ih.osm.core.config.AppEnvironment
 import com.ih.osm.designsystem.anatomy.AnatomyBanner
 import com.ih.osm.designsystem.anatomy.AnatomyBannerType
 import com.ih.osm.designsystem.anatomy.AnatomyButton
@@ -84,6 +94,9 @@ fun LoginScreen(
     onAction: (LoginViewModel.Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var environmentTapCount by remember { mutableIntStateOf(0) }
+    var lastEnvironmentTapAt by remember { mutableLongStateOf(0L) }
+
     val emailSupportingText = when (uiState.emailError) {
         LoginViewModel.EmailError.REQUIRED -> stringResource(R.string.login_email_required)
         LoginViewModel.EmailError.INVALID -> stringResource(R.string.login_email_invalid)
@@ -93,6 +106,18 @@ fun LoginScreen(
         LoginViewModel.PasswordError.REQUIRED -> stringResource(R.string.login_password_required)
         LoginViewModel.PasswordError.TOO_SHORT -> stringResource(R.string.login_password_too_short)
         null -> null
+    }
+
+    if (uiState.showEnvironmentDialog) {
+        EnvironmentSelectorDialog(
+            currentEnvironment = uiState.currentEnvironment,
+            selectedEnvironment = uiState.pendingEnvironment,
+            onEnvironmentSelected = {
+                onAction(LoginViewModel.Action.EnvironmentPendingChanged(it))
+            },
+            onConfirm = { onAction(LoginViewModel.Action.EnvironmentSelectionConfirmed) },
+            onDismiss = { onAction(LoginViewModel.Action.EnvironmentSelectorDismissed) },
+        )
     }
 
     Surface(
@@ -124,7 +149,24 @@ fun LoginScreen(
                     .widthIn(max = 440.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BrandHeader()
+                BrandHeader(
+                    environment = uiState.currentEnvironment,
+                    onIconTap = {
+                        val now = SystemClock.elapsedRealtime()
+                        environmentTapCount = if (
+                            now - lastEnvironmentTapAt <= ENVIRONMENT_TAP_WINDOW_MILLIS
+                        ) {
+                            environmentTapCount + 1
+                        } else {
+                            1
+                        }
+                        lastEnvironmentTapAt = now
+                        if (environmentTapCount == REQUIRED_ENVIRONMENT_TAPS) {
+                            environmentTapCount = 0
+                            onAction(LoginViewModel.Action.EnvironmentSelectorRequested)
+                        }
+                    },
+                )
 
                 Spacer(Modifier.height(40.dp))
 
@@ -234,12 +276,16 @@ fun LoginScreen(
 }
 
 @Composable
-private fun BrandHeader() {
+private fun BrandHeader(
+    environment: AppEnvironment,
+    onIconTap: () -> Unit,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .size(72.dp)
                 .clip(CircleShape)
+                .clickable(onClick = onIconTap)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
         ) {
@@ -267,12 +313,77 @@ private fun BrandHeader() {
     }
 }
 
+@Composable
+private fun EnvironmentSelectorDialog(
+    currentEnvironment: AppEnvironment,
+    selectedEnvironment: AppEnvironment,
+    onEnvironmentSelected: (AppEnvironment) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.login_environment_dialog_title)) },
+        text = {
+            Column {
+                Text(
+                    text = stringResource(
+                        R.string.login_environment_dialog_current,
+                        currentEnvironment.displayName,
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(12.dp))
+                AppEnvironment.entries.forEach { environment ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onEnvironmentSelected(environment) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = environment == selectedEnvironment,
+                            onClick = { onEnvironmentSelected(environment) },
+                        )
+                        Text(
+                            text = environment.displayName,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.login_environment_dialog_apply))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.login_environment_dialog_cancel))
+            }
+        },
+    )
+}
+
+private val AppEnvironment.displayName: String
+    get() = when (this) {
+        AppEnvironment.DEV -> "DEV"
+        AppEnvironment.PROD -> "PROD"
+    }
+
+private const val REQUIRED_ENVIRONMENT_TAPS = 3
+private const val ENVIRONMENT_TAP_WINDOW_MILLIS = 1_500L
+
 @PreviewScreen
 @Composable
 private fun LoginScreenPreview() {
     OneSmartMateTheme {
         LoginScreen(
-            uiState = LoginViewModel.UiState(),
+            uiState = LoginViewModel.UiState(
+                currentEnvironment = AppEnvironment.DEV,
+            ),
             onAction = {},
         )
     }

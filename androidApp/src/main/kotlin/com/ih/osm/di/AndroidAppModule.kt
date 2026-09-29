@@ -3,6 +3,10 @@ package com.ih.osm.di
 import com.ih.osm.AppViewModel
 import com.ih.osm.core.network.AndroidNetworkStatusMonitor
 import com.ih.osm.core.network.NetworkStatusMonitor
+import com.ih.osm.core.config.AppConfig
+import com.ih.osm.core.environment.ApiEnvironmentManager
+import com.ih.osm.core.environment.ApiEnvironmentPreferences
+import com.ih.osm.BuildConfig
 import com.ih.osm.features.auth.login.LoginViewModel
 import com.ih.osm.features.auth.passwordrecovery.ForgotPasswordViewModel
 import com.ih.osm.features.cards.CardListViewModel
@@ -35,6 +39,15 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val androidAppModule = module {
+    single { ApiEnvironmentPreferences(get()) }
+    single {
+        ApiEnvironmentManager(
+            appConfig = get<AppConfig>(),
+            preferences = get(),
+            developmentBaseUrl = BuildConfig.DEV_API_BASE_URL,
+            productionBaseUrl = BuildConfig.PROD_API_BASE_URL,
+        )
+    }
     single<NetworkStatusMonitor> { AndroidNetworkStatusMonitor(get()) }
     single<MobileDataSyncPreferences> { SharedPreferencesMobileDataSyncPreferences(get()) }
     single<CatalogSyncManager> { CatalogSyncScheduler(get(), get(), get()) }

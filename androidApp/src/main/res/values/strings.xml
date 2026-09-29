@@ -15,6 +15,11 @@
     <string name="login_forgot_password">¿Olvidaste tu contraseña?</string>
     <string name="login_submit">Iniciar sesión</string>
     <string name="login_secure_access">Acceso seguro para tu equipo</string>
+    <string name="login_environment_badge">API · %1$s</string>
+    <string name="login_environment_dialog_title">Cambiar ambiente</string>
+    <string name="login_environment_dialog_current">Ambiente actual: %1$s</string>
+    <string name="login_environment_dialog_apply">Aplicar</string>
+    <string name="login_environment_dialog_cancel">Cancelar</string>
     <string name="forgot_password_screen_title">Recuperar contraseña</string>
     <string name="forgot_password_step">Paso %1$d de %2$d</string>
     <string name="forgot_password_email_title">Recupera tu acceso</string>

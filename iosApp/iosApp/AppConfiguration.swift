@@ -1,24 +1,49 @@
 import Foundation
 
+enum APIEnvironment: String, CaseIterable, Identifiable {
+    case dev
+    case prod
+
+    var id: String { rawValue }
+    var displayName: String { rawValue.uppercased() }
+}
+
 enum AppConfiguration {
     #if DEBUG
-    static let environment = "dev"
-    static let enableNetworkLogging = true
-    private static let apiBaseURLKey = "DevelopmentApiBaseURL"
+    static let buildEnvironment = APIEnvironment.dev
     #else
-    static let environment = "prod"
-    static let enableNetworkLogging = false
-    private static let apiBaseURLKey = "ProductionApiBaseURL"
+    static let buildEnvironment = APIEnvironment.prod
     #endif
 
-    static let apiBaseURL: String = {
+    static var selectedAPIEnvironment: APIEnvironment {
         guard
-            let value = Bundle.main.object(forInfoDictionaryKey: apiBaseURLKey) as? String,
+            let storedValue = UserDefaults.standard.string(forKey: selectedEnvironmentKey),
+            let environment = APIEnvironment(rawValue: storedValue)
+        else { return buildEnvironment }
+        return environment
+    }
+
+    static var environment: String { selectedAPIEnvironment.rawValue }
+    static var enableNetworkLogging: Bool { selectedAPIEnvironment == .dev }
+    static var apiBaseURL: String { apiBaseURL(for: selectedAPIEnvironment) }
+
+    static func apiBaseURL(for environment: APIEnvironment) -> String {
+        let key = environment == .dev
+            ? "DevelopmentApiBaseURL"
+            : "ProductionApiBaseURL"
+        guard
+            let value = Bundle.main.object(forInfoDictionaryKey: key) as? String,
             !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             !value.contains("$(")
         else {
-            fatalError("Missing \(apiBaseURLKey) in Secrets.xcconfig")
+            fatalError("Missing \(key) in Secrets.xcconfig")
         }
         return value
-    }()
+    }
+
+    static func selectAPIEnvironment(_ environment: APIEnvironment) {
+        UserDefaults.standard.set(environment.rawValue, forKey: selectedEnvironmentKey)
+    }
+
+    private static let selectedEnvironmentKey = "api.selected-environment"
 }

@@ -22,6 +22,7 @@ final class LoginViewModel {
 
     typealias LoginHandler = @MainActor (Credentials) async throws -> Void
     typealias PasswordResetHandler = @MainActor (String) -> Void
+    typealias EnvironmentChangeHandler = @MainActor (APIEnvironment) -> Void
 
     private(set) var email: String
     private(set) var password: String
@@ -29,9 +30,11 @@ final class LoginViewModel {
     private(set) var passwordError: PasswordError?
     private(set) var bannerMessage: String?
     private(set) var isLoading = false
+    private(set) var currentEnvironment: APIEnvironment
 
     private let loginHandler: LoginHandler
     private let passwordResetHandler: PasswordResetHandler
+    private let environmentChangeHandler: EnvironmentChangeHandler
     private let emailValidator = EmailAddressValidator()
 
     init(
@@ -41,7 +44,9 @@ final class LoginViewModel {
         passwordError: PasswordError? = nil,
         bannerMessage: String? = nil,
         loginHandler: @escaping LoginHandler = { _ in },
-        passwordResetHandler: @escaping PasswordResetHandler = { _ in }
+        passwordResetHandler: @escaping PasswordResetHandler = { _ in },
+        initialEnvironment: APIEnvironment = AppConfiguration.selectedAPIEnvironment,
+        environmentChangeHandler: @escaping EnvironmentChangeHandler = { _ in }
     ) {
         self.email = email
         self.password = password
@@ -50,6 +55,8 @@ final class LoginViewModel {
         self.bannerMessage = bannerMessage
         self.loginHandler = loginHandler
         self.passwordResetHandler = passwordResetHandler
+        currentEnvironment = initialEnvironment
+        self.environmentChangeHandler = environmentChangeHandler
     }
 
     func updateEmail(_ value: String) {
@@ -70,6 +77,13 @@ final class LoginViewModel {
 
     func requestPasswordReset() {
         passwordResetHandler(normalizedEmail)
+    }
+
+    func selectEnvironment(_ environment: APIEnvironment) {
+        guard !isLoading else { return }
+        environmentChangeHandler(environment)
+        currentEnvironment = environment
+        bannerMessage = nil
     }
 
     @discardableResult

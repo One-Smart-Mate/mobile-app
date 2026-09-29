@@ -29,6 +29,12 @@ enum AppStrings {
         static let submit: LocalizedStringResource = "login.submit"
         static let secureAccess: LocalizedStringResource = "login.secure_access"
         static let genericError: LocalizedStringResource = "login.error.generic"
+        static let environmentBadge: LocalizedStringResource = "login.environment.badge"
+        static let environmentDialogTitle: LocalizedStringResource = "login.environment.dialog.title"
+        static let environmentCurrent: LocalizedStringResource = "login.environment.current"
+        static let environmentDevelopment: LocalizedStringResource = "login.environment.development"
+        static let environmentProduction: LocalizedStringResource = "login.environment.production"
+        static let environmentCancel: LocalizedStringResource = "login.environment.cancel"
     }
 
     enum PasswordRecovery {

@@ -1,5 +1,7 @@
 package com.ih.osm.core.config
 
+import kotlinx.coroutines.flow.MutableStateFlow
+
 enum class AppEnvironment {
     DEV,
     PROD;
@@ -13,12 +15,38 @@ enum class AppEnvironment {
     }
 }
 
-@ConsistentCopyVisibility
-data class AppConfig private constructor(
-    val baseUrl: String,
-    val environment: AppEnvironment,
-    val enableNetworkLogging: Boolean,
+class AppConfig private constructor(
+    baseUrl: String,
+    environment: AppEnvironment,
+    enableNetworkLogging: Boolean,
 ) {
+    private val values = MutableStateFlow(
+        Values(
+            baseUrl = baseUrl,
+            environment = environment,
+            enableNetworkLogging = enableNetworkLogging,
+        ),
+    )
+
+    val baseUrl: String
+        get() = values.value.baseUrl
+    val environment: AppEnvironment
+        get() = values.value.environment
+    val enableNetworkLogging: Boolean
+        get() = values.value.enableNetworkLogging
+
+    fun update(
+        baseUrl: String,
+        environment: AppEnvironment,
+    ) {
+        val updated = create(
+            baseUrl = baseUrl,
+            environment = environment,
+            enableNetworkLogging = environment == AppEnvironment.DEV,
+        )
+        values.value = updated.values.value
+    }
+
     companion object {
         fun create(
             baseUrl: String,
@@ -43,4 +71,10 @@ data class AppConfig private constructor(
             )
         }
     }
+
+    private data class Values(
+        val baseUrl: String,
+        val environment: AppEnvironment,
+        val enableNetworkLogging: Boolean,
+    )
 }

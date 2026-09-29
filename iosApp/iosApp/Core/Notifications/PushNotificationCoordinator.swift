@@ -14,6 +14,7 @@ final class PushNotificationCoordinator {
         category: "PushNotifications"
     )
     private let pendingTokenKey = "push.pending-fcm-token"
+    private let latestTokenKey = "push.latest-fcm-token"
     private var controller: IosPushNotificationController?
     private var registrationTask: Task<Void, Never>?
 
@@ -26,7 +27,7 @@ final class PushNotificationCoordinator {
 
     func configureFirebase() {
         guard FirebaseApp.app() == nil else { return }
-        let resource = AppConfiguration.environment == "dev"
+        let resource = AppConfiguration.buildEnvironment == .dev
             ? "GoogleService-Info-Dev"
             : "GoogleService-Info-Prod"
         guard
@@ -54,12 +55,17 @@ final class PushNotificationCoordinator {
 
     func receivedFCMToken(_ token: String?) {
         guard let token, !token.isEmpty else { return }
+        UserDefaults.standard.set(token, forKey: latestTokenKey)
         UserDefaults.standard.set(token, forKey: pendingTokenKey)
         registerPendingToken()
     }
 
     func sessionDidBecomeAvailable() {
         registerPendingToken()
+    }
+
+    func apiEnvironmentDidChange() {
+        receivedFCMToken(UserDefaults.standard.string(forKey: latestTokenKey))
     }
 
     func receivedRemoteNotification(_ userInfo: [AnyHashable: Any]) -> Bool {

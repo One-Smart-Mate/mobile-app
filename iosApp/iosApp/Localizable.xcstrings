@@ -3103,6 +3103,72 @@
         }
       }
     },
+    "login.environment.badge" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API · %@"
+          }
+        }
+      }
+    },
+    "login.environment.cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        }
+      }
+    },
+    "login.environment.current" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ambiente actual: %@"
+          }
+        }
+      }
+    },
+    "login.environment.development" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desarrollo (DEV)"
+          }
+        }
+      }
+    },
+    "login.environment.dialog.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar ambiente"
+          }
+        }
+      }
+    },
+    "login.environment.production" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Producción (PROD)"
+          }
+        }
+      }
+    },
     "login.email.error.invalid" : {
       "extractionState" : "manual",
       "localizations" : {

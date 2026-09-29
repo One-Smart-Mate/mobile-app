@@ -26,6 +26,23 @@ import com.ih.osm.features.notifications.IosPushNotificationController
 import com.ih.osm.features.settings.IosSettingsController
 import com.ih.osm.database.AppDatabase
 
+class IosApiEnvironmentController(
+    private val config: AppConfig,
+) {
+    val currentEnvironment: String
+        get() = config.environment.name.lowercase()
+
+    fun selectEnvironment(
+        baseUrl: String,
+        environment: String,
+    ) {
+        config.update(
+            baseUrl = baseUrl,
+            environment = AppEnvironment.from(environment),
+        )
+    }
+}
+
 fun initKoinIos(
     baseUrl: String,
     environment: String,
@@ -92,3 +109,8 @@ fun createIosSettingsController(): IosSettingsController = IosSettingsController
     repository = KoinPlatform.getKoin().get<CardRepository>(),
     authRepository = KoinPlatform.getKoin().get<AuthRepository>(),
 )
+
+fun createIosApiEnvironmentController(): IosApiEnvironmentController =
+    IosApiEnvironmentController(
+        config = KoinPlatform.getKoin().get<AppConfig>(),
+    )

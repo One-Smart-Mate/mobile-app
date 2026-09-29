@@ -38,4 +38,22 @@ class AppConfigTest {
             )
         }
     }
+
+    @Test
+    fun updatesTheEndpointAndEnvironmentAtRuntime() {
+        val config = AppConfig.create(
+            baseUrl = "https://prod.example.com",
+            environment = AppEnvironment.PROD,
+            enableNetworkLogging = false,
+        )
+
+        config.update(
+            baseUrl = "https://dev.example.com",
+            environment = AppEnvironment.DEV,
+        )
+
+        assertEquals("https://dev.example.com/", config.baseUrl)
+        assertEquals(AppEnvironment.DEV, config.environment)
+        assertEquals(true, config.enableNetworkLogging)
+    }
 }

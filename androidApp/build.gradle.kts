@@ -89,6 +89,8 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "DEV_API_BASE_URL", developmentApiBaseUrl.asBuildConfigString())
+        buildConfigField("String", "PROD_API_BASE_URL", productionApiBaseUrl.asBuildConfigString())
     }
     flavorDimensions += "environment"
     productFlavors {

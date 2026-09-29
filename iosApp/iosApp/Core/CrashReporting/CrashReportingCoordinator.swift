@@ -1,11 +1,21 @@
+import FirebaseCore
 import FirebaseCrashlytics
 
 enum CrashReportingCoordinator {
     static func configure() {
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
         Crashlytics.crashlytics().setCustomValue(
-            AppConfiguration.environment,
-            forKey: "environment"
+            AppConfiguration.buildEnvironment.rawValue,
+            forKey: "build_environment"
+        )
+        updateAPIEnvironment(AppConfiguration.selectedAPIEnvironment)
+    }
+
+    static func updateAPIEnvironment(_ environment: APIEnvironment) {
+        guard FirebaseApp.app() != nil else { return }
+        Crashlytics.crashlytics().setCustomValue(
+            environment.rawValue,
+            forKey: "api_environment"
         )
     }
 

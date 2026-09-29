@@ -8,6 +8,7 @@ struct LoginView: View {
     }
 
     @State private var viewModel: LoginViewModel
+    @State private var isEnvironmentDialogPresented = false
     @FocusState private var focusedField: Field?
 
     init() {
@@ -49,13 +50,35 @@ struct LoginView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.bannerMessage)
+        .alert(
+            String(localized: AppStrings.Login.environmentDialogTitle),
+            isPresented: $isEnvironmentDialogPresented
+        ) {
+            Button(String(localized: AppStrings.Login.environmentDevelopment)) {
+                viewModel.selectEnvironment(.dev)
+            }
+            Button(String(localized: AppStrings.Login.environmentProduction)) {
+                viewModel.selectEnvironment(.prod)
+            }
+            Button(String(localized: AppStrings.Login.environmentCancel), role: .cancel) {}
+        } message: {
+            Text(
+                String(
+                    format: String(localized: AppStrings.Login.environmentCurrent),
+                    viewModel.currentEnvironment.displayName
+                )
+            )
+        }
     }
 
     private func portraitContent(minHeight: CGFloat) -> some View {
         VStack(spacing: 0) {
             Spacer(minLength: OSMSpacing.xl)
 
-            BrandHeader()
+            BrandHeader(
+                environment: viewModel.currentEnvironment,
+                onEnvironmentSelectorRequested: { isEnvironmentDialogPresented = true }
+            )
 
             Spacer()
                 .frame(height: OSMSpacing.xxl)
@@ -73,7 +96,10 @@ struct LoginView: View {
 
     private func wideContent(minHeight: CGFloat) -> some View {
         HStack(spacing: 72) {
-            BrandHeader()
+            BrandHeader(
+                environment: viewModel.currentEnvironment,
+                onEnvironmentSelectorRequested: { isEnvironmentDialogPresented = true }
+            )
                 .frame(maxWidth: 360)
 
             loginForm
@@ -234,6 +260,9 @@ struct LoginView: View {
 }
 
 private struct BrandHeader: View {
+    let environment: APIEnvironment
+    let onEnvironmentSelectorRequested: () -> Void
+
     var body: some View {
         VStack(spacing: 0) {
             Image(systemName: "checkmark.shield")
@@ -243,6 +272,8 @@ private struct BrandHeader: View {
                 .background(Color.osmPrimaryContainer)
                 .clipShape(Circle())
                 .accessibilityHidden(true)
+                .contentShape(Circle())
+                .onTapGesture(count: 3, perform: onEnvironmentSelectorRequested)
 
             Spacer()
                 .frame(height: 14)
@@ -262,6 +293,23 @@ private struct BrandHeader: View {
                 color: .osmOnSurfaceVariant,
                 alignment: .center
             )
+
+            Spacer()
+                .frame(height: OSMSpacing.xs)
+
+            Text(
+                String(
+                    format: String(localized: AppStrings.Login.environmentBadge),
+                    environment.displayName
+                )
+            )
+            .font(OSMTypography.caption)
+            .fontWeight(.semibold)
+            .foregroundStyle(Color.osmOnSurfaceVariant)
+            .padding(.horizontal, OSMSpacing.sm)
+            .padding(.vertical, 4)
+            .background(Color.osmSurfaceVariant)
+            .clipShape(Capsule())
         }
         .accessibilityElement(children: .combine)
     }

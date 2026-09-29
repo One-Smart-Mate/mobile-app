@@ -22,6 +22,7 @@ struct AppDependencies {
         let catalogSyncController = KoinIosKt.createIosCatalogSyncController()
         let cardListController = KoinIosKt.createIosCardListController()
         let cardSyncController = KoinIosKt.createIosCardSyncController()
+        let apiEnvironmentController = KoinIosKt.createIosApiEnvironmentController()
 
         return AppDependencies(
             makeSessionViewModel: {
@@ -48,7 +49,17 @@ struct AppDependencies {
                                 ?? String(localized: AppStrings.Login.genericError)
                         )
                     }
-                }, passwordResetHandler: passwordResetHandler)
+                }, passwordResetHandler: passwordResetHandler,
+                   initialEnvironment: AppConfiguration.selectedAPIEnvironment,
+                   environmentChangeHandler: { environment in
+                       AppConfiguration.selectAPIEnvironment(environment)
+                       apiEnvironmentController.selectEnvironment(
+                           baseUrl: AppConfiguration.apiBaseURL(for: environment),
+                           environment: environment.rawValue
+                       )
+                       CrashReportingCoordinator.updateAPIEnvironment(environment)
+                       PushNotificationCoordinator.shared.apiEnvironmentDidChange()
+                   })
             },
             makeForgotPasswordViewModel: { email in
                 ForgotPasswordViewModel(
