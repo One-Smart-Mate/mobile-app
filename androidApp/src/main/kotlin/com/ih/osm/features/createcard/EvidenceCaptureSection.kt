@@ -19,12 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AudioFile
 import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.VideoFile
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -42,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.ih.osm.R
@@ -55,6 +52,8 @@ import com.ih.osm.features.card.domain.evidence.CardEvidenceLimits
 import com.ih.osm.features.card.domain.model.CardEvidenceMediaType
 import com.ih.osm.features.createcard.domain.storage.EvidenceStorage
 import com.ih.osm.features.createcard.domain.storage.PendingEvidenceCapture
+import com.ih.osm.features.evidence.EvidenceMediaGallery
+import com.ih.osm.features.evidence.EvidenceMediaUiItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -202,9 +201,11 @@ fun EvidenceCaptureSection(
         if (evidences.isEmpty() && !isProcessing) {
             EvidenceInfoCard(stringResource(R.string.create_card_no_evidence))
         } else {
-            evidences.forEach { evidence ->
-                EvidenceDraftItem(evidence) { onEvidenceRemoved(evidence.id) }
-            }
+            EvidenceMediaGallery(
+                evidences = evidences.map(CreateCardEvidenceDraft::toEvidenceMediaUiItem),
+                isOnlyRead = false,
+                onDelete = { onEvidenceRemoved(it.id) },
+            )
         }
     }
 
@@ -293,39 +294,14 @@ private fun EvidenceActionCard(
     }
 }
 
-@Composable
-private fun EvidenceDraftItem(evidence: CreateCardEvidenceDraft, onRemove: () -> Unit) {
-    val icon = when (evidence.mediaType) {
-        CardEvidenceMediaType.IMAGE -> Icons.Outlined.CameraAlt
-        CardEvidenceMediaType.VIDEO -> Icons.Outlined.VideoFile
-        CardEvidenceMediaType.AUDIO -> Icons.Outlined.AudioFile
-    }
-    Surface(shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-            Column(modifier = Modifier.weight(1f)) {
-                AnatomyText(
-                    evidence.displayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    properties = AnatomyTextProperties(fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis),
-                )
-                val duration = if (evidence.durationMillis > 0) " · ${evidence.durationMillis / 1_000L}s" else ""
-                AnatomyText(
-                    "${evidence.sizeBytes / 1024L} KB$duration",
-                    style = MaterialTheme.typography.bodySmall,
-                    properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                )
-            }
-            IconButton(onClick = onRemove) {
-                Icon(Icons.Outlined.DeleteOutline, stringResource(R.string.create_card_remove_evidence), tint = MaterialTheme.colorScheme.error)
-            }
-        }
-    }
-}
+internal fun CreateCardEvidenceDraft.toEvidenceMediaUiItem(): EvidenceMediaUiItem = EvidenceMediaUiItem(
+    id = id,
+    source = localPath,
+    displayName = displayName,
+    mediaType = mediaType,
+    sizeBytes = sizeBytes,
+    durationMillis = durationMillis,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

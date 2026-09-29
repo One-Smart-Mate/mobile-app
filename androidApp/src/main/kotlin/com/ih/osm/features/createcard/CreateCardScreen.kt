@@ -83,6 +83,7 @@ import com.ih.osm.features.card.domain.create.CreateCardState
 import com.ih.osm.features.card.domain.create.CreateCardStep
 import com.ih.osm.features.card.domain.create.CreateCardValidationError
 import com.ih.osm.features.card.domain.evidence.CardEvidenceLimits
+import com.ih.osm.features.evidence.EvidenceMediaGallery
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 import java.time.Instant
@@ -394,6 +395,14 @@ private fun androidx.compose.foundation.lazy.LazyListScope.reviewContent(state: 
                 } else {
                     stringResource(R.string.create_card_evidence_count, state.evidences.size)
                 },
+            )
+        }
+    }
+    if (state.evidences.isNotEmpty()) {
+        item {
+            EvidenceMediaGallery(
+                evidences = state.evidences.map { it.toEvidenceMediaUiItem() },
+                isOnlyRead = true,
             )
         }
     }
