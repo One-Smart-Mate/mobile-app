@@ -2035,17 +2035,6 @@
         }
       }
     },
-    "create_card.evidence.camera" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Usar cámara"
-          }
-        }
-      }
-    },
     "create_card.evidence.count" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2075,17 +2064,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Evidencias"
-          }
-        }
-      }
-    },
-    "create_card.evidence.library" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elegir de la fototeca"
           }
         }
       }
@@ -2141,17 +2119,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eliminar evidencia"
-          }
-        }
-      }
-    },
-    "create_card.evidence.source" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Agregar evidencia"
           }
         }
       }
@@ -3490,28 +3457,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continuar"
-          }
-        }
-      }
-    },
-    "permissions.gallery.description" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite seleccionar imágenes y videos guardados en tu dispositivo."
-          }
-        }
-      }
-    },
-    "permissions.gallery.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fototeca"
           }
         }
       }

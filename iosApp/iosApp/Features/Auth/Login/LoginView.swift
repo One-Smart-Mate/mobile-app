@@ -297,19 +297,6 @@ private struct BrandHeader: View {
             Spacer()
                 .frame(height: OSMSpacing.xs)
 
-            Text(
-                String(
-                    format: String(localized: AppStrings.Login.environmentBadge),
-                    environment.displayName
-                )
-            )
-            .font(OSMTypography.caption)
-            .fontWeight(.semibold)
-            .foregroundStyle(Color.osmOnSurfaceVariant)
-            .padding(.horizontal, OSMSpacing.sm)
-            .padding(.vertical, 4)
-            .background(Color.osmSurfaceVariant)
-            .clipShape(Capsule())
         }
         .accessibilityElement(children: .combine)
     }

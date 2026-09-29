@@ -1,8 +1,5 @@
-import CoreTransferable
-import PhotosUI
 import SharedLogic
 import SwiftUI
-import UniformTypeIdentifiers
 import UIKit
 
 struct CardEvidenceCaptureView: View {
@@ -14,12 +11,8 @@ struct CardEvidenceCaptureView: View {
     private let evidenceImportFailed: () -> Void
 
     @State private var requestedMedia: CardEvidenceMediaType?
-    @State private var showSourceOptions = false
     @State private var showCamera = false
     @State private var showAudioRecorder = false
-    @State private var showPhotoPicker = false
-    @State private var pendingSourceAction: EvidenceSourceAction?
-    @State private var pickedItem: PhotosPickerItem?
     @State private var isImporting = false
 
     private let storage = CardEvidenceStorage.shared
@@ -111,32 +104,6 @@ struct CardEvidenceCaptureView: View {
                 .padding(.top, 4)
             }
         }
-        .sheet(
-            isPresented: $showSourceOptions,
-            onDismiss: performPendingSourceAction
-        ) {
-            EvidenceSourceSheet(
-                cameraAvailable: UIImagePickerController.isSourceTypeAvailable(.camera),
-                onSelect: { action in
-                    pendingSourceAction = action
-                    showSourceOptions = false
-                },
-                onCancel: { showSourceOptions = false }
-            )
-            .presentationDetents([.height(285)])
-            .presentationDragIndicator(.visible)
-            .presentationBackground(Color.osmSurface)
-        }
-        .photosPicker(
-            isPresented: $showPhotoPicker,
-            selection: $pickedItem,
-            matching: requestedMedia == .video ? .videos : .images,
-            preferredItemEncoding: .current
-        )
-        .onChange(of: pickedItem) { _, item in
-            guard let item, let requestedMedia else { return }
-            Task { await importPickerItem(item, as: requestedMedia) }
-        }
         .fullScreenCover(isPresented: $showCamera) {
             if let requestedMedia {
                 CardCameraPicker(
@@ -167,17 +134,6 @@ struct CardEvidenceCaptureView: View {
         }
     }
 
-    private func performPendingSourceAction() {
-        guard let action = pendingSourceAction else { return }
-        pendingSourceAction = nil
-        switch action {
-        case .camera:
-            showCamera = true
-        case .photoLibrary:
-            showPhotoPicker = true
-        }
-    }
-
     private func evidenceAction(
         title: LocalizedStringResource,
         subtitle: String,
@@ -189,8 +145,10 @@ struct CardEvidenceCaptureView: View {
             requestedMedia = mediaType
             if mediaType == .audio {
                 showAudioRecorder = true
+            } else if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                showCamera = true
             } else {
-                showSourceOptions = true
+                evidenceImportFailed()
             }
         } label: {
             HStack(spacing: 14) {
@@ -253,41 +211,6 @@ struct CardEvidenceCaptureView: View {
         .padding(.leading, 10)
         .background(Color.osmSurface)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    private func importPickerItem(_ item: PhotosPickerItem, as mediaType: CardEvidenceMediaType) async {
-        await MainActor.run { isImporting = true }
-        defer {
-            Task { @MainActor in
-                isImporting = false
-                pickedItem = nil
-            }
-        }
-        do {
-            if mediaType == .video {
-                guard let transferred = try await item.loadTransferable(type: PickedVideoFile.self) else {
-                    throw EvidenceImportError.missingData
-                }
-                defer { try? FileManager.default.removeItem(at: transferred.url) }
-                let prepared = try await storage.importFile(from: transferred.url, mediaType: .video)
-                await addEvidence(prepared)
-                return
-            }
-            guard let data = try await item.loadTransferable(type: Data.self) else {
-                throw EvidenceImportError.missingData
-            }
-            let type = preferredType(from: item.supportedContentTypes, mediaType: mediaType)
-            let ext = type.preferredFilenameExtension ?? defaultExtension(for: mediaType)
-            let prepared = try await storage.persistData(
-                data,
-                fileName: "evidence-\(UUID().uuidString).\(ext)",
-                mediaType: mediaType,
-                mimeType: type.preferredMIMEType ?? defaultMimeType(for: mediaType)
-            )
-            await addEvidence(prepared)
-        } catch {
-            evidenceImportFailed()
-        }
     }
 
     private func importFile(_ url: URL, as mediaType: CardEvidenceMediaType, removeSource: Bool) async {
@@ -359,76 +282,6 @@ struct CardEvidenceCaptureView: View {
         return "\(duration) · \(size)"
     }
 
-    private func preferredType(from types: [UTType], mediaType: CardEvidenceMediaType) -> UTType {
-        let expected: UTType = mediaType == .video ? .movie : .image
-        return types.first(where: { $0.conforms(to: expected) }) ?? expected
-    }
-
-    private func defaultExtension(for mediaType: CardEvidenceMediaType) -> String {
-        mediaType == .video ? "mov" : "jpg"
-    }
-
-    private func defaultMimeType(for mediaType: CardEvidenceMediaType) -> String {
-        mediaType == .video ? "video/quicktime" : "image/jpeg"
-    }
-
-    private enum EvidenceImportError: Error { case missingData }
-}
-
-private enum EvidenceSourceAction {
-    case camera
-    case photoLibrary
-}
-
-private struct EvidenceSourceSheet: View {
-    let cameraAvailable: Bool
-    let onSelect: (EvidenceSourceAction) -> Void
-    let onCancel: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(AppStrings.CreateCard.evidenceSource)
-                .font(.title2.weight(.bold))
-
-            if cameraAvailable {
-                sourceButton(
-                    AppStrings.CreateCard.camera,
-                    icon: "camera",
-                    action: .camera
-                )
-            }
-            sourceButton(
-                AppStrings.CreateCard.photoLibrary,
-                icon: "photo.on.rectangle",
-                action: .photoLibrary
-            )
-
-            Button(AppStrings.Common.cancel, action: onCancel)
-                .font(.body.weight(.semibold))
-                .frame(maxWidth: .infinity, minHeight: 44)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 12)
-        .padding(.bottom, 18)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.osmSurface)
-    }
-
-    private func sourceButton(
-        _ title: LocalizedStringResource,
-        icon: String,
-        action: EvidenceSourceAction
-    ) -> some View {
-        Button { onSelect(action) } label: {
-            Label(title, systemImage: icon)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(Color.osmPrimary)
-                .frame(maxWidth: .infinity, minHeight: 52)
-                .background(Color.osmPrimaryContainer.opacity(0.7))
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
 }
 
 private struct CardEvidenceCaptureLimits {
@@ -439,24 +292,6 @@ private struct CardEvidenceCaptureLimits {
     let audioDurationSeconds: Int64
 }
 
-private struct PickedVideoFile: Transferable {
-    let url: URL
-
-    static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(contentType: .movie) { video in
-            SentTransferredFile(video.url)
-        } importing: { received in
-            let destination = FileManager.default.temporaryDirectory
-                .appendingPathComponent("picked-\(UUID().uuidString).\(received.file.pathExtension.nonEmpty ?? "mov")")
-            try FileManager.default.copyItem(at: received.file, to: destination)
-            return PickedVideoFile(url: destination)
-        }
-    }
-}
-
-private extension String {
-    var nonEmpty: String? { isEmpty ? nil : self }
-}
 
 private struct CardAudioRecorderSheet: View {
     let maximumSeconds: Int64

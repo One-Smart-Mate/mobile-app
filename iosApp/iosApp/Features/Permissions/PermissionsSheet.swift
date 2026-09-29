@@ -102,8 +102,6 @@ private struct PermissionRow: View {
             PermissionVisual("camera", AppStrings.Permissions.cameraTitle, AppStrings.Permissions.cameraDescription)
         case .microphone:
             PermissionVisual("mic", AppStrings.Permissions.microphoneTitle, AppStrings.Permissions.microphoneDescription)
-        case .photoLibrary:
-            PermissionVisual("photo.on.rectangle", AppStrings.Permissions.galleryTitle, AppStrings.Permissions.galleryDescription)
         case .backgroundTasks:
             PermissionVisual("arrow.triangle.2.circlepath.icloud", AppStrings.Permissions.backgroundTitle, AppStrings.Permissions.backgroundDescription)
         }

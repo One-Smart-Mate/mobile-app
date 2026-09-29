@@ -313,16 +313,16 @@ struct HomeView: View {
                         systemImage: "note.text.badge.plus",
                         action: onCreateCard
                     )
-                    QuickActionCard(
-                        title: AppStrings.Home.scanQR,
-                        systemImage: "qrcode.viewfinder",
-                        action: {}
-                    )
-                    QuickActionCard(
-                        title: AppStrings.Home.fastPassword,
-                        systemImage: "key",
-                        action: {}
-                    )
+//                    QuickActionCard(
+//                        title: AppStrings.Home.scanQR,
+//                        systemImage: "qrcode.viewfinder",
+//                        action: {}
+//                    )
+//                    QuickActionCard(
+//                        title: AppStrings.Home.fastPassword,
+//                        systemImage: "key",
+//                        action: {}
+//                    )
                     QuickActionCard(
                         title: AppStrings.Home.cards,
                         systemImage: "doc.text",

@@ -1,6 +1,5 @@
 import AVFoundation
 import Observation
-import Photos
 import UIKit
 import UserNotifications
 
@@ -8,7 +7,6 @@ enum AppPermissionKind: CaseIterable, Identifiable {
     case notifications
     case camera
     case microphone
-    case photoLibrary
     case backgroundTasks
 
     var id: Self { self }
@@ -63,10 +61,6 @@ final class PermissionsViewModel {
                 kind: .microphone,
                 status: AVAudioApplication.shared.recordPermission.permissionStatus
             ),
-            AppPermissionItem(
-                kind: .photoLibrary,
-                status: PHPhotoLibrary.authorizationStatus(for: .readWrite).permissionStatus
-            ),
             AppPermissionItem(kind: .backgroundTasks, status: .systemManaged)
         ]
     }
@@ -94,10 +88,6 @@ final class PermissionsViewModel {
         if AVAudioApplication.shared.recordPermission == .undetermined {
             _ = await AVAudioApplication.requestRecordPermission()
         }
-        if PHPhotoLibrary.authorizationStatus(for: .readWrite) == .notDetermined {
-            _ = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
-        }
-
         await refresh()
         if allRuntimePermissionsReady { showsSheet = false }
     }
@@ -144,18 +134,6 @@ private extension AVAudioApplication.recordPermission {
         case .granted: .granted
         case .denied: .denied
         case .undetermined: .missing
-        @unknown default: .missing
-        }
-    }
-}
-
-private extension PHAuthorizationStatus {
-    var permissionStatus: AppPermissionStatus {
-        switch self {
-        case .authorized: .granted
-        case .limited: .partial
-        case .denied, .restricted: .denied
-        case .notDetermined: .missing
         @unknown default: .missing
         }
     }
