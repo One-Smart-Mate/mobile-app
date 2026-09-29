@@ -4,7 +4,6 @@ enum class AppPermissionKind {
     NOTIFICATIONS,
     CAMERA,
     MICROPHONE,
-    GALLERY,
     BACKGROUND_TASKS,
 }
 

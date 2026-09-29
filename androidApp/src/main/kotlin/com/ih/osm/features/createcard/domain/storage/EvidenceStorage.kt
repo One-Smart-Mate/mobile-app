@@ -15,7 +15,6 @@ data class PendingEvidenceCapture(
 
 interface EvidenceStorage {
     fun createCapture(mediaType: CardEvidenceMediaType): PendingEvidenceCapture
-    suspend fun import(uri: Uri, mediaType: CardEvidenceMediaType): CreateCardEvidenceDraft
     suspend fun finishCapture(capture: PendingEvidenceCapture): CreateCardEvidenceDraft
     fun startAudioRecording(maxDurationSeconds: Long): PendingEvidenceCapture
     suspend fun stopAudioRecording(): CreateCardEvidenceDraft

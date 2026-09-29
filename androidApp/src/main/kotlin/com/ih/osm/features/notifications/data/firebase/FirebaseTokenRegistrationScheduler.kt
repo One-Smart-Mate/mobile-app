@@ -1,6 +1,7 @@
 package com.ih.osm.features.notifications.data.firebase
 
 import android.content.Context
+import android.util.Log
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -20,6 +21,7 @@ class FirebaseTokenRegistrationScheduler(
 
     fun onTokenRefreshed(token: String) {
         if (token.isBlank()) return
+        Log.d("FirebaseTokenRegistrationScheduler", "onTokenRefreshed: $token")
         store.save(token)
         val request = OneTimeWorkRequestBuilder<FirebaseTokenRegistrationWorker>()
             .setConstraints(

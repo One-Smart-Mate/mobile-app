@@ -26,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.CloudSync
-import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Shield
@@ -300,11 +299,6 @@ private fun AppPermissionKind.visual(): PermissionVisual = when (this) {
         Icons.Outlined.Mic,
         R.string.permissions_microphone_title,
         R.string.permissions_microphone_description,
-    )
-    AppPermissionKind.GALLERY -> PermissionVisual(
-        Icons.Outlined.Collections,
-        R.string.permissions_gallery_title,
-        R.string.permissions_gallery_description,
     )
     AppPermissionKind.BACKGROUND_TASKS -> PermissionVisual(
         Icons.Outlined.CloudSync,

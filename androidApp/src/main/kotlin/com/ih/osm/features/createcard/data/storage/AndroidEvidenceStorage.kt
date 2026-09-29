@@ -3,8 +3,6 @@ package com.ih.osm.features.createcard.data.storage
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.media.MediaRecorder
-import android.net.Uri
-import android.provider.OpenableColumns
 import androidx.core.content.FileProvider
 import com.ih.osm.BuildConfig
 import com.ih.osm.features.card.domain.create.CreateCardEvidenceDraft
@@ -47,39 +45,6 @@ class AndroidEvidenceStorage(context: Context) : EvidenceStorage {
             mimeType = mimeType,
         )
     }
-
-    override suspend fun import(uri: Uri, mediaType: CardEvidenceMediaType): CreateCardEvidenceDraft =
-        withContext(Dispatchers.IO) {
-            val mimeType = appContext.contentResolver.getType(uri) ?: mediaType.defaultMimeType()
-            require(mimeType in mediaType.allowedMimeTypes()) { "Unsupported evidence format." }
-            val displayName = queryDisplayName(uri)
-            val extension = displayName.substringAfterLast('.', missingDelimiterValue = "")
-                .takeIf(String::isNotBlank)
-                ?.let { ".$it" }
-                ?: mimeType.defaultExtension(mediaType)
-            val id = UUID.randomUUID().toString()
-            val destination = File(evidenceDirectory, "$id$extension")
-            try {
-                appContext.contentResolver.openInputStream(uri).use { input ->
-                    requireNotNull(input) { "Unable to open the selected evidence." }
-                    destination.outputStream().use { output ->
-                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                        var total = 0L
-                        while (true) {
-                            val read = input.read(buffer)
-                            if (read < 0) break
-                            total += read
-                            require(total <= MAX_FILE_SIZE_BYTES) { "Evidence exceeds the file size limit." }
-                            output.write(buffer, 0, read)
-                        }
-                    }
-                }
-                destination.toDraft(id, displayName.ifBlank { destination.name }, mimeType, mediaType)
-            } catch (error: Throwable) {
-                destination.delete()
-                throw error
-            }
-        }
 
     override suspend fun finishCapture(capture: PendingEvidenceCapture): CreateCardEvidenceDraft =
         withContext(Dispatchers.IO) {
@@ -192,50 +157,7 @@ class AndroidEvidenceStorage(context: Context) : EvidenceStorage {
         }
     }
 
-    private fun queryDisplayName(uri: Uri): String {
-        val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
-        return appContext.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) cursor.getString(0).orEmpty() else ""
-        }.orEmpty()
-    }
-
     private companion object {
-        const val MAX_FILE_SIZE_BYTES = 25L * 1024L * 1024L
         const val RECORDING_GUARD_SECONDS = 2L
-    }
-}
-
-private fun CardEvidenceMediaType.allowedMimeTypes(): Set<String> = when (this) {
-    CardEvidenceMediaType.IMAGE -> setOf("image/jpeg", "image/png", "image/webp")
-    CardEvidenceMediaType.VIDEO -> setOf("video/mp4", "video/quicktime", "video/webm")
-    CardEvidenceMediaType.AUDIO -> setOf(
-        "audio/mp4",
-        "audio/mpeg",
-        "audio/wav",
-        "audio/x-wav",
-        "audio/webm",
-        "audio/aac",
-    )
-}
-
-private fun CardEvidenceMediaType.defaultMimeType(): String = when (this) {
-    CardEvidenceMediaType.IMAGE -> "image/jpeg"
-    CardEvidenceMediaType.VIDEO -> "video/mp4"
-    CardEvidenceMediaType.AUDIO -> "audio/mp4"
-}
-
-private fun String.defaultExtension(mediaType: CardEvidenceMediaType): String = when {
-    contains("jpeg") || contains("jpg") -> ".jpg"
-    contains("png") -> ".png"
-    contains("webp") -> ".webp"
-    contains("quicktime") -> ".mov"
-    contains("video") -> ".mp4"
-    contains("mpeg") -> ".mp3"
-    contains("wav") -> ".wav"
-    contains("audio") -> ".m4a"
-    else -> when (mediaType) {
-        CardEvidenceMediaType.IMAGE -> ".jpg"
-        CardEvidenceMediaType.VIDEO -> ".mp4"
-        CardEvidenceMediaType.AUDIO -> ".m4a"
     }
 }

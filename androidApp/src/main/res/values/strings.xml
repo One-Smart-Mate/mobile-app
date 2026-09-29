@@ -187,14 +187,9 @@
     <string name="create_card_evidence_processing">Preparando evidencia…</string>
     <string name="create_card_evidence_count">%1$d archivos</string>
     <string name="create_card_remove_evidence">Eliminar evidencia</string>
-    <string name="create_card_add_photo">Agregar foto</string>
-    <string name="create_card_add_video">Agregar video</string>
-    <string name="create_card_add_audio">Agregar audio</string>
-    <string name="create_card_evidence_source_help">Captura evidencia ahora o selecciona un archivo existente.</string>
     <string name="create_card_take_photo">Tomar foto</string>
     <string name="create_card_record_video">Grabar video</string>
     <string name="create_card_record_audio">Grabar audio</string>
-    <string name="create_card_select_file">Seleccionar archivo</string>
     <string name="create_card_audio_timer">%1$d s de %2$d s</string>
     <string name="create_card_start_recording">Iniciar grabación</string>
     <string name="create_card_stop_recording">Detener y usar audio</string>
@@ -369,8 +364,6 @@
     <string name="permissions_camera_description">Permitirá capturar fotos y videos como evidencia.</string>
     <string name="permissions_microphone_title">Micrófono</string>
     <string name="permissions_microphone_description">Permitirá grabar audio para las evidencias.</string>
-    <string name="permissions_gallery_title">Fotos y videos</string>
-    <string name="permissions_gallery_description">Permitirá seleccionar evidencias existentes de tu galería.</string>
     <string name="permissions_background_title">Sincronización en segundo plano</string>
     <string name="permissions_background_description">WorkManager mantiene las tareas pendientes aunque salgas de la app.</string>
     <string name="permissions_status_granted">Permitido</string>

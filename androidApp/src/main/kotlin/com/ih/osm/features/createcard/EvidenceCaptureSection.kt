@@ -77,7 +77,6 @@ fun EvidenceCaptureSection(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var sourceType by remember { mutableStateOf<CardEvidenceMediaType?>(null) }
     var pendingCapture by remember { mutableStateOf<PendingEvidenceCapture?>(null) }
     var permissionAction by remember { mutableStateOf<SharedEvidenceCaptureAction?>(null) }
     var grantedAction by remember { mutableStateOf<SharedEvidenceCaptureAction?>(null) }
@@ -105,15 +104,6 @@ fun EvidenceCaptureSection(
         pendingCapture = null
         if (success && capture != null) processEvidence { evidenceStorage.finishCapture(capture) }
         else evidenceStorage.discard(capture)
-    }
-    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { processEvidence { evidenceStorage.import(it, CardEvidenceMediaType.IMAGE) } }
-    }
-    val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { processEvidence { evidenceStorage.import(it, CardEvidenceMediaType.VIDEO) } }
-    }
-    val audioPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { processEvidence { evidenceStorage.import(it, CardEvidenceMediaType.AUDIO) } }
     }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         val action = permissionAction
@@ -181,7 +171,7 @@ fun EvidenceCaptureSection(
                 label = stringResource(R.string.create_card_photo),
                 count = "$images/${limits.images}",
                 enabled = images < limits.images && !isProcessing,
-                onClick = { sourceType = CardEvidenceMediaType.IMAGE },
+                onClick = { request(SharedEvidenceCaptureAction.TAKE_PHOTO) },
                 modifier = Modifier.weight(1f),
             )
             EvidenceActionCard(
@@ -189,7 +179,7 @@ fun EvidenceCaptureSection(
                 label = stringResource(R.string.create_card_video),
                 count = "$videos/${limits.videos}",
                 enabled = videos < limits.videos && !isProcessing,
-                onClick = { sourceType = CardEvidenceMediaType.VIDEO },
+                onClick = { request(SharedEvidenceCaptureAction.RECORD_VIDEO) },
                 modifier = Modifier.weight(1f),
             )
             EvidenceActionCard(
@@ -197,7 +187,7 @@ fun EvidenceCaptureSection(
                 label = stringResource(R.string.create_card_audio),
                 count = "$audios/${limits.audios}",
                 enabled = audios < limits.audios && !isProcessing,
-                onClick = { sourceType = CardEvidenceMediaType.AUDIO },
+                onClick = { request(SharedEvidenceCaptureAction.RECORD_AUDIO) },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -218,30 +208,6 @@ fun EvidenceCaptureSection(
         }
     }
 
-    sourceType?.let { mediaType ->
-        EvidenceSourceSheet(
-            mediaType = mediaType,
-            onDismiss = { sourceType = null },
-            onCapture = {
-                sourceType = null
-                request(
-                    when (mediaType) {
-                        CardEvidenceMediaType.IMAGE -> SharedEvidenceCaptureAction.TAKE_PHOTO
-                        CardEvidenceMediaType.VIDEO -> SharedEvidenceCaptureAction.RECORD_VIDEO
-                        CardEvidenceMediaType.AUDIO -> SharedEvidenceCaptureAction.RECORD_AUDIO
-                    },
-                )
-            },
-            onSelectFile = {
-                sourceType = null
-                when (mediaType) {
-                    CardEvidenceMediaType.IMAGE -> imagePicker.launch("image/*")
-                    CardEvidenceMediaType.VIDEO -> videoPicker.launch("video/*")
-                    CardEvidenceMediaType.AUDIO -> audioPicker.launch("audio/*")
-                }
-            },
-        )
-    }
     if (showAudioRecorder) {
         EvidenceAudioRecorderSheet(
             isRecording = recordingStartedAt != null,
@@ -357,41 +323,6 @@ private fun EvidenceDraftItem(evidence: CreateCardEvidenceDraft, onRemove: () ->
             IconButton(onClick = onRemove) {
                 Icon(Icons.Outlined.DeleteOutline, stringResource(R.string.create_card_remove_evidence), tint = MaterialTheme.colorScheme.error)
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun EvidenceSourceSheet(
-    mediaType: CardEvidenceMediaType,
-    onDismiss: () -> Unit,
-    onCapture: () -> Unit,
-    onSelectFile: () -> Unit,
-) {
-    val title = stringResource(
-        when (mediaType) {
-            CardEvidenceMediaType.IMAGE -> R.string.create_card_add_photo
-            CardEvidenceMediaType.VIDEO -> R.string.create_card_add_video
-            CardEvidenceMediaType.AUDIO -> R.string.create_card_add_audio
-        },
-    )
-    val capture = stringResource(
-        when (mediaType) {
-            CardEvidenceMediaType.IMAGE -> R.string.create_card_take_photo
-            CardEvidenceMediaType.VIDEO -> R.string.create_card_record_video
-            CardEvidenceMediaType.AUDIO -> R.string.create_card_record_audio
-        },
-    )
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            AnatomyText(title, style = MaterialTheme.typography.titleLarge, properties = AnatomyTextProperties(fontWeight = FontWeight.Bold))
-            AnatomyText(stringResource(R.string.create_card_evidence_source_help), style = MaterialTheme.typography.bodyMedium)
-            AnatomyButton(capture, onClick = onCapture)
-            AnatomyButton(stringResource(R.string.create_card_select_file), onClick = onSelectFile, style = AnatomyButtonStyle.SECONDARY)
         }
     }
 }
