@@ -1,9 +1,17 @@
+import SharedLogic
 import SwiftUI
 
 struct SettingsView: View {
     let user: SessionUser
     @Bindable var viewModel: SettingsViewModel
     @Bindable var permissionsViewModel: PermissionsViewModel
+    let catalogSyncState: CatalogSyncViewState
+    let catalogSyncNetworkError: CatalogSyncNetworkBlockReason?
+    let onDismissCatalogSyncError: () -> Void
+    let onSyncCatalogs: () -> Void
+
+    @State private var showsTransientCatalogSyncState = false
+    @State private var showsCatalogSyncConfirmation = false
 
     var body: some View {
         List {
@@ -14,6 +22,16 @@ struct SettingsView: View {
                     message: error,
                     type: .error,
                     onDismiss: viewModel.dismissError
+                )
+                .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
+                .listRowBackground(Color.osmBackground)
+            }
+
+            if let catalogSyncNetworkError {
+                AnatomyBanner(
+                    message: String(localized: catalogSyncNetworkError.message),
+                    type: .error,
+                    onDismiss: onDismissCatalogSyncError
                 )
                 .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
                 .listRowBackground(Color.osmBackground)
@@ -50,6 +68,14 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(.plain)
+
+                ManualCatalogSyncCard(
+                    state: displayedCatalogSyncState,
+                    isBusy: isCatalogSyncBusy,
+                    action: { showsCatalogSyncConfirmation = true }
+                )
+                .listRowInsets(.init(top: 8, leading: 0, bottom: 8, trailing: 0))
+                .listRowBackground(Color.osmBackground)
 
                 Toggle(
                     isOn: Binding(
@@ -107,9 +133,33 @@ struct SettingsView: View {
         } message: {
             Text(logoutWarningMessage)
         }
+        .alert(
+            AppStrings.CatalogSync.manualConfirmTitle,
+            isPresented: $showsCatalogSyncConfirmation
+        ) {
+            Button(AppStrings.Common.cancel, role: .cancel) {}
+            Button(AppStrings.CatalogSync.manualConfirmAction) {
+                onSyncCatalogs()
+            }
+        } message: {
+            Text(AppStrings.CatalogSync.manualConfirmBody)
+        }
         .task {
             viewModel.start()
             await permissionsViewModel.refresh()
+        }
+        .task(id: isTransientCatalogSyncState) {
+            showsTransientCatalogSyncState = false
+            guard isTransientCatalogSyncState else { return }
+
+            do {
+                try await Task.sleep(for: .milliseconds(500))
+            } catch {
+                return
+            }
+
+            guard !Task.isCancelled else { return }
+            showsTransientCatalogSyncState = true
         }
     }
 
@@ -141,6 +191,35 @@ struct SettingsView: View {
     private var missingPermissions: Int {
         permissionsViewModel.items.count {
             $0.status == .missing || $0.status == .partial || $0.status == .denied
+        }
+    }
+
+    private var isTransientCatalogSyncState: Bool {
+        switch catalogSyncState {
+        case .waitingForNetwork, .downloading:
+            true
+        case .idle, .failed:
+            false
+        }
+    }
+
+    private var displayedCatalogSyncState: CatalogSyncViewState {
+        switch catalogSyncState {
+        case .failed:
+            catalogSyncState
+        case .waitingForNetwork, .downloading:
+            showsTransientCatalogSyncState ? catalogSyncState : .idle
+        case .idle:
+            catalogSyncState
+        }
+    }
+
+    private var isCatalogSyncBusy: Bool {
+        switch catalogSyncState {
+        case .waitingForNetwork, .downloading:
+            true
+        case .idle, .failed:
+            false
         }
     }
 

@@ -230,6 +230,12 @@ struct CreateCardView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(Color.osmOutlineVariant, lineWidth: 1)
         }
+        if !state.evidences.isEmpty {
+            EvidenceMediaGallery(
+                items: state.evidences.map(\.mediaGalleryItem),
+                isOnlyRead: true
+            )
+        }
         CreateCardInfoBox(text: AppStrings.CreateCard.offlineNotice)
     }
 

@@ -54,15 +54,11 @@ struct MainTabRoot: View {
                     user: user,
                     selectedSiteID: $selectedSiteID,
                     networkStatus: networkMonitor.status,
-                    catalogSyncState: catalogSyncViewModel?.state ?? .idle,
                     pendingCardCount: cardSyncScheduler.pendingCount,
                     isCardSyncing: cardSyncScheduler.isSyncing,
                     cardSyncCompleted: cardSyncScheduler.completed,
                     cardSyncTotal: cardSyncScheduler.total,
                     onSyncPendingCards: cardSyncScheduler.syncManually,
-                    catalogSyncNetworkError: catalogSyncNetworkError,
-                    onDismissCatalogSyncError: { catalogSyncNetworkError = nil },
-                    onSyncCatalogs: syncCatalogsManually,
                     onCreateCard: presentCreateCard,
                     onOpenCards: { selectedTab = .cards }
                 )
@@ -105,7 +101,11 @@ struct MainTabRoot: View {
                     SettingsView(
                         user: user,
                         viewModel: settingsViewModel,
-                        permissionsViewModel: permissionsViewModel
+                        permissionsViewModel: permissionsViewModel,
+                        catalogSyncState: catalogSyncViewModel?.state ?? .idle,
+                        catalogSyncNetworkError: catalogSyncNetworkError,
+                        onDismissCatalogSyncError: { catalogSyncNetworkError = nil },
+                        onSyncCatalogs: syncCatalogsManually
                     )
                 } else {
                     ContentUnavailableView(
@@ -203,48 +203,34 @@ struct HomeView: View {
     let user: SessionUser
     @Binding var selectedSiteID: Int64?
     let networkStatus: NetworkConnectionStatus
-    let catalogSyncState: CatalogSyncViewState
     let pendingCardCount: Int
     let isCardSyncing: Bool
     let cardSyncCompleted: Int
     let cardSyncTotal: Int
     let onSyncPendingCards: () -> Void
-    let catalogSyncNetworkError: CatalogSyncNetworkBlockReason?
-    let onDismissCatalogSyncError: () -> Void
-    let onSyncCatalogs: () -> Void
     let onCreateCard: () -> Void
     let onOpenCards: () -> Void
-    @State private var showsTransientCatalogSyncState = false
-    @State private var showsCatalogSyncConfirmation = false
 
     init(
         user: SessionUser,
         selectedSiteID: Binding<Int64?>,
         networkStatus: NetworkConnectionStatus,
-        catalogSyncState: CatalogSyncViewState,
         pendingCardCount: Int,
         isCardSyncing: Bool,
         cardSyncCompleted: Int,
         cardSyncTotal: Int,
         onSyncPendingCards: @escaping () -> Void,
-        catalogSyncNetworkError: CatalogSyncNetworkBlockReason?,
-        onDismissCatalogSyncError: @escaping () -> Void,
-        onSyncCatalogs: @escaping () -> Void,
         onCreateCard: @escaping () -> Void,
         onOpenCards: @escaping () -> Void
     ) {
         self.user = user
         _selectedSiteID = selectedSiteID
         self.networkStatus = networkStatus
-        self.catalogSyncState = catalogSyncState
         self.pendingCardCount = pendingCardCount
         self.isCardSyncing = isCardSyncing
         self.cardSyncCompleted = cardSyncCompleted
         self.cardSyncTotal = cardSyncTotal
         self.onSyncPendingCards = onSyncPendingCards
-        self.catalogSyncNetworkError = catalogSyncNetworkError
-        self.onDismissCatalogSyncError = onDismissCatalogSyncError
-        self.onSyncCatalogs = onSyncCatalogs
         self.onCreateCard = onCreateCard
         self.onOpenCards = onOpenCards
     }
@@ -266,22 +252,6 @@ struct HomeView: View {
 
                 NetworkStatusBadge(status: networkStatus)
                     .padding(.top, OSMSpacing.sm)
-
-                if let catalogSyncNetworkError {
-                    AnatomyBanner(
-                        message: String(localized: catalogSyncNetworkError.message),
-                        type: .error,
-                        onDismiss: onDismissCatalogSyncError
-                    )
-                        .padding(.top, OSMSpacing.sm)
-                }
-
-                ManualCatalogSyncCard(
-                    state: displayedCatalogSyncState,
-                    isBusy: isCatalogSyncBusy,
-                    action: { showsCatalogSyncConfirmation = true }
-                )
-                .padding(.top, OSMSpacing.sm)
 
                 if pendingCardCount > 0 {
                     PendingCardsSyncCard(
@@ -336,30 +306,6 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Color.osmBackground.ignoresSafeArea())
-        .alert(
-            AppStrings.CatalogSync.manualConfirmTitle,
-            isPresented: $showsCatalogSyncConfirmation
-        ) {
-            Button(AppStrings.Common.cancel, role: .cancel) {}
-            Button(AppStrings.CatalogSync.manualConfirmAction) {
-                onSyncCatalogs()
-            }
-        } message: {
-            Text(AppStrings.CatalogSync.manualConfirmBody)
-        }
-        .task(id: isTransientCatalogSyncState) {
-            showsTransientCatalogSyncState = false
-            guard isTransientCatalogSyncState else { return }
-
-            do {
-                try await Task.sleep(for: .milliseconds(500))
-            } catch {
-                return
-            }
-
-            guard !Task.isCancelled else { return }
-            showsTransientCatalogSyncState = true
-        }
         .onChange(of: user.sites) { _, sites in
             if !sites.contains(where: { $0.id == selectedSiteID }) {
                 selectedSiteID = sites.first?.id
@@ -369,35 +315,6 @@ struct HomeView: View {
 
     private var selectedSite: SessionSite? {
         user.sites.first { $0.id == selectedSiteID } ?? user.sites.first
-    }
-
-    private var isTransientCatalogSyncState: Bool {
-        switch catalogSyncState {
-        case .waitingForNetwork, .downloading:
-            true
-        case .idle, .failed:
-            false
-        }
-    }
-
-    private var displayedCatalogSyncState: CatalogSyncViewState {
-        switch catalogSyncState {
-        case .failed:
-            catalogSyncState
-        case .waitingForNetwork, .downloading:
-            showsTransientCatalogSyncState ? catalogSyncState : .idle
-        case .idle:
-            catalogSyncState
-        }
-    }
-
-    private var isCatalogSyncBusy: Bool {
-        switch catalogSyncState {
-        case .waitingForNetwork, .downloading:
-            true
-        case .idle, .failed:
-            false
-        }
     }
 
     private var header: some View {
@@ -592,7 +509,7 @@ private struct NetworkStatusBadge: View {
     }
 }
 
-private struct ManualCatalogSyncCard: View {
+struct ManualCatalogSyncCard: View {
     let state: CatalogSyncViewState
     let isBusy: Bool
     let action: () -> Void
@@ -675,7 +592,7 @@ private struct ManualCatalogSyncCard: View {
     }
 }
 
-private extension CatalogSyncNetworkBlockReason {
+extension CatalogSyncNetworkBlockReason {
     var message: LocalizedStringResource {
         switch self {
         case .mobileDataDisabled:

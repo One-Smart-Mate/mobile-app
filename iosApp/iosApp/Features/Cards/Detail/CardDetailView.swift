@@ -10,25 +10,12 @@ private enum CardDetailTab: Hashable {
     case evidence
 }
 
-private struct EvidencePreview: Identifiable {
-    enum Kind {
-        case image
-        case video
-    }
-
-    let id = UUID()
-    let kind: Kind
-    let path: String
-}
-
 struct CardDetailView: View {
     let uuid: String
     let siteNames: [Int64: String]
     @Bindable var viewModel: CardDetailViewModel
 
     @State private var selectedTab: CardDetailTab = .information
-    @State private var preview: EvidencePreview?
-    @State private var pendingVideoEvidenceID: String?
 
     var body: some View {
         Group {
@@ -53,17 +40,6 @@ struct CardDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task(id: uuid) { viewModel.start(uuid: uuid) }
         .onDisappear { viewModel.stop() }
-        .onChange(of: viewModel.evidenceFiles.count) { _, _ in
-            presentPendingVideoIfAvailable()
-        }
-        .fullScreenCover(item: $preview) { preview in
-            switch preview.kind {
-            case .image:
-                FullScreenEvidenceImage(path: preview.path) { self.preview = nil }
-            case .video:
-                FullScreenEvidenceVideo(path: preview.path) { self.preview = nil }
-            }
-        }
     }
 
     private func detailContent(_ card: Card) -> some View {
@@ -87,29 +63,11 @@ struct CardDetailView: View {
             case .evidence:
                 CardEvidenceView(
                     evidences: card.evidences,
-                    viewModel: viewModel,
-                    onOpenImage: { evidence in open(evidence, as: .image) },
-                    onOpenVideo: { evidence in open(evidence, as: .video) }
+                    viewModel: viewModel
                 )
             }
         }
         .background(Color.osmBackground)
-    }
-
-    private func open(_ evidence: CardEvidence, as kind: EvidencePreview.Kind) {
-        if let path = viewModel.evidenceFiles[evidence.id] {
-            preview = EvidencePreview(kind: kind, path: path)
-            return
-        }
-        if kind == .video { pendingVideoEvidenceID = evidence.id }
-        viewModel.resolve(evidence)
-    }
-
-    private func presentPendingVideoIfAvailable() {
-        guard let id = pendingVideoEvidenceID,
-              let path = viewModel.evidenceFiles[id] else { return }
-        pendingVideoEvidenceID = nil
-        preview = EvidencePreview(kind: .video, path: path)
     }
 }
 
@@ -341,8 +299,6 @@ private struct DetailValueRow: View {
 private struct CardEvidenceView: View {
     let evidences: [CardEvidence]
     @Bindable var viewModel: CardDetailViewModel
-    let onOpenImage: (CardEvidence) -> Void
-    let onOpenVideo: (CardEvidence) -> Void
 
     var body: some View {
         ScrollView {
@@ -351,9 +307,7 @@ private struct CardEvidenceView: View {
                     EvidenceStageSection(
                         stage: stage,
                         evidences: evidences.filter { $0.stage == stage },
-                        viewModel: viewModel,
-                        onOpenImage: onOpenImage,
-                        onOpenVideo: onOpenVideo
+                        viewModel: viewModel
                     )
                 }
             }
@@ -368,12 +322,6 @@ private struct EvidenceStageSection: View {
     let stage: CardEvidenceStage
     let evidences: [CardEvidence]
     @Bindable var viewModel: CardDetailViewModel
-    let onOpenImage: (CardEvidence) -> Void
-    let onOpenVideo: (CardEvidence) -> Void
-
-    private var images: [CardEvidence] { evidences.filter { $0.mediaType == .image } }
-    private var videos: [CardEvidence] { evidences.filter { $0.mediaType == .video } }
-    private var audios: [CardEvidence] { evidences.filter { $0.mediaType == .audio } }
 
     var body: some View {
         ReadOnlyDetailSection(title: stage.localizedTitle) {
@@ -382,48 +330,23 @@ private struct EvidenceStageSection: View {
                     .font(.body)
                     .foregroundStyle(Color.osmOnSurfaceVariant)
             } else {
-                if !images.isEmpty {
-                    MediaHeading(systemImage: "photo", title: AppStrings.CardDetail.images, count: images.count)
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
-                        ForEach(images, id: \.id) { evidence in
-                            EvidenceImageThumbnail(
-                                evidence: evidence,
-                                path: viewModel.evidenceFiles[evidence.id],
-                                isLoading: viewModel.loadingEvidenceIDs.contains(evidence.id),
-                                hasFailed: viewModel.failedEvidenceIDs.contains(evidence.id),
-                                action: { onOpenImage(evidence) }
-                            )
-                        }
-                    }
-                }
-
-                if !videos.isEmpty {
-                    MediaHeading(systemImage: "video", title: AppStrings.CardDetail.videos, count: videos.count)
-                        .padding(.top, OSMSpacing.xs)
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
-                        ForEach(videos, id: \.id) { evidence in
-                            EvidenceVideoThumbnail(
-                                isLoading: viewModel.loadingEvidenceIDs.contains(evidence.id),
-                                hasFailed: viewModel.failedEvidenceIDs.contains(evidence.id),
-                                action: { onOpenVideo(evidence) }
-                            )
-                        }
-                    }
-                }
-
-                if !audios.isEmpty {
-                    MediaHeading(systemImage: "waveform", title: AppStrings.CardDetail.audios, count: audios.count)
-                        .padding(.top, OSMSpacing.xs)
-                    ForEach(audios, id: \.id) { evidence in
-                        EvidenceAudioRow(
-                            evidence: evidence,
+                EvidenceMediaGallery(
+                    items: evidences.map { evidence in
+                        EvidenceMediaItem(
+                            id: evidence.id,
                             path: viewModel.evidenceFiles[evidence.id],
+                            displayName: URL(fileURLWithPath: evidence.url).lastPathComponent,
+                            mediaType: evidence.mediaType,
                             isLoading: viewModel.loadingEvidenceIDs.contains(evidence.id),
-                            hasFailed: viewModel.failedEvidenceIDs.contains(evidence.id),
-                            onResolve: { viewModel.resolve(evidence) }
+                            hasFailed: viewModel.failedEvidenceIDs.contains(evidence.id)
                         )
+                    },
+                    isOnlyRead: true,
+                    onRequestSource: { item in
+                        guard let evidence = evidences.first(where: { $0.id == item.id }) else { return }
+                        viewModel.resolve(evidence)
                     }
-                }
+                )
             }
         }
     }

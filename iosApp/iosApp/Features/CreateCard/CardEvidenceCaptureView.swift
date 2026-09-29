@@ -86,9 +86,13 @@ struct CardEvidenceCaptureView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(AppStrings.CreateCard.attachedEvidence)
                         .font(.subheadline.weight(.semibold))
-                    ForEach(evidences, id: \.id) { evidence in
-                        evidenceRow(evidence)
-                    }
+                    EvidenceMediaGallery(
+                        items: evidences.map(\.mediaGalleryItem),
+                        isOnlyRead: false,
+                        onDelete: { evidence in
+                            Task { await removeEvidence(evidence.id) }
+                        }
+                    )
                 }
                 .padding(.top, 4)
             }
@@ -184,35 +188,6 @@ struct CardEvidenceCaptureView: View {
         .disabled(!enabled || isImporting || isProcessingEvidence)
     }
 
-    private func evidenceRow(_ evidence: CreateCardEvidenceDraft) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon(for: evidence.mediaType))
-                .foregroundStyle(Color.osmPrimary)
-                .frame(width: 34, height: 34)
-                .background(Color.osmPrimaryContainer.opacity(0.7))
-                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(evidence.displayName)
-                    .font(.subheadline.weight(.medium))
-                    .lineLimit(1)
-                Text(fileDetail(evidence))
-                    .font(.caption)
-                    .foregroundStyle(Color.osmOnSurfaceVariant)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Button(role: .destructive) {
-                Task { await removeEvidence(evidence.id) }
-            } label: {
-                Image(systemName: "trash")
-                    .frame(width: 44, height: 44)
-            }
-            .accessibilityLabel(AppStrings.CreateCard.removeEvidence)
-        }
-        .padding(.leading, 10)
-        .background(Color.osmSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
     private func importFile(_ url: URL, as mediaType: CardEvidenceMediaType, removeSource: Bool) async {
         await MainActor.run { isImporting = true }
         defer {
@@ -263,23 +238,6 @@ struct CardEvidenceCaptureView: View {
             maximum,
             duration
         )
-    }
-
-    private func icon(for mediaType: CardEvidenceMediaType) -> String {
-        switch mediaType {
-        case .image: "photo"
-        case .video: "video"
-        case .audio: "waveform"
-        default: "paperclip"
-        }
-    }
-
-    private func fileDetail(_ evidence: CreateCardEvidenceDraft) -> String {
-        let size = ByteCountFormatter.string(fromByteCount: evidence.sizeBytes, countStyle: .file)
-        guard evidence.durationMillis > 0 else { return size }
-        let duration = Duration.seconds(Double(evidence.durationMillis) / 1_000)
-            .formatted(.time(pattern: .minuteSecond))
-        return "\(duration) · \(size)"
     }
 
 }
