@@ -23,6 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.SignalCellularAlt
@@ -32,6 +34,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
@@ -42,6 +45,9 @@ import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -66,7 +72,10 @@ import com.ih.osm.designsystem.preview.PreviewScreen
 import com.ih.osm.designsystem.theme.OneSmartMateTheme
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
 import com.ih.osm.features.auth.domain.model.UserSite
+import com.ih.osm.features.catalog.domain.model.CatalogKind
+import com.ih.osm.features.catalog.domain.model.CatalogSyncStatus
 import com.ih.osm.features.permissions.PermissionsBottomSheetHost
+import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -76,20 +85,40 @@ fun SettingsScreenRoute(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.getStateFlow().collectAsStateWithLifecycle()
+    val catalogSyncState = state.catalogSyncStatus
+    val isTransientSyncState = catalogSyncState is CatalogSyncStatus.WaitingForNetwork ||
+        catalogSyncState is CatalogSyncStatus.Downloading
+    var showTransientSyncState by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { viewModel.process(SettingsViewModel.Action.RefreshPermissions) }
+    LaunchedEffect(user) { viewModel.process(SettingsViewModel.Action.BindUser(user)) }
+    LaunchedEffect(isTransientSyncState) {
+        showTransientSyncState = if (isTransientSyncState) {
+            delay(SYNC_PROGRESS_VISIBILITY_DELAY_MS)
+            true
+        } else {
+            false
+        }
+    }
 
     SettingsScreen(
         user = user,
         state = state,
+        catalogSyncState = when {
+            catalogSyncState is CatalogSyncStatus.Failed -> catalogSyncState
+            showTransientSyncState -> catalogSyncState
+            else -> CatalogSyncStatus.Idle
+        },
         versionName = BuildConfig.VERSION_NAME,
         onInformationClick = { viewModel.process(SettingsViewModel.Action.ShowAccountInformation) },
         onPermissionsClick = { viewModel.process(SettingsViewModel.Action.ShowPermissions) },
         onAllowMobileDataChange = {
             viewModel.process(SettingsViewModel.Action.SetAllowMobileData(it))
         },
+        onCatalogSyncClick = { viewModel.process(SettingsViewModel.Action.RequestCatalogSync) },
         onLogoutClick = { viewModel.process(SettingsViewModel.Action.RequestLogout(user)) },
         onDismissError = { viewModel.process(SettingsViewModel.Action.DismissError) },
+        onDismissCatalogBanner = { viewModel.process(SettingsViewModel.Action.DismissCatalogBanner) },
         modifier = modifier,
     )
 
@@ -115,18 +144,30 @@ fun SettingsScreenRoute(
             onConfirm = { viewModel.process(SettingsViewModel.Action.ConfirmLogout(user)) },
         )
     }
+
+    if (state.showCatalogSyncConfirmation) {
+        CatalogSyncConfirmationDialog(
+            onDismiss = { viewModel.process(SettingsViewModel.Action.DismissCatalogSyncConfirmation) },
+            onConfirm = { viewModel.process(SettingsViewModel.Action.ConfirmCatalogSync) },
+        )
+    }
 }
+
+private const val SYNC_PROGRESS_VISIBILITY_DELAY_MS = 500L
 
 @Composable
 private fun SettingsScreen(
     user: AuthenticatedUser,
     state: SettingsUiState,
+    catalogSyncState: CatalogSyncStatus,
     versionName: String,
     onInformationClick: () -> Unit,
     onPermissionsClick: () -> Unit,
     onAllowMobileDataChange: (Boolean) -> Unit,
+    onCatalogSyncClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onDismissError: () -> Unit,
+    onDismissCatalogBanner: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -148,6 +189,15 @@ private fun SettingsScreen(
                     message = stringResource(R.string.settings_logout_error),
                     type = AnatomyBannerType.ERROR,
                     onDismiss = onDismissError,
+                )
+            }
+        }
+        state.catalogBanner?.let { banner ->
+            item {
+                AnatomyBanner(
+                    message = stringResource(banner.messageResource()),
+                    type = AnatomyBannerType.ERROR,
+                    onDismiss = onDismissCatalogBanner,
                 )
             }
         }
@@ -178,6 +228,12 @@ private fun SettingsScreen(
                         }
                         Chevron()
                     },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                CatalogSyncSettingsRow(
+                    state = catalogSyncState,
+                    isBusy = state.isCatalogSyncBusy(),
+                    onClick = onCatalogSyncClick,
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 SettingsRow(
@@ -221,6 +277,83 @@ private fun SettingsScreen(
                         }
                     },
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CatalogSyncSettingsRow(
+    state: CatalogSyncStatus,
+    isBusy: Boolean,
+    onClick: () -> Unit,
+) {
+    val isFailure = state is CatalogSyncStatus.Failed
+    val status = when (state) {
+        CatalogSyncStatus.Idle -> stringResource(R.string.home_catalog_sync_action)
+        CatalogSyncStatus.WaitingForNetwork -> stringResource(R.string.catalog_sync_waiting)
+        is CatalogSyncStatus.Downloading -> state.catalog.catalogLabel()
+        is CatalogSyncStatus.Failed -> state.message ?: stringResource(R.string.catalog_sync_failed)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isBusy, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = if (isFailure) Icons.Outlined.CloudOff else Icons.Outlined.CloudDownload,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp),
+            tint = if (isFailure) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            AnatomyText(
+                text = stringResource(R.string.home_catalog_sync_title),
+                style = MaterialTheme.typography.bodyMedium,
+                properties = AnatomyTextProperties(fontWeight = FontWeight.Medium),
+            )
+            AnatomyText(
+                text = if (state is CatalogSyncStatus.Idle) {
+                    stringResource(R.string.home_catalog_sync_body)
+                } else {
+                    status
+                },
+                style = MaterialTheme.typography.bodySmall,
+                properties = AnatomyTextProperties(
+                    color = if (isFailure) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                ),
+            )
+            if (state is CatalogSyncStatus.Idle) {
+                AnatomyText(
+                    text = status,
+                    style = MaterialTheme.typography.labelMedium,
+                    properties = AnatomyTextProperties(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                )
+            }
+            when (state) {
+                CatalogSyncStatus.WaitingForNetwork -> {
+                    Spacer(Modifier.height(5.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+                is CatalogSyncStatus.Downloading -> {
+                    Spacer(Modifier.height(5.dp))
+                    LinearProgressIndicator(
+                        progress = { state.progress },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                else -> Unit
             }
         }
     }
@@ -433,6 +566,69 @@ private fun InformationRow(label: String, value: String) {
 }
 
 @Composable
+private fun CatalogSyncConfirmationDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.CloudDownload,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        },
+        title = {
+            AnatomyText(
+                text = stringResource(R.string.home_catalog_sync_confirm_title),
+                style = MaterialTheme.typography.titleLarge,
+                properties = AnatomyTextProperties(fontWeight = FontWeight.Bold),
+            )
+        },
+        text = {
+            AnatomyText(
+                text = stringResource(R.string.home_catalog_sync_confirm_body),
+                style = MaterialTheme.typography.bodyMedium,
+                properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            )
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                AnatomyText(stringResource(R.string.settings_cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                AnatomyText(
+                    text = stringResource(R.string.home_catalog_sync_confirm_action),
+                    properties = AnatomyTextProperties(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                )
+            }
+        },
+    )
+}
+
+private fun SettingsBanner.messageResource(): Int = when (this) {
+    SettingsBanner.MOBILE_DATA_DISABLED -> R.string.home_catalog_sync_mobile_data_disabled
+    SettingsBanner.NO_INTERNET -> R.string.home_catalog_sync_no_internet
+    SettingsBanner.CATALOG_SYNC_FAILED -> R.string.catalog_sync_failed
+}
+
+@Composable
+private fun CatalogKind?.catalogLabel(): String = when (this) {
+    CatalogKind.CARD_TYPES -> stringResource(R.string.catalog_sync_card_types)
+    CatalogKind.PRECLASSIFIERS -> stringResource(R.string.catalog_sync_preclassifiers)
+    CatalogKind.PRIORITIES -> stringResource(R.string.catalog_sync_priorities)
+    CatalogKind.LEVELS -> stringResource(R.string.catalog_sync_levels)
+    CatalogKind.EMPLOYEES -> stringResource(R.string.catalog_sync_employees)
+    null -> stringResource(R.string.catalog_sync_starting)
+}
+
+@Composable
 private fun PendingCardsLogoutDialog(
     pendingCount: Long,
     isLoggingOut: Boolean,
@@ -509,12 +705,15 @@ private fun SettingsScreenPreview() {
                 dueDate = null,
             ),
             state = SettingsUiState(missingPermissionCount = 2),
+            catalogSyncState = CatalogSyncStatus.Idle,
             versionName = "1.0-dev",
             onInformationClick = {},
             onPermissionsClick = {},
             onAllowMobileDataChange = {},
+            onCatalogSyncClick = {},
             onLogoutClick = {},
             onDismissError = {},
+            onDismissCatalogBanner = {},
         )
     }
 }
