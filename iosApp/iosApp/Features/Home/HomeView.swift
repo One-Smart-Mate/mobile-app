@@ -321,7 +321,7 @@ struct HomeView: View {
         HStack(alignment: .top, spacing: OSMSpacing.sm) {
             VStack(alignment: .leading, spacing: OSMSpacing.xxs) {
                 AnatomyText(
-                    verbatim: user.companyName,
+                    verbatim: selectedSite.name ?? user.companyName,
                     font: OSMTypography.title2,
                     lineLimit: 1
                 )

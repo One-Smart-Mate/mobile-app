@@ -273,8 +273,6 @@ private fun HomeHeader(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             AnatomyText(
-                // Show the SITE name (consistent with the web), falling back to
-                // the company name only when no site is selected.
                 text = selectedSite?.name?.takeIf { it.isNotBlank() } ?: user.companyName,
                 style = MaterialTheme.typography.headlineMedium,
                 properties = AnatomyTextProperties(
