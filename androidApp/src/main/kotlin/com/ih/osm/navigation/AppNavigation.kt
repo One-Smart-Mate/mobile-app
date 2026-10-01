@@ -48,6 +48,7 @@ import com.ih.osm.features.carddetail.CardDetailScreenRoute
 import com.ih.osm.features.cardsolution.CardSolutionScreenRoute
 import com.ih.osm.features.createcard.CreateCardScreenRoute
 import com.ih.osm.features.home.HomeScreenRoute
+import com.ih.osm.features.opl.OplScreenRoute
 import com.ih.osm.features.settings.SettingsScreenRoute
 import com.ih.osm.features.card.domain.solution.CardSolutionType
 import kotlinx.serialization.Serializable
@@ -59,6 +60,7 @@ private sealed interface AppRoute : NavKey {
     @Serializable data class ForgotPassword(val email: String) : AppRoute
     @Serializable data object Main : AppRoute
     @Serializable data class CreateCard(val siteId: Long? = null) : AppRoute
+    @Serializable data class Opl(val siteId: Long) : AppRoute
     @Serializable data class CardDetail(val uuid: String) : AppRoute
     @Serializable data class CardSolution(val uuid: String, val type: String) : AppRoute
 }
@@ -132,6 +134,7 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
                     MainTabRoot(
                         user = user,
                         onCreateCard = { backStack.add(AppRoute.CreateCard(it)) },
+                        onOpenOpl = { backStack.add(AppRoute.Opl(it)) },
                         onOpenCard = { backStack.add(AppRoute.CardDetail(it)) },
                         onApplySolution = { uuid, type ->
                             backStack.add(AppRoute.CardSolution(uuid, type.name))
@@ -143,6 +146,13 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
                         user = user,
                         siteId = route.siteId,
                         onFinished = { backStack.removeLast() },
+                    )
+                }
+                is AppRoute.Opl -> NavEntry(route) {
+                    OplScreenRoute(
+                        user = user,
+                        siteId = route.siteId,
+                        onBack = { backStack.removeLast() },
                     )
                 }
                 is AppRoute.CardDetail -> NavEntry(route) {
@@ -170,6 +180,7 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
 private fun MainTabRoot(
     user: AuthenticatedUser,
     onCreateCard: (Long?) -> Unit,
+    onOpenOpl: (Long) -> Unit,
     onOpenCard: (String) -> Unit,
     onApplySolution: (String, CardSolutionType) -> Unit,
     catalogSyncManager: CatalogSyncManager = koinInject(),
@@ -214,6 +225,7 @@ private fun MainTabRoot(
                 user = user,
                 onCreateCard = { onCreateCard(it) },
                 onOpenNotes = { selectedTab = MainTab.CARDS },
+                onOpenOpl = onOpenOpl,
                 modifier = Modifier.padding(innerPadding),
             )
             MainTab.CARDS -> CardListScreenRoute(

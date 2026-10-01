@@ -21,6 +21,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.Note
+import androidx.compose.material.icons.automirrored.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Key
@@ -74,6 +77,7 @@ fun HomeScreenRoute(
     user: AuthenticatedUser,
     onCreateCard: (Long) -> Unit,
     onOpenNotes: () -> Unit,
+    onOpenOpl: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
@@ -97,6 +101,7 @@ fun HomeScreenRoute(
         onSiteSelected = { selectedSiteId = it.id },
         onCreateNote = { selectedSite?.let { onCreateCard(it.id) } },
         onOpenNotes = onOpenNotes,
+        onOpenOpl = { selectedSite?.let { onOpenOpl(it.id) } },
         pendingCardCount = state.pendingCount,
         isCardSyncing = state.isSyncing,
         cardSyncCompleted = state.completed,
@@ -116,6 +121,7 @@ fun HomeScreen(
     onSiteSelected: (UserSite) -> Unit,
     onCreateNote: () -> Unit,
     onOpenNotes: () -> Unit,
+    onOpenOpl: () -> Unit,
     pendingCardCount: Long,
     isCardSyncing: Boolean,
     cardSyncCompleted: Int,
@@ -170,6 +176,8 @@ fun HomeScreen(
             QuickActionsGrid(
                 onCreateNote = onCreateNote,
                 onOpenNotes = onOpenNotes,
+                onOpenOpl = onOpenOpl,
+                oplEnabled = selectedSite != null,
             )
             Spacer(Modifier.height(16.dp))
         }
@@ -408,6 +416,8 @@ private fun NetworkStatusBadge(status: NetworkConnectionStatus) {
 private fun QuickActionsGrid(
     onCreateNote: () -> Unit,
     onOpenNotes: () -> Unit,
+    onOpenOpl: () -> Unit,
+    oplEnabled: Boolean,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
@@ -416,27 +426,10 @@ private fun QuickActionsGrid(
         ) {
             QuickActionCard(
                 title = stringResource(R.string.home_action_new_note),
-                icon = Icons.Outlined.NoteAdd,
+                icon = Icons.AutoMirrored.Outlined.NoteAdd,
                 onClick = onCreateNote,
                 modifier = Modifier.weight(1f),
             )
-//            QuickActionCard(
-//                title = stringResource(R.string.home_action_scan_qr),
-//                icon = Icons.Outlined.QrCodeScanner,
-//                onClick = {},
-//                modifier = Modifier.weight(1f),
-//            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-//            QuickActionCard(
-//                title = stringResource(R.string.home_action_fast_password),
-//                icon = Icons.Outlined.Key,
-//                onClick = {},
-//                modifier = Modifier.weight(1f),
-//            )
             QuickActionCard(
                 title = stringResource(R.string.cards_title),
                 icon = Icons.Outlined.Description,
@@ -444,6 +437,20 @@ private fun QuickActionsGrid(
                 modifier = Modifier.weight(1f),
             )
         }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            QuickActionCard(
+                title = stringResource(R.string.opl_title),
+                icon = Icons.AutoMirrored.Outlined.MenuBook,
+                onClick = onOpenOpl,
+                enabled = oplEnabled,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+        }
+
     }
 }
 
@@ -453,10 +460,12 @@ private fun QuickActionCard(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     AnatomyCard(
         modifier = modifier.heightIn(min = 108.dp, max = 116.dp),
         onClick = onClick,
+        enabled = enabled,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
     ) {
         Column(
@@ -520,6 +529,7 @@ private fun HomeScreenPreview() {
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},
+            onOpenOpl = {},
             pendingCardCount = 2,
             isCardSyncing = true,
             cardSyncCompleted = 1,
@@ -540,6 +550,7 @@ private fun HomeScreenLandscapePreview() {
             onSiteSelected = {},
             onCreateNote = {},
             onOpenNotes = {},
+            onOpenOpl = {},
             pendingCardCount = 2,
             isCardSyncing = false,
             cardSyncCompleted = 0,

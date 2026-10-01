@@ -370,4 +370,55 @@
     <string name="permissions_status_partial">Parcial</string>
     <string name="permissions_status_pending">Pendiente</string>
     <string name="permissions_status_ready">Listo</string>
+    <string name="search_clear">Limpiar búsqueda o selección</string>
+    <string name="opl_title" translatable="false">OPL</string>
+    <string name="opl_subtitle" translatable="false">One Point Lesson</string>
+    <string name="opl_search_placeholder">Buscar por nombre de OPL o máquina</string>
+    <string name="opl_search_action">Buscar OPL</string>
+    <string name="opl_search_mode_helper">Busca por nombre de OPL o máquina, o selecciona una ubicación. Usa una sola opción a la vez.</string>
+    <string name="opl_clear_query_to_select">Borra el texto del buscador para buscar por ubicación.</string>
+    <string name="opl_clear_level_to_search">Quita la ubicación seleccionada para buscar por nombre.</string>
+    <string name="opl_searching">Buscando OPL…</string>
+    <string name="opl_loading_levels">Cargando niveles del dispositivo…</string>
+    <string name="opl_select_current_level">Buscar OPL de %1$s</string>
+    <string name="opl_site_unavailable">No hay un sitio disponible para consultar OPL.</string>
+    <string name="opl_levels_unavailable">No hay niveles disponibles. Sincroniza los catálogos desde Ajustes e inténtalo nuevamente.</string>
+    <string name="opl_query_too_long">La búsqueda debe tener como máximo 100 caracteres.</string>
+    <string name="opl_no_connection">No pudimos conectarnos. Revisa tu conexión e inténtalo nuevamente.</string>
+    <string name="opl_search_failed">No fue posible buscar los OPL. Inténtalo nuevamente.</string>
+    <string name="opl_access_denied">No tienes acceso a los OPL de este sitio o tu sesión venció.</string>
+    <string name="opl_card_no_locations">Sin ubicaciones asignadas</string>
+    <string name="opl_card_no_content">Sin contenido adjunto</string>
+    <string name="opl_card_updated">Actualizado: %1$s</string>
+    <string name="opl_card_created">Creado: %1$s</string>
+    <string name="opl_empty_title">No encontramos OPL</string>
+    <string name="opl_empty_description">Prueba con otro nombre de OPL o máquina, o selecciona otra ubicación.</string>
+    <plurals name="opl_result_count">
+        <item quantity="one">%1$d OPL encontrado</item>
+        <item quantity="other">%1$d OPL encontrados</item>
+    </plurals>
+    <plurals name="opl_card_more_locations">
+        <item quantity="one">+%1$d ubicación</item>
+        <item quantity="other">+%1$d ubicaciones</item>
+    </plurals>
+    <plurals name="opl_card_texts">
+        <item quantity="one">%1$d texto</item>
+        <item quantity="other">%1$d textos</item>
+    </plurals>
+    <plurals name="opl_card_images">
+        <item quantity="one">%1$d imagen</item>
+        <item quantity="other">%1$d imágenes</item>
+    </plurals>
+    <plurals name="opl_card_videos">
+        <item quantity="one">%1$d video</item>
+        <item quantity="other">%1$d videos</item>
+    </plurals>
+    <plurals name="opl_card_pdfs">
+        <item quantity="one">%1$d PDF</item>
+        <item quantity="other">%1$d PDF</item>
+    </plurals>
+    <plurals name="opl_card_files">
+        <item quantity="one">%1$d archivo</item>
+        <item quantity="other">%1$d archivos</item>
+    </plurals>
 </resources>
