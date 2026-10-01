@@ -27,6 +27,8 @@ class AndroidLogoutManager(
         runCatching { catalogSyncManager.cancel(user) }
 
         database.transaction {
+            database.oplOfflineQueries.deleteAllChunks()
+            database.oplOfflineQueries.deleteAllLessons()
             database.cardsQueries.deleteAllEvidences()
             database.cardsQueries.deleteAllCards()
             database.cardsQueries.deleteAllSyncCursors()
@@ -44,6 +46,7 @@ class AndroidLogoutManager(
 
         deleteDirectoryContents(File(appContext.filesDir, CARD_EVIDENCE_DIRECTORY))
         deleteDirectoryContents(File(appContext.cacheDir, CARD_EVIDENCE_DIRECTORY))
+        deleteDirectoryContents(File(appContext.cacheDir, "opl_media"))
         syncPreferences.reset()
         authRepository.logout()
     }

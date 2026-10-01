@@ -11,8 +11,8 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 38,
-      "versionName": "2.5-dev",
+      "versionCode": 39,
+      "versionName": "2.6-dev",
       "outputFile": "androidApp-dev-release.apk"
     }
   ],

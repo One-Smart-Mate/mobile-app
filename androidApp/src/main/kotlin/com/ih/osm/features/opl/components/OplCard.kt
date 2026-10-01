@@ -116,6 +116,15 @@ fun OplCard(
                 if (onClick != null) Icon(Icons.Outlined.ChevronRight, contentDescription = null)
             }
 
+            if (opl.isDownloaded) {
+                Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.primaryContainer) {
+                    AnatomyText(stringResource(R.string.opl_downloaded),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onPrimaryContainer))
+                }
+            }
+
             opl.objective?.takeIf(String::isNotBlank)?.let { objective ->
                 Spacer(Modifier.height(4.dp))
                 AnatomyText(

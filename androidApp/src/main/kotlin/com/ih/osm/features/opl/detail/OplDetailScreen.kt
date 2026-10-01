@@ -1,7 +1,5 @@
 package com.ih.osm.features.opl.detail
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,9 +16,11 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,13 +32,11 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -64,6 +61,7 @@ import com.ih.osm.features.opl.detail.data.fileName
 import com.ih.osm.features.opl.domain.model.Opl
 import com.ih.osm.features.opl.domain.model.OplContent
 import com.ih.osm.features.opl.domain.model.OplContentType
+import com.ih.osm.features.opl.domain.model.OplDownloadStage
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -83,19 +81,18 @@ fun OplDetailScreenRoute(
     val state by viewModel.getStateFlow().collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val downloadedMessage = stringResource(R.string.opl_detail_download_complete)
+    val deletedMessage = stringResource(R.string.opl_detail_deleted)
     val lifecycleOwner = LocalLifecycleOwner.current
-    var choosingDestination by rememberSaveable { mutableStateOf(false) }
-    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
-        choosingDestination = false
-        uri?.let { viewModel.process(OplDetailViewModel.Action.Export(it, siteName)) }
-    }
     LaunchedEffect(siteId, oplId) {
         viewModel.process(OplDetailViewModel.Action.Load(siteId, oplId))
     }
-    LaunchedEffect(viewModel, lifecycleOwner, downloadedMessage) {
+    LaunchedEffect(viewModel, lifecycleOwner, downloadedMessage, deletedMessage) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.getEventFlow().collect { event ->
-                if (event is OplDetailViewModel.Event.ExportFinished) snackbar.showSnackbar(downloadedMessage)
+                snackbar.showSnackbar(when (event) {
+                    OplDetailViewModel.Event.DownloadFinished -> downloadedMessage
+                    OplDetailViewModel.Event.Deleted -> deletedMessage
+                })
             }
         }
     }
@@ -105,14 +102,6 @@ fun OplDetailScreenRoute(
         onAction = viewModel::process,
         onBack = onBack,
         snackbarHostState = snackbar,
-        downloadEnabled = !choosingDestination,
-        onDownload = {
-            state.opl?.let {
-                choosingDestination = true
-                val name = it.title.replace(Regex("[^\\p{L}\\p{N}._ -]"), "_").take(80).ifBlank { "OPL-${it.id}" }
-                exportLauncher.launch("$name.zip")
-            }
-        },
     )
 }
 
@@ -123,9 +112,7 @@ fun OplDetailScreen(
     siteName: String,
     onAction: (OplDetailViewModel.Action) -> Unit,
     onBack: () -> Unit,
-    onDownload: () -> Unit,
     modifier: Modifier = Modifier,
-    downloadEnabled: Boolean = true,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     Scaffold(
@@ -133,21 +120,34 @@ fun OplDetailScreen(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { AnatomyText(stringResource(R.string.opl_detail_title), style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.navigation_back))
-                    }
-                },
-                actions = {
-                    if (state.isExporting) CircularProgressIndicator(Modifier.padding(12.dp).size(24.dp))
-                    else IconButton(onClick = onDownload, enabled = state.opl != null && downloadEnabled) {
-                        Icon(Icons.Outlined.Download, stringResource(R.string.opl_detail_download))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-            )
+            Column {
+                TopAppBar(
+                    title = { AnatomyText(stringResource(R.string.opl_detail_title), style = MaterialTheme.typography.titleLarge) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.navigation_back))
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { onAction(OplDetailViewModel.Action.RequestDownload) },
+                            enabled = state.opl != null && !state.isBusy) {
+                            Icon(Icons.Outlined.Download, stringResource(R.string.opl_detail_download))
+                        }
+                        if (state.opl?.isDownloaded == true) IconButton(
+                            onClick = { onAction(OplDetailViewModel.Action.RequestDelete) }, enabled = !state.isBusy,
+                        ) {
+                            Icon(Icons.Outlined.DeleteOutline, stringResource(R.string.opl_detail_delete),
+                                tint = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                )
+                if (state.isDownloading) OplDownloadStatus(state)
+                if (state.isDeleting) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                    AnatomyText(stringResource(R.string.opl_detail_deleting), modifier = Modifier.padding(16.dp))
+                }
+            }
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
@@ -175,18 +175,13 @@ fun OplDetailScreen(
                         contentPadding = PaddingValues(20.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        if (state.exportFailed) item("export_error") {
+                        if (state.operationError != null) item("operation_error") {
                             AnatomyBanner(
-                                message = stringResource(R.string.opl_detail_download_failed),
+                                message = stringResource(if (state.operationError == OplOperationError.DELETE_FAILED)
+                                    R.string.opl_detail_delete_failed else R.string.opl_detail_download_failed),
                                 type = AnatomyBannerType.ERROR,
-                                onDismiss = { onAction(OplDetailViewModel.Action.DismissExportError) },
+                                onDismiss = { onAction(OplDetailViewModel.Action.DismissOperationError) },
                             )
-                        }
-                        if (state.isExporting) item("export_progress") {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                LinearProgressIndicator(Modifier.fillMaxWidth())
-                                AnatomyText(stringResource(R.string.opl_detail_downloading))
-                            }
                         }
                         item("summary") { OplOverview(opl, siteName) }
                         item("locations") {
@@ -215,7 +210,8 @@ fun OplDetailScreen(
                         if (opl.content.isEmpty()) item("no_content") {
                             AnatomyBanner(stringResource(R.string.opl_card_no_content), AnatomyBannerType.INFO)
                         }
-                        items(opl.content.sortedWith(compareBy<OplContent> { it.order }.thenBy { it.id }), key = { "content-${it.id}" }) { content ->
+                        items(opl.content.sortedWith(compareBy<OplContent> { it.order }.thenBy { it.id }),
+                            key = { "content-${it.id}-${state.mediaEpoch}" }) { content ->
                             OplContentCard(content, state, onAction)
                         }
                         item("document_info") { OplDocumentInfo(opl) }
@@ -223,6 +219,36 @@ fun OplDetailScreen(
                 }
             }
         }
+    }
+    state.confirmation?.let { confirmation ->
+        AlertDialog(
+            onDismissRequest = { onAction(OplDetailViewModel.Action.DismissConfirmation) },
+            title = { AnatomyText(stringResource(when (confirmation) {
+                OplConfirmation.DOWNLOAD -> R.string.opl_detail_download_title
+                OplConfirmation.REPLACE -> R.string.opl_detail_replace_title
+                OplConfirmation.DELETE -> R.string.opl_detail_delete_title
+            }), style = MaterialTheme.typography.titleLarge) },
+            text = { AnatomyText(stringResource(when (confirmation) {
+                OplConfirmation.DOWNLOAD -> R.string.opl_detail_download_body
+                OplConfirmation.REPLACE -> R.string.opl_detail_replace_body
+                OplConfirmation.DELETE -> R.string.opl_detail_delete_body
+            })) },
+            confirmButton = {
+                TextButton(onClick = { onAction(OplDetailViewModel.Action.ConfirmOperation) }) {
+                    AnatomyText(stringResource(when (confirmation) {
+                        OplConfirmation.DOWNLOAD -> R.string.opl_detail_confirm_download
+                        OplConfirmation.REPLACE -> R.string.opl_detail_confirm_replace
+                        OplConfirmation.DELETE -> R.string.opl_detail_confirm_delete
+                    }), properties = AnatomyTextProperties(color = if (confirmation == OplConfirmation.DELETE)
+                        MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAction(OplDetailViewModel.Action.DismissConfirmation) }) {
+                    AnatomyText(stringResource(R.string.settings_cancel))
+                }
+            },
+        )
     }
     val pdf = state.opl?.content?.firstOrNull { it.id == state.selectedPdfId }
     if (pdf != null) OplPdfBottomSheet(
@@ -235,10 +261,34 @@ fun OplDetailScreen(
 }
 
 @Composable
+private fun OplDownloadStatus(state: OplDetailUiState) {
+    val progress = state.progress
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        LinearProgressIndicator(progress = { progress?.progress ?: 0f }, modifier = Modifier.fillMaxWidth())
+        val label = when (progress?.stage) {
+            OplDownloadStage.MEDIA -> stringResource(R.string.opl_detail_download_files,
+                progress.completedFiles, progress.totalFiles, (progress.progress * 100).toInt())
+            OplDownloadStage.SAVING -> stringResource(R.string.opl_detail_saving)
+            OplDownloadStage.COMPLETE -> stringResource(R.string.opl_detail_download_complete)
+            else -> stringResource(R.string.opl_detail_downloading)
+        }
+        AnatomyText(label, style = MaterialTheme.typography.bodySmall)
+        if (progress != null && progress.downloadedBytes > 0) {
+            AnatomyText(stringResource(R.string.opl_detail_download_bytes, progress.downloadedBytes / 1024),
+                style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+@Composable
 private fun OplOverview(opl: Opl, siteName: String) {
     DetailSection(siteName) {
         AnatomyText(opl.title, style = MaterialTheme.typography.headlineSmall,
             properties = AnatomyTextProperties(fontWeight = FontWeight.Bold))
+        if (opl.isDownloaded) AnatomyText(stringResource(R.string.opl_downloaded),
+            style = MaterialTheme.typography.labelLarge,
+            properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.primary))
         opl.typeName?.takeIf(String::isNotBlank)?.let {
             AnatomyText(it, style = MaterialTheme.typography.labelLarge,
                 properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.primary))
@@ -276,8 +326,8 @@ private fun DetailValue(label: String, value: String?) {
 @Composable
 private fun OplContentCard(content: OplContent, state: OplDetailUiState, onAction: (OplDetailViewModel.Action) -> Unit) {
     val mediaType = content.galleryType()
-    LaunchedEffect(content.id) {
-        if (mediaType == CardEvidenceMediaType.IMAGE && content.id !in state.failedFiles) {
+    LaunchedEffect(content.id, state.isBusy, state.opl?.downloadRevision) {
+        if (!state.isBusy && state.preloadImages && mediaType == CardEvidenceMediaType.IMAGE && content.id !in state.failedFiles) {
             onAction(OplDetailViewModel.Action.ResolveMedia(content.id))
         }
     }
@@ -292,6 +342,7 @@ private fun OplContentCard(content: OplContent, state: OplDetailUiState, onActio
         } else {
             content.text?.takeIf(String::isNotBlank)?.let { SelectionContainer { AnatomyText(it) } }
             when {
+                mediaType != null && state.isBusy -> AnatomyText(stringResource(R.string.opl_detail_media_wait))
                 mediaType != null -> EvidenceMediaGallery(
                     modifier = Modifier.fillMaxWidth(),
                     evidences = listOf(content.galleryItem(state)),
@@ -308,6 +359,7 @@ private fun OplContentCard(content: OplContent, state: OplDetailUiState, onActio
                         text = stringResource(R.string.opl_detail_open_pdf),
                         onClick = { onAction(OplDetailViewModel.Action.OpenPdf(content.id)) },
                         leadingIcon = Icons.Outlined.PictureAsPdf,
+                        enabled = !state.isBusy,
                     )
                 }
                 else -> AnatomyBanner(

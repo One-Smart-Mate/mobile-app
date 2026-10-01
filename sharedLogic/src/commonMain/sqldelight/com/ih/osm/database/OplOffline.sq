@@ -1,0 +1,91 @@
+CREATE TABLE OplOfflineRecord (
+    owner_id INTEGER NOT NULL,
+    api_base TEXT NOT NULL,
+    site_id INTEGER NOT NULL,
+    opl_id INTEGER NOT NULL,
+    generation TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    ready INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (owner_id, api_base, site_id, opl_id, generation)
+);
+
+CREATE TABLE OplOfflineMediaChunk (
+    owner_id INTEGER NOT NULL,
+    api_base TEXT NOT NULL,
+    site_id INTEGER NOT NULL,
+    opl_id INTEGER NOT NULL,
+    generation TEXT NOT NULL,
+    content_id INTEGER NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    bytes BLOB NOT NULL,
+    PRIMARY KEY (owner_id, api_base, site_id, opl_id, generation, content_id, chunk_index)
+);
+
+selectDownloaded:
+SELECT * FROM OplOfflineRecord
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND ready = 1
+ORDER BY opl_id;
+
+selectLesson:
+SELECT * FROM OplOfflineRecord
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND ready = 1 LIMIT 1;
+
+insertLesson:
+INSERT INTO OplOfflineRecord(owner_id, api_base, site_id, opl_id, generation, payload, ready)
+VALUES (?, ?, ?, ?, ?, ?, 0);
+
+insertChunk:
+INSERT INTO OplOfflineMediaChunk(owner_id, api_base, site_id, opl_id, generation, content_id, chunk_index, bytes)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+selectChunk:
+SELECT bytes FROM OplOfflineMediaChunk
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND generation = ? AND content_id = ? AND chunk_index = ?;
+
+countChunks:
+SELECT COUNT(*) FROM OplOfflineMediaChunk
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND generation = ? AND content_id = ?;
+
+markReady:
+UPDATE OplOfflineRecord SET ready = 1
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND generation = ?;
+
+deleteOtherChunks:
+DELETE FROM OplOfflineMediaChunk
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND generation != ?;
+
+deleteOtherLessons:
+DELETE FROM OplOfflineRecord
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND generation != ?;
+
+deleteGenerationChunks:
+DELETE FROM OplOfflineMediaChunk
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND generation = ?;
+
+deleteGeneration:
+DELETE FROM OplOfflineRecord
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND generation = ?;
+
+deletePendingChunks:
+DELETE FROM OplOfflineMediaChunk
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ?
+AND generation IN (
+    SELECT generation FROM OplOfflineRecord
+    WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND ready = 0
+);
+
+deletePendingLessons:
+DELETE FROM OplOfflineRecord
+WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ? AND ready = 0;
+
+deleteLessonChunks:
+DELETE FROM OplOfflineMediaChunk WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ?;
+
+deleteLesson:
+DELETE FROM OplOfflineRecord WHERE owner_id = ? AND api_base = ? AND site_id = ? AND opl_id = ?;
+
+deleteAllChunks:
+DELETE FROM OplOfflineMediaChunk;
+
+deleteAllLessons:
+DELETE FROM OplOfflineRecord;
