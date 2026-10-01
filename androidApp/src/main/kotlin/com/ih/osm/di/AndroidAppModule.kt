@@ -25,6 +25,7 @@ import com.ih.osm.features.createcard.CreateCardViewModel
 import com.ih.osm.features.createcard.data.storage.AndroidEvidenceStorage
 import com.ih.osm.features.createcard.domain.storage.EvidenceStorage
 import com.ih.osm.features.home.HomeViewModel
+import com.ih.osm.features.opl.OplViewModel
 import com.ih.osm.features.notifications.data.firebase.FirebaseTokenRegistrationScheduler
 import com.ih.osm.features.notifications.data.firebase.FirebaseTokenStore
 import com.ih.osm.features.permissions.PermissionsViewModel
@@ -69,6 +70,7 @@ val androidAppModule = module {
     viewModelOf(::CreateCardViewModel)
     viewModelOf(::CardSolutionViewModel)
     viewModelOf(::HomeViewModel)
+    viewModelOf(::OplViewModel)
     viewModelOf(::PermissionsViewModel)
     viewModelOf(::SettingsViewModel)
 }

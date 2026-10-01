@@ -2,8 +2,6 @@ package com.ih.osm.features.createcard
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,31 +16,23 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
@@ -54,7 +43,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -73,10 +61,13 @@ import com.ih.osm.designsystem.anatomy.AnatomyButtonStyle
 import com.ih.osm.designsystem.anatomy.AnatomyCard
 import com.ih.osm.designsystem.anatomy.AnatomyCardStyle
 import com.ih.osm.designsystem.anatomy.AnatomyText
+import com.ih.osm.designsystem.anatomy.AnatomyLevelBreadcrumbs
+import com.ih.osm.designsystem.anatomy.AnatomySelectionBottomSheet
+import com.ih.osm.designsystem.anatomy.AnatomySelectionField
+import com.ih.osm.designsystem.anatomy.AnatomySelectionItem
 import com.ih.osm.designsystem.anatomy.AnatomyTextField
 import com.ih.osm.designsystem.anatomy.AnatomyTextProperties
 import com.ih.osm.features.auth.domain.model.AuthenticatedUser
-import com.ih.osm.features.card.domain.create.CreateCardSelectionItem
 import com.ih.osm.features.card.domain.create.CreateCardEvidenceErrorReason
 import com.ih.osm.features.card.domain.create.CreateCardSheet
 import com.ih.osm.features.card.domain.create.CreateCardState
@@ -203,7 +194,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.classificationContent
         )
     }
     item {
-        SelectionField(
+        AnatomySelectionField(
             label = stringResource(R.string.create_card_type_label),
             value = state.selectedCardType?.name,
             placeholder = stringResource(R.string.create_card_type_placeholder),
@@ -213,7 +204,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.classificationContent
     }
     if (state.requiresCustomDueDate) {
         item {
-            SelectionField(
+            AnatomySelectionField(
                 label = stringResource(R.string.create_card_custom_due_date_label),
                 value = state.customDueDate,
                 placeholder = stringResource(R.string.create_card_custom_due_date_placeholder),
@@ -225,7 +216,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.classificationContent
     }
     if (state.requiresCardTypeValue) {
         item {
-            SelectionField(
+            AnatomySelectionField(
                 label = stringResource(R.string.create_card_condition_label),
                 value = when (state.selectedCardTypeValue) {
                     "safe" -> stringResource(R.string.create_card_condition_safe)
@@ -239,7 +230,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.classificationContent
         }
     }
     item {
-        SelectionField(
+        AnatomySelectionField(
             label = stringResource(R.string.create_card_preclassifier_label),
             value = state.selectedPreclassifier?.let { "${it.code} · ${it.description}" },
             placeholder = stringResource(R.string.create_card_preclassifier_placeholder),
@@ -252,7 +243,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.classificationContent
         )
     }
     item {
-        SelectionField(
+        AnatomySelectionField(
             label = stringResource(R.string.create_card_priority_label),
             value = state.selectedPriority?.let { "${it.code} · ${it.description}" },
             placeholder = stringResource(R.string.create_card_priority_placeholder),
@@ -274,7 +265,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.locationContent(
         )
     }
     item {
-        SelectionField(
+        AnatomySelectionField(
             label = stringResource(R.string.create_card_level_label),
             value = state.selectedLocation.takeIf(String::isNotBlank),
             placeholder = stringResource(R.string.create_card_level_placeholder),
@@ -533,64 +524,6 @@ private fun SectionHeader(title: String, subtitle: String) {
 }
 
 @Composable
-private fun SelectionField(
-    label: String,
-    value: String?,
-    placeholder: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    supporting: String? = null,
-    enabled: Boolean = true,
-) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        AnatomyText(
-            text = label,
-            modifier = Modifier.padding(start = 4.dp),
-            style = MaterialTheme.typography.labelMedium,
-            properties = AnatomyTextProperties(
-                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
-            ),
-        )
-        Surface(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)
-                .clickable(enabled = enabled, onClick = onClick),
-            shape = RoundedCornerShape(14.dp),
-            color = if (enabled) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                AnatomyText(
-                    text = value ?: placeholder,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyMedium,
-                    properties = AnatomyTextProperties(
-                        color = if (value == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    ),
-                )
-                Icon(Icons.Outlined.ChevronRight, contentDescription = null)
-            }
-        }
-        supporting?.let {
-            AnatomyText(
-                text = it,
-                modifier = Modifier.padding(start = 4.dp),
-                style = MaterialTheme.typography.bodySmall,
-                properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
-            )
-        }
-    }
-}
-
-@Composable
 private fun InfoCard(text: String) {
     Surface(
         shape = RoundedCornerShape(12.dp),
@@ -658,85 +591,44 @@ internal fun evidenceErrorMessage(reason: CreateCardEvidenceErrorReason, limit: 
     CreateCardEvidenceErrorReason.IMPORT_FAILED -> stringResource(R.string.create_card_error_import_evidence)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SelectionBottomSheet(
     state: CreateCardState,
     onAction: (CreateCardViewModel.Action) -> Unit,
 ) {
-    ModalBottomSheet(
-        onDismissRequest = { onAction(CreateCardViewModel.Action.DismissSheet) },
-        containerColor = MaterialTheme.colorScheme.surface,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.88f)
-                .widthIn(max = 720.dp).align(Alignment.CenterHorizontally)
-                .padding(horizontal = 20.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AnatomyText(
-                    text = stringResource(state.activeSheet.sheetTitleResource()),
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleLarge,
-                    properties = AnatomyTextProperties(fontWeight = FontWeight.Bold),
-                )
-                IconButton(onClick = { onAction(CreateCardViewModel.Action.DismissSheet) }) {
-                    Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.create_card_close_sheet))
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-            if (state.activeSheet == CreateCardSheet.CUSTOM_DUE_DATE) {
-                CustomDueDatePicker(state = state, onAction = onAction)
-                return@Column
-            }
-            AnatomyTextField(
-                value = state.sheetQuery,
-                onValueChange = { onAction(CreateCardViewModel.Action.SearchChanged(it)) },
-                placeholder = stringResource(R.string.create_card_search_placeholder),
-                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-            )
-            if (state.activeSheet == CreateCardSheet.LEVEL && state.sheetQuery.isBlank()) {
-                Spacer(Modifier.height(12.dp))
-                LevelBreadcrumbs(state, onAction)
-            }
-            Spacer(Modifier.height(12.dp))
-            if (state.sheetItems.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    AnatomyText(
-                        text = stringResource(R.string.create_card_no_results),
-                        properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
+    AnatomySelectionBottomSheet(
+        title = stringResource(state.activeSheet.sheetTitleResource()),
+        query = state.sheetQuery,
+        searchPlaceholder = stringResource(R.string.create_card_search_placeholder),
+        items = state.sheetItems.map { item ->
+            AnatomySelectionItem(
+                id = item.id,
+                title = if (state.activeSheet == CreateCardSheet.CARD_TYPE_VALUE) {
+                    stringResource(
+                        if (item.id == "safe") R.string.create_card_condition_safe
+                        else R.string.create_card_condition_unsafe,
                     )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(state.sheetItems, key = CreateCardSelectionItem::id) { item ->
-                        val localizedItem = if (state.activeSheet == CreateCardSheet.CARD_TYPE_VALUE) {
-                            item.copy(
-                                title = stringResource(
-                                    if (item.id == "safe") {
-                                        R.string.create_card_condition_safe
-                                    } else {
-                                        R.string.create_card_condition_unsafe
-                                    },
-                                ),
-                            )
-                        } else {
-                            item
-                        }
-                        SheetItem(
-                            item = localizedItem,
-                            selected = item.id == state.selectedItemIdForActiveSheet(),
-                            onClick = { onAction(CreateCardViewModel.Action.SelectItem(item.id)) },
-                        )
-                    }
-                }
+                } else item.title,
+                subtitle = item.subtitle,
+                hasChildren = item.hasChildren,
+            )
+        },
+        selectedItemId = state.selectedItemIdForActiveSheet(),
+        onQueryChanged = { onAction(CreateCardViewModel.Action.SearchChanged(it)) },
+        onSelectItem = { onAction(CreateCardViewModel.Action.SelectItem(it)) },
+        onDismiss = { onAction(CreateCardViewModel.Action.DismissSheet) },
+        breadcrumbs = if (state.activeSheet == CreateCardSheet.LEVEL) {
+            {
+                AnatomyLevelBreadcrumbs(
+                    path = state.levelNavigationPath.map { AnatomySelectionItem(it.id, it.name) },
+                    onNavigate = { onAction(CreateCardViewModel.Action.NavigateLevel(it)) },
+                )
             }
-        }
-    }
+        } else null,
+        customContent = if (state.activeSheet == CreateCardSheet.CUSTOM_DUE_DATE) {
+            { CustomDueDatePicker(state, onAction) }
+        } else null,
+    )
 }
 
 private fun CreateCardState.selectedItemIdForActiveSheet(): String? = when (activeSheet) {
@@ -779,92 +671,6 @@ private fun CustomDueDatePicker(
         enabled = pickerState.selectedDateMillis != null,
         modifier = Modifier.padding(bottom = 20.dp),
     )
-}
-
-@Composable
-private fun LevelBreadcrumbs(
-    state: CreateCardState,
-    onAction: (CreateCardViewModel.Action) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Surface(
-            onClick = { onAction(CreateCardViewModel.Action.NavigateLevel(null)) },
-            shape = RoundedCornerShape(50),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 11.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                Icon(Icons.Outlined.Business, contentDescription = null, modifier = Modifier.size(16.dp))
-                AnatomyText(stringResource(R.string.create_card_level_root), style = MaterialTheme.typography.labelMedium)
-            }
-        }
-        state.levelNavigationPath.forEach { level ->
-            Icon(Icons.Outlined.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp))
-            Surface(
-                onClick = { onAction(CreateCardViewModel.Action.NavigateLevel(level.id)) },
-                shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.primaryContainer,
-            ) {
-                AnatomyText(
-                    text = level.name,
-                    modifier = Modifier.padding(horizontal = 11.dp, vertical = 7.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    properties = AnatomyTextProperties(maxLines = 1),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SheetItem(
-    item: CreateCardSelectionItem,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            1.dp,
-            if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                AnatomyText(
-                    text = item.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    properties = AnatomyTextProperties(fontWeight = FontWeight.SemiBold),
-                )
-                item.subtitle?.takeIf(String::isNotBlank)?.let {
-                    Spacer(Modifier.height(2.dp))
-                    AnatomyText(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        properties = AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                    )
-                }
-            }
-            if (selected) {
-                Icon(Icons.Outlined.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            } else if (item.hasChildren) {
-                Icon(Icons.Outlined.ChevronRight, contentDescription = null)
-            }
-        }
-    }
 }
 
 private fun CreateCardSheet?.sheetTitleResource(): Int = when (this) {
