@@ -1,6 +1,18 @@
+import AVFoundation
+import OSLog
 import SharedLogic
 import SwiftUI
 import UIKit
+
+private let evidenceCaptureLogger = Logger(
+    subsystem: Bundle.main.bundleIdentifier ?? "com.ih.osm",
+    category: "EvidenceCamera"
+)
+
+private struct CameraPresentation: Identifiable {
+    let id = UUID()
+    let mediaType: CardEvidenceMediaType
+}
 
 struct CardEvidenceCaptureView: View {
     private let evidences: [CreateCardEvidenceDraft]
@@ -10,8 +22,7 @@ struct CardEvidenceCaptureView: View {
     private let removeEvidence: (String) async -> Void
     private let evidenceImportFailed: () -> Void
 
-    @State private var requestedMedia: CardEvidenceMediaType?
-    @State private var showCamera = false
+    @State private var cameraPresentation: CameraPresentation?
     @State private var showAudioRecorder = false
     @State private var isImporting = false
 
@@ -108,20 +119,56 @@ struct CardEvidenceCaptureView: View {
                 .padding(.top, 4)
             }
         }
-        .fullScreenCover(isPresented: $showCamera) {
-            if let requestedMedia {
+        .fullScreenCover(item: $cameraPresentation) { presentation in
+            ZStack(alignment: .topTrailing) {
                 CardCameraPicker(
-                    mediaType: requestedMedia,
+                    mediaType: presentation.mediaType,
                     maximumVideoDuration: TimeInterval(
                         limits.videoDurationSeconds
                     ),
                     onPicked: { url in
-                        showCamera = false
-                        Task { await importFile(url, as: requestedMedia, removeSource: true) }
+                        evidenceCaptureLogger.notice(
+                            "Camera returned media at \(url.lastPathComponent, privacy: .public)"
+                        )
+                        cameraPresentation = nil
+                        Task {
+                            await importFile(
+                                url,
+                                as: presentation.mediaType,
+                                removeSource: true
+                            )
+                        }
                     },
-                    onCancel: { showCamera = false }
+                    onCancel: {
+                        evidenceCaptureLogger.notice("Camera picker requested dismissal")
+                        cameraPresentation = nil
+                    }
                 )
                 .ignoresSafeArea()
+
+                Button {
+                    evidenceCaptureLogger.notice("Camera dismissed with diagnostic close button")
+                    cameraPresentation = nil
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 44, height: 44)
+                        .background(.black.opacity(0.72))
+                        .clipShape(Circle())
+                }
+                .padding(.top, 12)
+                .padding(.trailing, 12)
+                .zIndex(10)
+                .accessibilityLabel(AppStrings.Accessibility.dismiss)
+            }
+            .onAppear {
+                evidenceCaptureLogger.notice(
+                    "Camera full-screen cover appeared id=\(presentation.id.uuidString, privacy: .public) media=\(String(describing: presentation.mediaType), privacy: .public)"
+                )
+            }
+            .onDisappear {
+                evidenceCaptureLogger.notice("Camera full-screen cover disappeared")
             }
         }
         .sheet(isPresented: $showAudioRecorder) {
@@ -146,13 +193,12 @@ struct CardEvidenceCaptureView: View {
         enabled: Bool
     ) -> some View {
         Button {
-            requestedMedia = mediaType
             if mediaType == .audio {
                 showAudioRecorder = true
-            } else if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                showCamera = true
             } else {
-                evidenceImportFailed()
+                Task { @MainActor in
+                    await presentCamera(for: mediaType)
+                }
             }
         } label: {
             HStack(spacing: 14) {
@@ -186,6 +232,68 @@ struct CardEvidenceCaptureView: View {
         .buttonStyle(.plain)
         .opacity(enabled ? 1 : 0.55)
         .disabled(!enabled || isImporting || isProcessingEvidence)
+    }
+
+    @MainActor
+    private func presentCamera(for mediaType: CardEvidenceMediaType) async {
+        let sourceAvailable = UIImagePickerController.isSourceTypeAvailable(.camera)
+        let authorization = AVCaptureDevice.authorizationStatus(for: .video)
+        let applicationState = UIApplication.shared.applicationState.rawValue
+        let availableTypes = UIImagePickerController.availableMediaTypes(for: .camera) ?? []
+
+        evidenceCaptureLogger.notice(
+            "Camera requested media=\(String(describing: mediaType), privacy: .public) sourceAvailable=\(sourceAvailable) authorization=\(authorization.rawValue) appState=\(applicationState) availableTypes=\(availableTypes.joined(separator: ","), privacy: .public)"
+        )
+
+        guard sourceAvailable else {
+            evidenceCaptureLogger.error("Camera source is unavailable")
+            evidenceImportFailed()
+            return
+        }
+
+        let isAuthorized: Bool
+        switch authorization {
+        case .authorized:
+            isAuthorized = true
+        case .notDetermined:
+            evidenceCaptureLogger.notice("Requesting camera permission before presentation")
+            isAuthorized = await AVCaptureDevice.requestAccess(for: .video)
+            evidenceCaptureLogger.notice("Camera permission result granted=\(isAuthorized)")
+        case .denied, .restricted:
+            isAuthorized = false
+        @unknown default:
+            isAuthorized = false
+        }
+
+        guard isAuthorized else {
+            evidenceCaptureLogger.error(
+                "Camera presentation blocked; authorization=\(AVCaptureDevice.authorizationStatus(for: .video).rawValue)"
+            )
+            evidenceImportFailed()
+            return
+        }
+
+        evidenceCaptureLogger.notice("Camera validated; waiting for the initiating gesture to finish")
+        do {
+            try await Task.sleep(for: .milliseconds(150))
+        } catch {
+            evidenceCaptureLogger.error("Camera presentation task was cancelled before presentation")
+            return
+        }
+
+        guard UIApplication.shared.applicationState == .active else {
+            evidenceCaptureLogger.error(
+                "Camera presentation blocked because appState=\(UIApplication.shared.applicationState.rawValue)"
+            )
+            evidenceImportFailed()
+            return
+        }
+
+        let presentation = CameraPresentation(mediaType: mediaType)
+        evidenceCaptureLogger.notice(
+            "Presenting camera full-screen cover id=\(presentation.id.uuidString, privacy: .public)"
+        )
+        cameraPresentation = presentation
     }
 
     private func importFile(_ url: URL, as mediaType: CardEvidenceMediaType, removeSource: Bool) async {

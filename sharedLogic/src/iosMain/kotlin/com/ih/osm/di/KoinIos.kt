@@ -25,6 +25,7 @@ import com.ih.osm.features.card.domain.usecase.SyncPendingSolutionsUseCase
 import com.ih.osm.features.notifications.IosPushNotificationController
 import com.ih.osm.features.settings.IosSettingsController
 import com.ih.osm.database.AppDatabase
+import com.ih.osm.features.opl.domain.repository.OplRepository
 
 class IosApiEnvironmentController(
     private val config: AppConfig,
@@ -114,3 +115,5 @@ fun createIosApiEnvironmentController(): IosApiEnvironmentController =
     IosApiEnvironmentController(
         config = KoinPlatform.getKoin().get<AppConfig>(),
     )
+
+fun getIosOplRepository(): OplRepository = KoinPlatform.getKoin().get<OplRepository>()
