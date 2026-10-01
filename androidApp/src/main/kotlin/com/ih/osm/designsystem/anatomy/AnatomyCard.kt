@@ -35,6 +35,7 @@ fun AnatomyCard(
     onClick: (() -> Unit)? = null,
     imageSource: AnatomyImageSource? = null,
     imageContentDescription: String? = null,
+    removeBorder: Boolean =  false,
     imageHeight: Dp = 156.dp,
     contentPadding: PaddingValues = PaddingValues(16.dp),
     content: @Composable ColumnScope.() -> Unit,
@@ -57,6 +58,7 @@ fun AnatomyCard(
         },
     )
     val border = when {
+        removeBorder -> null
         selected -> BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
         style == AnatomyCardStyle.OUTLINED -> BorderStroke(
             1.dp,

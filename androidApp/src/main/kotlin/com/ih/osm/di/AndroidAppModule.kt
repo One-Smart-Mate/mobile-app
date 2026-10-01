@@ -26,6 +26,9 @@ import com.ih.osm.features.createcard.data.storage.AndroidEvidenceStorage
 import com.ih.osm.features.createcard.domain.storage.EvidenceStorage
 import com.ih.osm.features.home.HomeViewModel
 import com.ih.osm.features.opl.OplViewModel
+import com.ih.osm.features.opl.detail.OplDetailViewModel
+import com.ih.osm.features.opl.detail.data.AndroidOplMediaRepository
+import com.ih.osm.features.opl.detail.domain.OplMediaRepository
 import com.ih.osm.features.notifications.data.firebase.FirebaseTokenRegistrationScheduler
 import com.ih.osm.features.notifications.data.firebase.FirebaseTokenStore
 import com.ih.osm.features.permissions.PermissionsViewModel
@@ -71,6 +74,8 @@ val androidAppModule = module {
     viewModelOf(::CardSolutionViewModel)
     viewModelOf(::HomeViewModel)
     viewModelOf(::OplViewModel)
+    single<OplMediaRepository> { AndroidOplMediaRepository(get(), get(), get(), get()) }
+    viewModelOf(::OplDetailViewModel)
     viewModelOf(::PermissionsViewModel)
     viewModelOf(::SettingsViewModel)
 }

@@ -421,4 +421,34 @@
         <item quantity="one">%1$d archivo</item>
         <item quantity="other">%1$d archivos</item>
     </plurals>
+    <string name="opl_detail_title">Detalle del OPL</string>
+    <string name="opl_detail_download">Descargar OPL y archivos (ZIP)</string>
+    <string name="opl_detail_downloading">Preparando descarga del OPL y sus archivos…</string>
+    <string name="opl_detail_download_complete">OPL descargado con sus archivos.</string>
+    <string name="opl_detail_download_failed">No se pudo completar la descarga. Revisa tu conexión y los archivos del OPL e inténtalo nuevamente.</string>
+    <string name="opl_detail_not_found">Este OPL ya no está disponible.</string>
+    <string name="opl_detail_load_failed">No pudimos cargar el OPL. Inténtalo nuevamente.</string>
+    <string name="opl_detail_objective">Objetivo</string>
+    <string name="opl_detail_no_objective">Sin objetivo registrado.</string>
+    <string name="opl_detail_locations">Ubicaciones y equipos asignados</string>
+    <string name="opl_detail_machine_id">Máquina: %1$s</string>
+    <string name="opl_detail_content">Contenido de la lección</string>
+    <string name="opl_detail_text">Texto</string>
+    <string name="opl_detail_empty_text">Sin texto registrado.</string>
+    <string name="opl_detail_open_pdf">Abrir PDF</string>
+    <string name="opl_detail_loading_pdf">Cargando PDF…</string>
+    <string name="opl_detail_pdf_failed">No pudimos abrir el PDF. Puede no estar disponible, estar dañado o requerir contraseña.</string>
+    <string name="opl_detail_pdf_page">Página %1$d de %2$d</string>
+    <string name="opl_detail_pdf_page_description">Página %1$d del PDF</string>
+    <string name="opl_detail_unsupported_content">Este formato no se puede visualizar en la app: %1$s. Puedes incluirlo en la descarga del OPL.</string>
+    <string name="opl_detail_document_info">Información del documento</string>
+    <string name="opl_detail_identifier">Identificador del OPL</string>
+    <string name="opl_detail_creator">Creado por</string>
+    <string name="opl_detail_reviewer">Revisado por</string>
+    <string name="opl_detail_created">Fecha de creación</string>
+    <string name="opl_detail_updated">Última actualización</string>
+    <string name="opl_detail_cilt_usage">Usos en CILT</string>
+    <string name="opl_detail_direct_usage">Usos directos</string>
+    <string name="opl_detail_last_used">Último uso</string>
+    <string name="opl_detail_not_assigned">No registrado</string>
 </resources>

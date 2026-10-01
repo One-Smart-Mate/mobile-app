@@ -60,13 +60,14 @@ fun OplScreenRoute(
     user: AuthenticatedUser,
     siteId: Long,
     onBack: () -> Unit,
+    onOpenOpl: (Long) -> Unit,
     viewModel: OplViewModel = koinViewModel(),
 ) {
     val state by viewModel.getStateFlow().collectAsStateWithLifecycle()
     LaunchedEffect(user.id, siteId) {
         viewModel.process(OplViewModel.Action.Initialize(user, siteId))
     }
-    OplScreen(state = state, onAction = viewModel::process, onBack = onBack)
+    OplScreen(state = state, onAction = viewModel::process, onBack = onBack, onOpenOpl = onOpenOpl)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,6 +76,7 @@ fun OplScreen(
     state: OplUiState,
     onAction: (OplViewModel.Action) -> Unit,
     onBack: () -> Unit,
+    onOpenOpl: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
@@ -175,7 +177,7 @@ fun OplScreen(
                         item(key = "empty_results") { OplEmptyResults() }
                     } else {
                         items(state.opls, key = Opl::id) { opl ->
-                            OplCard(opl = opl, onClick = {})
+                            OplCard(opl = opl, onClick = { onOpenOpl(opl.id) })
                         }
                     }
                 }

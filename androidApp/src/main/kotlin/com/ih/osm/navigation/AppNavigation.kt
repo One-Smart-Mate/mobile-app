@@ -49,6 +49,7 @@ import com.ih.osm.features.cardsolution.CardSolutionScreenRoute
 import com.ih.osm.features.createcard.CreateCardScreenRoute
 import com.ih.osm.features.home.HomeScreenRoute
 import com.ih.osm.features.opl.OplScreenRoute
+import com.ih.osm.features.opl.detail.OplDetailScreenRoute
 import com.ih.osm.features.settings.SettingsScreenRoute
 import com.ih.osm.features.card.domain.solution.CardSolutionType
 import kotlinx.serialization.Serializable
@@ -61,6 +62,7 @@ private sealed interface AppRoute : NavKey {
     @Serializable data object Main : AppRoute
     @Serializable data class CreateCard(val siteId: Long? = null) : AppRoute
     @Serializable data class Opl(val siteId: Long) : AppRoute
+    @Serializable data class OplDetail(val siteId: Long, val oplId: Long) : AppRoute
     @Serializable data class CardDetail(val uuid: String) : AppRoute
     @Serializable data class CardSolution(val uuid: String, val type: String) : AppRoute
 }
@@ -92,7 +94,7 @@ private fun AuthenticationRoot(onExitRequested: () -> Unit) {
             rememberViewModelStoreNavEntryDecorator(),
         ),
         onBack = {
-            if (backStack.size > 1) backStack.removeLast() else onExitRequested()
+            if (backStack.size > 1)  backStack.removeAt(backStack.lastIndex)else onExitRequested()
         },
         entryProvider = { route ->
             when (route) {
@@ -106,8 +108,8 @@ private fun AuthenticationRoot(onExitRequested: () -> Unit) {
                 is AppRoute.ForgotPassword -> NavEntry(route) {
                     ForgotPasswordScreenRoute(
                         initialEmail = route.email,
-                        onBack = { backStack.removeLast() },
-                        onFinished = { backStack.removeLast() },
+                        onBack = {  backStack.removeAt(backStack.lastIndex) },
+                        onFinished = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
                 else -> NavEntry(route) { Box(Modifier.fillMaxSize()) }
@@ -126,7 +128,7 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
             rememberViewModelStoreNavEntryDecorator(),
         ),
         onBack = {
-            if (backStack.size > 1) backStack.removeLast() else onExitRequested()
+            if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) else onExitRequested()
         },
         entryProvider = { route ->
             when (route) {
@@ -145,21 +147,33 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
                     CreateCardScreenRoute(
                         user = user,
                         siteId = route.siteId,
-                        onFinished = { backStack.removeLast() },
+                        onFinished = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
                 is AppRoute.Opl -> NavEntry(route) {
                     OplScreenRoute(
                         user = user,
                         siteId = route.siteId,
-                        onBack = { backStack.removeLast() },
+                        onBack = { backStack.removeAt(backStack.lastIndex) },
+                        onOpenOpl = {
+                            val detail = AppRoute.OplDetail(route.siteId, it)
+                            if (backStack.lastOrNull() != detail) backStack.add(detail)
+                        },
+                    )
+                }
+                is AppRoute.OplDetail -> NavEntry(route) {
+                    OplDetailScreenRoute(
+                        siteId = route.siteId,
+                        oplId = route.oplId,
+                        siteName = user.sites.firstOrNull { it.id == route.siteId }?.name.orEmpty(),
+                        onBack = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
                 is AppRoute.CardDetail -> NavEntry(route) {
                     CardDetailScreenRoute(
                         cardUuid = route.uuid,
                         siteNames = user.sites.associate { it.id to it.name },
-                        onBack = { backStack.removeLast() },
+                        onBack = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
                 is AppRoute.CardSolution -> NavEntry(route) {
@@ -167,7 +181,7 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
                         user = user,
                         cardUuid = route.uuid,
                         type = CardSolutionType.valueOf(route.type),
-                        onFinished = { backStack.removeLast() },
+                        onFinished = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
                 else -> NavEntry(route) { Box(Modifier.fillMaxSize()) }
