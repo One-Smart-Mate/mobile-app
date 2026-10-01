@@ -1,0 +1,22 @@
+CREATE TABLE OplOfflineRecord (
+    owner_id INTEGER NOT NULL,
+    api_base TEXT NOT NULL,
+    site_id INTEGER NOT NULL,
+    opl_id INTEGER NOT NULL,
+    generation TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    ready INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (owner_id, api_base, site_id, opl_id, generation)
+);
+
+CREATE TABLE OplOfflineMediaChunk (
+    owner_id INTEGER NOT NULL,
+    api_base TEXT NOT NULL,
+    site_id INTEGER NOT NULL,
+    opl_id INTEGER NOT NULL,
+    generation TEXT NOT NULL,
+    content_id INTEGER NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    bytes BLOB NOT NULL,
+    PRIMARY KEY (owner_id, api_base, site_id, opl_id, generation, content_id, chunk_index)
+);

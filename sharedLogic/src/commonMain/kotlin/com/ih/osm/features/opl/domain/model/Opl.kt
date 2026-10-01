@@ -1,6 +1,10 @@
 package com.ih.osm.features.opl.domain.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+
 /** A read-only lesson published by the web application. */
+@Serializable
 data class Opl(
     val id: Long,
     val siteId: Long,
@@ -21,9 +25,12 @@ data class Opl(
     val levelRelationId: Long?,
     val content: List<OplContent>,
     val levels: List<OplLevel>,
+    @Transient val isDownloaded: Boolean = false,
+    @Transient val downloadRevision: String? = null,
 )
 
 /** Content stays in the order defined on the web, including mixed media. */
+@Serializable
 data class OplContent(
     val id: Long,
     val oplId: Long,
@@ -37,6 +44,7 @@ data class OplContent(
     val updatedAt: String?,
 )
 
+@Serializable
 enum class OplContentType {
     TEXT,
     IMAGE,
@@ -46,6 +54,7 @@ enum class OplContentType {
 }
 
 /** IDs match the String IDs of the synchronized LEVEL catalog. */
+@Serializable
 data class OplLevel(
     val id: String,
     val relationId: Long?,

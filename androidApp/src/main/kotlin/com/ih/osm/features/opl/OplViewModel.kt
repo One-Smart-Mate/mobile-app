@@ -14,6 +14,7 @@ import com.ih.osm.features.opl.domain.model.Opl
 import com.ih.osm.features.opl.domain.repository.OplRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -62,6 +63,7 @@ class OplViewModel(
     sealed interface Event
 
     private var levelSelector = LocalLevelSelector(emptyList())
+    private var downloaded: List<Opl> = emptyList()
 
     override fun processImpl(action: Action) {
         when (action) {
@@ -69,7 +71,9 @@ class OplViewModel(
             is Action.QueryChanged -> {
                 if (getStateValue().isBusy || getStateValue().selectedLevel != null) return
                 if (getStateValue().query == action.value) return
-                setState { copy(query = action.value, error = null, opls = emptyList(), hasSearched = false) }
+                setState { copy(query = action.value, error = null,
+                    opls = if (action.value.isBlank()) downloaded else emptyList(),
+                    hasSearched = action.value.isBlank() && downloaded.isNotEmpty()) }
             }
             Action.Search -> search()
             Action.OpenLevelSelector -> {
@@ -90,7 +94,8 @@ class OplViewModel(
             }
             Action.ClearLevel -> {
                 if (getStateValue().isBusy) return
-                setState { copy(selectedLevelPath = emptyList(), error = null, opls = emptyList(), hasSearched = false) }
+                setState { copy(selectedLevelPath = emptyList(), error = null, opls = downloaded,
+                    hasSearched = downloaded.isNotEmpty()) }
             }
             Action.DismissError -> setState { copy(error = null) }
         }
@@ -100,7 +105,31 @@ class OplViewModel(
         if (getStateValue().initialized) return
         val site = if (siteId == null) user.sites.firstOrNull() else user.sites.firstOrNull { it.id == siteId }
         setState { OplUiState(initialized = true, site = site, error = if (site == null) OplError.SITE_UNAVAILABLE else null) }
-        if (site != null) loadLocalLevels(openSheet = false)
+        if (site != null) {
+            loadLocalLevels(openSheet = false)
+            observeDownloads(site.id)
+        }
+    }
+
+    private fun observeDownloads(siteId: Long) {
+        viewModelScope.launch {
+            repository.observeDownloadedIds(siteId)
+                .catch { error -> Log.w(TAG, "Unable to observe downloaded OPLs", error) }
+                .collect { ids ->
+                    val result = withContext(Dispatchers.IO) { repository.getDownloaded(siteId) }
+                    downloaded = (result as? NetworkResult.Success)?.data.orEmpty()
+                    val snapshots = downloaded.associateBy { it.id }
+                    setState {
+                        if (query.isBlank() && selectedLevel == null && !isSearching) {
+                            copy(opls = downloaded, hasSearched = downloaded.isNotEmpty())
+                        } else {
+                            copy(opls = opls.map { opl -> snapshots[opl.id] ?: opl.copy(
+                                isDownloaded = opl.id in ids, downloadRevision = null,
+                            ) })
+                        }
+                    }
+                }
+        }
     }
 
     private fun loadLocalLevels(openSheet: Boolean) {
