@@ -8,6 +8,10 @@ enum MainTab: Hashable {
 }
 
 struct MainTabRoot: View {
+    private enum OplRoute: Hashable {
+        case list(Int64)
+        case detail(Int64, Int64)
+    }
     let user: SessionUser
 
     @Environment(\.scenePhase) private var scenePhase
@@ -17,6 +21,7 @@ struct MainTabRoot: View {
     @State private var catalogSyncViewModel: CatalogSyncViewModel?
     @State private var cardListViewModel: CardListViewModel?
     @State private var cardNavigationPath: [String] = []
+    @State private var homeNavigationPath: [OplRoute] = []
     @State private var createCardViewModel: CreateCardViewModel?
     @State private var cardSolutionViewModel: CardSolutionViewModel?
     @State private var permissionsViewModel = PermissionsViewModel()
@@ -27,6 +32,8 @@ struct MainTabRoot: View {
     private let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
     private let makeCardDetailViewModel: @MainActor () -> CardDetailViewModel?
     private let makeCardSolutionViewModel: @MainActor (String, CardSolutionType) -> CardSolutionViewModel?
+    private let makeOplViewModel: (@MainActor (SessionSite) -> OplViewModel)?
+    private let makeOplDetailViewModel: (@MainActor (SessionSite, Int64) -> OplDetailViewModel)?
 
     init(
         user: SessionUser,
@@ -35,12 +42,16 @@ struct MainTabRoot: View {
         makeCardDetailViewModel: @escaping @MainActor () -> CardDetailViewModel? = { nil },
         makeCreateCardViewModel: @escaping @MainActor () -> CreateCardViewModel? = { nil },
         makeCardSolutionViewModel: @escaping @MainActor (String, CardSolutionType) -> CardSolutionViewModel? = { _, _ in nil },
-        settingsViewModel: SettingsViewModel? = nil
+        settingsViewModel: SettingsViewModel? = nil,
+        makeOplViewModel: (@MainActor (SessionSite) -> OplViewModel)? = nil,
+        makeOplDetailViewModel: (@MainActor (SessionSite, Int64) -> OplDetailViewModel)? = nil
     ) {
         self.user = user
         self.makeCreateCardViewModel = makeCreateCardViewModel
         self.makeCardDetailViewModel = makeCardDetailViewModel
         self.makeCardSolutionViewModel = makeCardSolutionViewModel
+        self.makeOplViewModel = makeOplViewModel
+        self.makeOplDetailViewModel = makeOplDetailViewModel
         _selectedSiteID = State(initialValue: user.sites.first?.id)
         _catalogSyncViewModel = State(initialValue: catalogSyncViewModel)
         _cardListViewModel = State(initialValue: cardListViewModel)
@@ -49,7 +60,7 @@ struct MainTabRoot: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            NavigationStack {
+            NavigationStack(path: $homeNavigationPath) {
                 HomeView(
                     user: user,
                     selectedSiteID: $selectedSiteID,
@@ -60,8 +71,25 @@ struct MainTabRoot: View {
                     cardSyncTotal: cardSyncScheduler.total,
                     onSyncPendingCards: cardSyncScheduler.syncManually,
                     onCreateCard: presentCreateCard,
-                    onOpenCards: { selectedTab = .cards }
+                    onOpenCards: { selectedTab = .cards },
+                    onOpenOpl: {
+                        if let siteID = selectedSiteID ?? user.sites.first?.id { homeNavigationPath.append(.list(siteID)) }
+                    }
                 )
+                .navigationDestination(for: OplRoute.self) { route in
+                    switch route {
+                    case let .list(siteID):
+                        if let site = user.sites.first(where: { $0.id == siteID }), let makeOplViewModel {
+                            OplListDestination(site: site, makeViewModel: makeOplViewModel) { id in
+                                homeNavigationPath.append(.detail(siteID, id))
+                            }
+                        } else { ContentUnavailableView(OplStrings.notFound, systemImage: "book.closed") }
+                    case let .detail(siteID, id):
+                        if let site = user.sites.first(where: { $0.id == siteID }), let makeOplDetailViewModel {
+                            OplDetailDestination(site: site, oplID: id, makeViewModel: makeOplDetailViewModel)
+                        } else { ContentUnavailableView(OplStrings.notFound, systemImage: "book.closed") }
+                    }
+                }
             }
             .tabItem { Label(AppStrings.Navigation.home, systemImage: "house") }
             .tag(MainTab.home)
@@ -210,6 +238,7 @@ struct HomeView: View {
     let onSyncPendingCards: () -> Void
     let onCreateCard: () -> Void
     let onOpenCards: () -> Void
+    let onOpenOpl: () -> Void
 
     init(
         user: SessionUser,
@@ -221,7 +250,8 @@ struct HomeView: View {
         cardSyncTotal: Int,
         onSyncPendingCards: @escaping () -> Void,
         onCreateCard: @escaping () -> Void,
-        onOpenCards: @escaping () -> Void
+        onOpenCards: @escaping () -> Void,
+        onOpenOpl: @escaping () -> Void = {}
     ) {
         self.user = user
         _selectedSiteID = selectedSiteID
@@ -233,6 +263,7 @@ struct HomeView: View {
         self.onSyncPendingCards = onSyncPendingCards
         self.onCreateCard = onCreateCard
         self.onOpenCards = onOpenCards
+        self.onOpenOpl = onOpenOpl
     }
 
     var body: some View {
@@ -298,6 +329,7 @@ struct HomeView: View {
                         systemImage: "doc.text",
                         action: onOpenCards
                     )
+                    QuickActionCard(title: OplStrings.title, systemImage: "book.closed", action: onOpenOpl)
                 }
             }
             .padding(.horizontal, 20)

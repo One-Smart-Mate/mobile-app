@@ -255,7 +255,7 @@ struct LoginView: View {
     }
 
     private func usesWideLayout(_ size: CGSize) -> Bool {
-        size.width > 760 && size.width > size.height
+        size.width > 770 && size.width > size.height
     }
 }
 

@@ -26,6 +26,8 @@ import com.ih.osm.features.notifications.IosPushNotificationController
 import com.ih.osm.features.settings.IosSettingsController
 import com.ih.osm.database.AppDatabase
 import com.ih.osm.features.opl.domain.repository.OplRepository
+import com.ih.osm.features.opl.IosOplController
+import com.ih.osm.features.level.domain.repository.LevelRepository
 
 class IosApiEnvironmentController(
     private val config: AppConfig,
@@ -117,3 +119,10 @@ fun createIosApiEnvironmentController(): IosApiEnvironmentController =
     )
 
 fun getIosOplRepository(): OplRepository = KoinPlatform.getKoin().get<OplRepository>()
+
+fun createIosOplController(): IosOplController = IosOplController(
+    repository = KoinPlatform.getKoin().get<OplRepository>(),
+    levels = KoinPlatform.getKoin().get<LevelRepository>(),
+    session = KoinPlatform.getKoin().get<SessionRepository>(),
+    config = KoinPlatform.getKoin().get<AppConfig>(),
+)

@@ -93,7 +93,7 @@ struct CreateCardView: View {
             title: AppStrings.CreateCard.classificationTitle,
             subtitle: AppStrings.CreateCard.classificationSubtitle
         )
-        CreateCardSelectionRow(
+        AnatomySelectionRow(
             title: AppStrings.CreateCard.typeLabel,
             value: state.selectedCardType?.name,
             placeholder: AppStrings.CreateCard.typePlaceholder,
@@ -101,7 +101,7 @@ struct CreateCardView: View {
             action: { viewModel.open(.cardType) }
         )
         if state.requiresCardTypeValue {
-            CreateCardSelectionRow(
+            AnatomySelectionRow(
                 title: AppStrings.CreateCard.conditionLabel,
                 value: conditionName(state.selectedCardTypeValue),
                 placeholder: AppStrings.CreateCard.conditionPlaceholder,
@@ -109,7 +109,7 @@ struct CreateCardView: View {
                 action: { viewModel.open(.cardTypeValue) }
             )
         }
-        CreateCardSelectionRow(
+        AnatomySelectionRow(
             title: AppStrings.CreateCard.preclassifierLabel,
             value: state.selectedPreclassifier.map { "\($0.code) · \($0.description_)" },
             placeholder: AppStrings.CreateCard.preclassifierPlaceholder,
@@ -117,7 +117,7 @@ struct CreateCardView: View {
             enabled: state.selectedCardType != nil,
             action: { viewModel.open(.preclassifier) }
         )
-        CreateCardSelectionRow(
+        AnatomySelectionRow(
             title: AppStrings.CreateCard.priorityLabel,
             value: state.selectedPriority.map { "\($0.code) · \($0.description_)" },
             placeholder: AppStrings.CreateCard.priorityPlaceholder,
@@ -126,7 +126,7 @@ struct CreateCardView: View {
             action: { viewModel.open(.priority) }
         )
         if state.requiresCustomDueDate {
-            CreateCardSelectionRow(
+            AnatomySelectionRow(
                 title: AppStrings.CreateCard.dueDateLabel,
                 value: state.customDueDate,
                 placeholder: AppStrings.CreateCard.dueDatePlaceholder,
@@ -142,7 +142,7 @@ struct CreateCardView: View {
             title: AppStrings.CreateCard.locationTitle,
             subtitle: AppStrings.CreateCard.locationSubtitle
         )
-        CreateCardSelectionRow(
+        AnatomySelectionRow(
             title: AppStrings.CreateCard.levelLabel,
             value: state.selectedLocation.isEmpty ? nil : state.selectedLocation,
             placeholder: AppStrings.CreateCard.levelPlaceholder,
@@ -374,51 +374,6 @@ private struct CreateCardSectionHeader: View {
     }
 }
 
-private struct CreateCardSelectionRow: View {
-    let title: LocalizedStringResource
-    let value: String?
-    let placeholder: LocalizedStringResource
-    let systemImage: String
-    var supportingText: String?
-    var enabled = true
-    let action: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-            Button(action: action) {
-                HStack(spacing: 12) {
-                    Image(systemName: systemImage)
-                        .foregroundStyle(Color.osmPrimary)
-                    Text(value ?? String(localized: placeholder))
-                        .foregroundStyle(value == nil ? Color.osmOnSurfaceVariant : Color.osmOnSurface)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color.osmOnSurfaceVariant)
-                }
-                .padding(14)
-                .frame(minHeight: 60)
-                .background(enabled ? Color.osmSurface : Color.osmSurfaceVariant)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.osmOutlineVariant, lineWidth: 1)
-                }
-            }
-            .buttonStyle(.plain)
-            .disabled(!enabled)
-            if let supportingText, !supportingText.isEmpty {
-                Text(supportingText)
-                    .font(.caption)
-                    .foregroundStyle(Color.osmOnSurfaceVariant)
-            }
-        }
-    }
-}
-
 private struct CreateCardInfoBox: View {
     let text: LocalizedStringResource
 
@@ -459,85 +414,40 @@ private struct CreateCardSelectionSheet: View {
     @State private var selectedDate = Date.now
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if state.activeSheet == .customDueDate {
-                    VStack(spacing: 24) {
-                        DatePicker(
-                            AppStrings.CreateCard.dueDateLabel,
-                            selection: $selectedDate,
-                            in: Date.now...,
-                            displayedComponents: .date
-                        )
+        if state.activeSheet == .customDueDate {
+            NavigationStack {
+                VStack(spacing: 24) {
+                    DatePicker(AppStrings.CreateCard.dueDateLabel, selection: $selectedDate,
+                               in: Date.now..., displayedComponents: .date)
                         .datePickerStyle(.graphical)
-                        Button(AppStrings.CreateCard.useDate) {
-                            let value = selectedDate.formatted(
-                                .iso8601.year().month().day().dateSeparator(.dash)
-                            )
-                            viewModel.setDueDate(value)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        Spacer()
+                    Button(AppStrings.CreateCard.useDate) {
+                        viewModel.setDueDate(selectedDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)))
                     }
-                    .padding()
-                } else {
-                    List {
-                        if state.activeSheet == .level, !state.levelNavigationPath.isEmpty {
-                            Section {
-                                Button {
-                                    viewModel.navigateLevel(nil)
-                                } label: {
-                                    Label(AppStrings.CreateCard.levelRoot, systemImage: "house")
-                                }
-                                ForEach(state.levelNavigationPath, id: \.id) { level in
-                                    Button(level.name) { viewModel.navigateLevel(level.id) }
-                                }
-                            }
-                        }
-                        Section {
-                            ForEach(state.sheetItems, id: \.id) { item in
-                                Button {
-                                    viewModel.select(item.id)
-                                } label: {
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 3) {
-                                            Text(localizedSelectionTitle(item.title, sheet: state.activeSheet))
-                                                .foregroundStyle(Color.osmOnSurface)
-                                            if let subtitle = item.subtitle, !subtitle.isEmpty {
-                                                Text(subtitle)
-                                                    .font(.caption)
-                                                    .foregroundStyle(Color.osmOnSurfaceVariant)
-                                            }
-                                        }
-                                        Spacer()
-                                        if item.hasChildren {
-                                            Image(systemName: "chevron.right")
-                                                .foregroundStyle(Color.osmOnSurfaceVariant)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .searchable(
-                        text: Binding(get: { state.sheetQuery }, set: viewModel.search),
-                        prompt: AppStrings.CreateCard.searchOptions
-                    )
-                    .overlay {
-                        if state.sheetItems.isEmpty {
-                            ContentUnavailableView.search(text: state.sheetQuery)
-                        }
+                    .buttonStyle(.borderedProminent).controlSize(.large)
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle(sheetTitle(state.activeSheet))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(AppStrings.Common.cancel, action: viewModel.dismissSheet)
                     }
                 }
             }
-            .navigationTitle(sheetTitle(state.activeSheet))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(AppStrings.Common.cancel, action: viewModel.dismissSheet)
-                }
-            }
+        } else {
+            AnatomySelectionSheet(
+                title: sheetTitle(state.activeSheet),
+                query: Binding(get: { state.sheetQuery }, set: viewModel.search),
+                items: state.sheetItems.map {
+                    AnatomySelectionItem(id: $0.id, title: localizedSelectionTitle($0.title, sheet: state.activeSheet),
+                                         subtitle: $0.subtitle, hasChildren: $0.hasChildren)
+                },
+                breadcrumbs: state.activeSheet == .level
+                    ? state.levelNavigationPath.map { AnatomySelectionItem(id: $0.id, title: $0.name) } : [],
+                onNavigate: { viewModel.navigateLevel($0) },
+                onSelect: { viewModel.select($0) }, onDismiss: { viewModel.dismissSheet() }
+            )
         }
     }
 

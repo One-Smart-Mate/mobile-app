@@ -34,6 +34,7 @@ struct EvidenceMediaGallery: View {
     let isOnlyRead: Bool
     var onDelete: ((EvidenceMediaItem) -> Void)?
     var onRequestSource: ((EvidenceMediaItem) -> Void)?
+    var onPreviewPresentationChanged: ((Bool) -> Void)?
 
     @State private var preview: EvidenceMediaPreview?
     @State private var pendingPreview: PendingEvidencePreview?
@@ -72,7 +73,11 @@ struct EvidenceMediaGallery: View {
             guard let pendingPreview,
                   let path = paths[pendingPreview.id] else { return }
             self.pendingPreview = nil
+            onPreviewPresentationChanged?(true)
             preview = EvidenceMediaPreview(kind: pendingPreview.kind, path: path)
+        }
+        .onChange(of: preview != nil) { _, isPresented in
+            onPreviewPresentationChanged?(isPresented)
         }
         .fullScreenCover(item: $preview) { preview in
             switch preview.kind {
@@ -122,6 +127,7 @@ struct EvidenceMediaGallery: View {
 
     private func open(_ item: EvidenceMediaItem, as kind: EvidenceMediaPreview.Kind) {
         if let path = item.path {
+            onPreviewPresentationChanged?(true)
             preview = EvidenceMediaPreview(kind: kind, path: path)
         } else {
             pendingPreview = PendingEvidencePreview(id: item.id, kind: kind)

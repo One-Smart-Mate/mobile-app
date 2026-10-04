@@ -4,6 +4,8 @@ import com.ih.osm.database.AppDatabase
 import com.ih.osm.features.auth.domain.repository.AuthRepository
 import com.ih.osm.features.card.IosEvidenceFileCache
 import com.ih.osm.features.card.domain.repository.CardRepository
+import com.ih.osm.features.opl.IosOplMediaCache
+import com.ih.osm.features.opl.IosOplOperations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,24 +34,33 @@ class IosSettingsController(
 
     fun pendingCount(): Long = repository.pendingCount()
 
+    @Throws(Exception::class)
     suspend fun logout() {
-        database.transaction {
-            database.cardsQueries.deleteAllEvidences()
-            database.cardsQueries.deleteAllCards()
-            database.cardsQueries.deleteAllSyncCursors()
-            database.catalogsQueries.deleteAllCatalogSyncStates()
-            database.catalogsQueries.deleteAllCatalogSyncMetadata()
-            database.catalogsQueries.deleteAllEmployees()
-            database.catalogsQueries.deleteAllLevels()
-            database.catalogsQueries.deleteAllPriorities()
-            database.catalogsQueries.deleteAllPreclassifiers()
-            database.catalogsQueries.deleteAllCardTypes()
-            database.userSessionQueries.deleteRoles()
-            database.userSessionQueries.deleteSites()
-            database.userSessionQueries.deleteUser()
+        try {
+            IosOplOperations.cancelAll()
+            IosOplMediaCache.clearAll()
+            database.transaction {
+                database.oplOfflineQueries.deleteAllChunks()
+                database.oplOfflineQueries.deleteAllLessons()
+                database.cardsQueries.deleteAllEvidences()
+                database.cardsQueries.deleteAllCards()
+                database.cardsQueries.deleteAllSyncCursors()
+                database.catalogsQueries.deleteAllCatalogSyncStates()
+                database.catalogsQueries.deleteAllCatalogSyncMetadata()
+                database.catalogsQueries.deleteAllEmployees()
+                database.catalogsQueries.deleteAllLevels()
+                database.catalogsQueries.deleteAllPriorities()
+                database.catalogsQueries.deleteAllPreclassifiers()
+                database.catalogsQueries.deleteAllCardTypes()
+                database.userSessionQueries.deleteRoles()
+                database.userSessionQueries.deleteSites()
+                database.userSessionQueries.deleteUser()
+            }
+            IosEvidenceFileCache.clearAll()
+            authRepository.logout()
+        } finally {
+            IosOplOperations.resume()
         }
-        IosEvidenceFileCache.clearAll()
-        authRepository.logout()
     }
 
     fun stop() {
