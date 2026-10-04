@@ -13,6 +13,8 @@ struct AppDependencies {
     let makeCreateCardViewModel: @MainActor () -> CreateCardViewModel?
     let makeCardSolutionViewModel: @MainActor (String, CardSolutionType) -> CardSolutionViewModel?
     let makeSettingsViewModel: @MainActor () -> SettingsViewModel?
+    let makeOplViewModel: (@MainActor (SessionSite) -> OplViewModel)?
+    let makeOplDetailViewModel: (@MainActor (SessionSite, Int64) -> OplDetailViewModel)?
     let catalogSyncController: IosCatalogSyncController?
     let cardSyncController: IosCardSyncController?
 
@@ -96,6 +98,12 @@ struct AppDependencies {
             makeSettingsViewModel: {
                 SettingsViewModel(controller: KoinIosKt.createIosSettingsController())
             },
+            makeOplViewModel: { site in
+                OplViewModel(site: site, controller: KoinIosKt.createIosOplController())
+            },
+            makeOplDetailViewModel: { site, id in
+                OplDetailViewModel(site: site, oplID: id, controller: KoinIosKt.createIosOplController())
+            },
             catalogSyncController: catalogSyncController,
             cardSyncController: cardSyncController
         )
@@ -124,6 +132,8 @@ struct AppDependencies {
             makeCreateCardViewModel: { nil },
             makeCardSolutionViewModel: { _, _ in nil },
             makeSettingsViewModel: { nil },
+            makeOplViewModel: nil,
+            makeOplDetailViewModel: nil,
             catalogSyncController: nil,
             cardSyncController: nil
         )
