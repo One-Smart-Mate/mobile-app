@@ -372,6 +372,27 @@
     <string name="permissions_status_ready">Listo</string>
     <string name="search_clear">Limpiar búsqueda o selección</string>
     <string name="opl_title" translatable="false">OPL</string>
+    <!-- CILT routine (ported from m2-android-app) -->
+    <string name="cilt_title" translatable="false">CILT</string>
+    <string name="cilt_home_description">Rutina CILT del día</string>
+    <string name="cilt_routine_empty">No hay CILT programados para hoy</string>
+    <string name="cilt_routine_error">No se pudo cargar la rutina CILT</string>
+    <string name="cilt_reload">Reintentar</string>
+    <string name="cilt_run">Ejecutar</string>
+    <string name="cilt_status_pending">Pendiente</string>
+    <string name="cilt_status_completed">Completada</string>
+    <string name="cilt_sequence_title">Secuencia</string>
+    <string name="cilt_sequence_error">No se pudo cargar la secuencia</string>
+    <string name="cilt_standard_ok">Estándar OK: %1$s</string>
+    <string name="cilt_tools">Herramientas: %1$s</string>
+    <string name="cilt_start">Iniciar</string>
+    <string name="cilt_finish">Finalizar</string>
+    <string name="cilt_initial_parameter">Parámetro inicial</string>
+    <string name="cilt_final_parameter">Parámetro final</string>
+    <string name="cilt_parameter_ok_question">¿El parámetro está OK?</string>
+    <string name="cilt_yes">Sí</string>
+    <string name="cilt_no">No</string>
+    <string name="cilt_dismiss">Cerrar</string>
     <string name="opl_subtitle" translatable="false">One Point Lesson</string>
     <string name="opl_search_placeholder">Buscar por nombre de OPL o máquina</string>
     <string name="opl_search_action">Buscar OPL</string>

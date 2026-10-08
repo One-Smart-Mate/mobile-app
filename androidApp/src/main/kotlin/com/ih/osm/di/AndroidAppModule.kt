@@ -26,6 +26,7 @@ import com.ih.osm.features.createcard.data.storage.AndroidEvidenceStorage
 import com.ih.osm.features.createcard.domain.storage.EvidenceStorage
 import com.ih.osm.features.home.HomeViewModel
 import com.ih.osm.features.opl.OplViewModel
+import com.ih.osm.features.cilt.CiltViewModel
 import com.ih.osm.features.opl.detail.OplDetailViewModel
 import com.ih.osm.features.opl.detail.data.AndroidOplMediaRepository
 import com.ih.osm.features.opl.detail.domain.OplMediaRepository
@@ -76,6 +77,7 @@ val androidAppModule = module {
     viewModelOf(::OplViewModel)
     single<OplMediaRepository> { AndroidOplMediaRepository(get(), get(), get(), get()) }
     viewModelOf(::OplDetailViewModel)
+    viewModelOf(::CiltViewModel)
     viewModelOf(::PermissionsViewModel)
     viewModelOf(::SettingsViewModel)
 }

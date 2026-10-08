@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.outlined.Note
 import androidx.compose.material.icons.automirrored.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.ChecklistRtl
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.QrCodeScanner
@@ -78,6 +79,7 @@ fun HomeScreenRoute(
     onCreateCard: (Long) -> Unit,
     onOpenNotes: () -> Unit,
     onOpenOpl: (Long) -> Unit,
+    onOpenCilt: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
@@ -102,6 +104,7 @@ fun HomeScreenRoute(
         onCreateNote = { selectedSite?.let { onCreateCard(it.id) } },
         onOpenNotes = onOpenNotes,
         onOpenOpl = { selectedSite?.let { onOpenOpl(it.id) } },
+        onOpenCilt = onOpenCilt,
         pendingCardCount = state.pendingCount,
         isCardSyncing = state.isSyncing,
         cardSyncCompleted = state.completed,
@@ -122,6 +125,7 @@ fun HomeScreen(
     onCreateNote: () -> Unit,
     onOpenNotes: () -> Unit,
     onOpenOpl: () -> Unit,
+    onOpenCilt: () -> Unit = {},
     pendingCardCount: Long,
     isCardSyncing: Boolean,
     cardSyncCompleted: Int,
@@ -177,6 +181,7 @@ fun HomeScreen(
                 onCreateNote = onCreateNote,
                 onOpenNotes = onOpenNotes,
                 onOpenOpl = onOpenOpl,
+                onOpenCilt = onOpenCilt,
                 oplEnabled = selectedSite != null,
             )
             Spacer(Modifier.height(16.dp))
@@ -417,6 +422,7 @@ private fun QuickActionsGrid(
     onCreateNote: () -> Unit,
     onOpenNotes: () -> Unit,
     onOpenOpl: () -> Unit,
+    onOpenCilt: () -> Unit,
     oplEnabled: Boolean,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -446,9 +452,14 @@ private fun QuickActionsGrid(
                 icon = Icons.AutoMirrored.Outlined.MenuBook,
                 onClick = onOpenOpl,
                 enabled = oplEnabled,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
             )
-
+            QuickActionCard(
+                title = stringResource(R.string.cilt_title),
+                icon = Icons.Outlined.ChecklistRtl,
+                onClick = onOpenCilt,
+                modifier = Modifier.weight(1f),
+            )
         }
 
     }
