@@ -2,6 +2,7 @@ package com.ih.osm.features.catalog.data.remote
 
 import com.ih.osm.core.network.NetworkClient
 import com.ih.osm.core.network.NetworkResult
+import com.ih.osm.features.cilt.data.remote.CiltMasterDto
 import io.ktor.client.request.parameter
 
 internal class CatalogApiService(
@@ -28,6 +29,11 @@ internal class CatalogApiService(
             parameter("page", page)
             parameter("limit", limit)
         }.unwrap()
+
+    suspend fun getCilts(siteId: Long): NetworkResult<List<CiltMasterDto>> =
+        networkClient.get<CatalogApiResponse<List<CiltMasterDto>>>(
+            "/cilt-mstr/site/$siteId/with-sequences",
+        ).unwrap()
 
     private fun <T> NetworkResult<CatalogApiResponse<T>>.unwrap(): NetworkResult<T> = when (this) {
         is NetworkResult.Success -> NetworkResult.Success(data.data, statusCode)

@@ -13,6 +13,8 @@ import com.ih.osm.features.preclassifier.data.repository.PreclassifierRepository
 import com.ih.osm.features.preclassifier.domain.repository.PreclassifierRepository
 import com.ih.osm.features.priority.data.repository.PriorityRepositoryImpl
 import com.ih.osm.features.priority.domain.repository.PriorityRepository
+import com.ih.osm.features.cilt.data.repository.CiltCatalogRepositoryImpl
+import com.ih.osm.features.cilt.domain.repository.CiltCatalogRepository
 import com.ih.osm.features.catalog.domain.usecase.BuildCatalogSyncPlanUseCase
 import com.ih.osm.features.catalog.domain.usecase.SyncCatalogsUseCase
 import org.koin.dsl.module
@@ -24,9 +26,10 @@ val catalogModule = module {
     single<PriorityRepository> { PriorityRepositoryImpl(get(), get()) }
     single<LevelRepository> { LevelRepositoryImpl(get(), get()) }
     single<EmployeeRepository> { EmployeeRepositoryImpl(get(), get()) }
+    single<CiltCatalogRepository> { CiltCatalogRepositoryImpl(get(), get()) }
     single<CatalogSyncRepository> {
-        CatalogSyncRepositoryImpl(get(), get(), get(), get(), get(), get())
+        CatalogSyncRepositoryImpl(get(), get(), get(), get(), get(), get(), get())
     }
-    single { SyncCatalogsUseCase(get(), get(), get(), get(), get(), get()) }
-    single { BuildCatalogSyncPlanUseCase(get(), get(), get(), get(), get(), get()) }
+    single { SyncCatalogsUseCase(get(), get(), get(), get(), get(), get(), get()) }
+    single { BuildCatalogSyncPlanUseCase(get(), get(), get(), get(), get(), get(), get()) }
 }

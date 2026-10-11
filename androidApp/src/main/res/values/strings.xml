@@ -149,6 +149,7 @@
     <string name="catalog_sync_priorities">Descargando prioridades…</string>
     <string name="catalog_sync_levels">Descargando niveles…</string>
     <string name="catalog_sync_employees">Descargando usuarios…</string>
+    <string name="catalog_sync_cilts">Descargando procedimientos…</string>
     <string name="catalog_sync_failed">No se pudo descargar el contenido sin conexión.</string>
     <string name="create_card_title">Nueva tarjeta</string>
     <string name="create_card_step_classify">Clasificar</string>

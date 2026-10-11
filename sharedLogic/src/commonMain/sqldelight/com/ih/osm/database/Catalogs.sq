@@ -69,6 +69,39 @@ CREATE TABLE EmployeeCatalog (
     PRIMARY KEY (site_id, id)
 );
 
+CREATE TABLE CiltMasterCatalog (
+    site_id INTEGER NOT NULL,
+    id TEXT NOT NULL,
+    cilt_name TEXT NOT NULL,
+    cilt_description TEXT NOT NULL,
+    creator_name TEXT NOT NULL,
+    reviewer_name TEXT NOT NULL,
+    approved_by_name TEXT NOT NULL,
+    cilt_due_date TEXT NOT NULL,
+    standard_time INTEGER NOT NULL,
+    url_img_layout TEXT,
+    status TEXT NOT NULL,
+    PRIMARY KEY (site_id, id)
+);
+
+CREATE TABLE CiltSequenceCatalog (
+    site_id INTEGER NOT NULL,
+    id TEXT NOT NULL,
+    cilt_mstr_id TEXT NOT NULL,
+    cilt_mstr_name TEXT NOT NULL,
+    cilt_type_id TEXT NOT NULL,
+    cilt_type_name TEXT NOT NULL,
+    secuence_list TEXT NOT NULL,
+    secuence_color TEXT NOT NULL,
+    tools_required TEXT NOT NULL,
+    standard_time INTEGER NOT NULL,
+    standard_ok TEXT NOT NULL,
+    reference_point TEXT,
+    secuence_order INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    PRIMARY KEY (site_id, id)
+);
+
 CREATE TABLE CatalogSyncMetadata (
     user_id INTEGER NOT NULL PRIMARY KEY,
     site_scope TEXT NOT NULL,
@@ -179,3 +212,36 @@ INSERT OR REPLACE INTO EmployeeCatalog VALUES (?, ?, ?, ?);
 
 upsertCatalogSyncMetadata:
 INSERT OR REPLACE INTO CatalogSyncMetadata(user_id, site_scope, completed_at_epoch_ms) VALUES (?, ?, ?);
+
+selectCiltMastersBySite:
+SELECT * FROM CiltMasterCatalog WHERE site_id = ? ORDER BY cilt_name;
+
+countCiltMastersBySite:
+SELECT COUNT(*) FROM CiltMasterCatalog WHERE site_id = ?;
+
+deleteCiltMastersBySite:
+DELETE FROM CiltMasterCatalog WHERE site_id = ?;
+
+deleteAllCiltMasters:
+DELETE FROM CiltMasterCatalog;
+
+insertCiltMaster:
+INSERT OR REPLACE INTO CiltMasterCatalog VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectCiltSequencesBySite:
+SELECT * FROM CiltSequenceCatalog WHERE site_id = ? ORDER BY cilt_mstr_id, secuence_order;
+
+selectCiltSequencesByMaster:
+SELECT * FROM CiltSequenceCatalog WHERE site_id = ? AND cilt_mstr_id = ? ORDER BY secuence_order;
+
+countCiltSequencesBySite:
+SELECT COUNT(*) FROM CiltSequenceCatalog WHERE site_id = ?;
+
+deleteCiltSequencesBySite:
+DELETE FROM CiltSequenceCatalog WHERE site_id = ?;
+
+deleteAllCiltSequences:
+DELETE FROM CiltSequenceCatalog;
+
+insertCiltSequence:
+INSERT OR REPLACE INTO CiltSequenceCatalog VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

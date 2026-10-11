@@ -6,6 +6,7 @@ import com.ih.osm.features.catalog.domain.model.CatalogSyncMetadata
 import com.ih.osm.features.catalog.domain.model.CatalogKind
 import com.ih.osm.features.catalog.domain.model.SiteCatalogs
 import com.ih.osm.features.catalog.domain.repository.CatalogSyncRepository
+import com.ih.osm.features.cilt.domain.repository.CiltCatalogRepository
 import com.ih.osm.features.employee.domain.repository.EmployeeRepository
 import com.ih.osm.features.level.domain.repository.LevelRepository
 import com.ih.osm.features.preclassifier.domain.repository.PreclassifierRepository
@@ -18,6 +19,7 @@ internal class CatalogSyncRepositoryImpl(
     private val priorities: PriorityRepository,
     private val levels: LevelRepository,
     private val employees: EmployeeRepository,
+    private val cilts: CiltCatalogRepository,
 ) : CatalogSyncRepository {
     override fun replaceAllTransactionally(
         userId: Long,
@@ -33,6 +35,7 @@ internal class CatalogSyncRepositoryImpl(
                 priorities.deleteAll()
                 levels.deleteAll()
                 employees.deleteAll()
+                cilts.deleteAll()
                 database.catalogsQueries.deleteAllCatalogSyncMetadata()
                 database.catalogsQueries.deleteAllCatalogSyncStates()
             }
@@ -56,6 +59,10 @@ internal class CatalogSyncRepositoryImpl(
                 site.employees?.let {
                     employees.replaceAll(site.siteId, it)
                     markComplete(site.siteId, CatalogKind.EMPLOYEES, it.size, completedAtEpochMs)
+                }
+                site.cilts?.let {
+                    cilts.replaceAll(site.siteId, it)
+                    markComplete(site.siteId, CatalogKind.CILTS, it.size, completedAtEpochMs)
                 }
             }
             database.catalogsQueries.upsertCatalogSyncMetadata(userId, siteScope, completedAtEpochMs)

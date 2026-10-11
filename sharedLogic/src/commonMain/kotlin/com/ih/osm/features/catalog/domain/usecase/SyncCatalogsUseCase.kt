@@ -26,6 +26,7 @@ class SyncCatalogsUseCase(
     private val priorityRepository: PriorityRepository,
     private val levelRepository: LevelRepository,
     private val employeeRepository: EmployeeRepository,
+    private val ciltCatalogRepository: com.ih.osm.features.cilt.domain.repository.CiltCatalogRepository,
     private val catalogSyncRepository: CatalogSyncRepository,
 ) {
     suspend operator fun invoke(
@@ -42,6 +43,7 @@ class SyncCatalogsUseCase(
             var priorities: List<com.ih.osm.features.priority.domain.model.Priority>? = null
             var levels: List<com.ih.osm.features.level.domain.model.Level>? = null
             var employees: List<com.ih.osm.features.employee.domain.model.Employee>? = null
+            var cilts: List<com.ih.osm.features.cilt.domain.model.CiltMaster>? = null
 
             if (CatalogKind.CARD_TYPES in siteRequest.catalogs) {
                 when (val result = cardTypeRepository.fetchRemote(siteId)) {
@@ -83,7 +85,15 @@ class SyncCatalogsUseCase(
                 onProgress(CatalogSyncProgress(++completedSteps, plan.totalSteps, CatalogKind.EMPLOYEES, siteId))
             }
 
-            downloaded += SiteCatalogs(siteId, cardTypes, preclassifiers, priorities, levels, employees)
+            if (CatalogKind.CILTS in siteRequest.catalogs) {
+                when (val result = ciltCatalogRepository.fetchRemote(siteId)) {
+                    is NetworkResult.Success -> cilts = result.data
+                    is NetworkResult.Failure -> return CatalogSyncResult.Failure(result.error)
+                }
+                onProgress(CatalogSyncProgress(++completedSteps, plan.totalSteps, CatalogKind.CILTS, siteId))
+            }
+
+            downloaded += SiteCatalogs(siteId, cardTypes, preclassifiers, priorities, levels, employees, cilts)
         }
 
         val siteScope = plan.siteScope.distinct().sorted().joinToString(",")
@@ -104,6 +114,7 @@ class BuildCatalogSyncPlanUseCase(
     private val priorities: PriorityRepository,
     private val levels: LevelRepository,
     private val employees: EmployeeRepository,
+    private val cilts: com.ih.osm.features.cilt.domain.repository.CiltCatalogRepository,
     private val catalogSyncRepository: CatalogSyncRepository,
 ) {
     operator fun invoke(userId: Long, siteIds: List<Long>): CatalogSyncPlan {
@@ -134,6 +145,9 @@ class BuildCatalogSyncPlanUseCase(
                 }
                 if (!isComplete(siteId, CatalogKind.EMPLOYEES, employees.count(siteId))) {
                     add(CatalogKind.EMPLOYEES)
+                }
+                if (!isComplete(siteId, CatalogKind.CILTS, cilts.count(siteId))) {
+                    add(CatalogKind.CILTS)
                 }
             }
             kinds.takeIf(Set<CatalogKind>::isNotEmpty)?.let { SiteCatalogSyncRequest(siteId, it) }

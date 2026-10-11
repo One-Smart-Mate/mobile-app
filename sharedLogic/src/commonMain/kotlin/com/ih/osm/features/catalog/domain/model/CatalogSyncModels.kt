@@ -1,6 +1,7 @@
 package com.ih.osm.features.catalog.domain.model
 
 import com.ih.osm.features.cardtype.domain.model.CardType
+import com.ih.osm.features.cilt.domain.model.CiltMaster
 import com.ih.osm.features.employee.domain.model.Employee
 import com.ih.osm.features.level.domain.model.Level
 import com.ih.osm.features.preclassifier.domain.model.Preclassifier
@@ -13,6 +14,7 @@ data class SiteCatalogs(
     val priorities: List<Priority>? = null,
     val levels: List<Level>? = null,
     val employees: List<Employee>? = null,
+    val cilts: List<CiltMaster>? = null,
 )
 
 enum class CatalogKind {
@@ -21,6 +23,7 @@ enum class CatalogKind {
     PRIORITIES,
     LEVELS,
     EMPLOYEES,
+    CILTS,
 }
 
 data class SiteCatalogSyncRequest(

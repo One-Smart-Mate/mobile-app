@@ -625,6 +625,7 @@ private fun CatalogKind?.catalogLabel(): String = when (this) {
     CatalogKind.PRIORITIES -> stringResource(R.string.catalog_sync_priorities)
     CatalogKind.LEVELS -> stringResource(R.string.catalog_sync_levels)
     CatalogKind.EMPLOYEES -> stringResource(R.string.catalog_sync_employees)
+    CatalogKind.CILTS -> stringResource(R.string.catalog_sync_cilts)
     null -> stringResource(R.string.catalog_sync_starting)
 }
 
