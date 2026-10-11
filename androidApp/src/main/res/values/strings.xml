@@ -384,6 +384,8 @@
     <string name="cilt_status_completed">Completada</string>
     <string name="cilt_sequence_title">Secuencia</string>
     <string name="cilt_sequence_error">No se pudo cargar la secuencia</string>
+    <string name="cilt_start_error">No se pudo iniciar la secuencia. Puede que ya esté iniciada o fuera de su horario programado.</string>
+    <string name="cilt_complete_error">No se pudo completar la secuencia. Verifica tu conexión e inténtalo de nuevo.</string>
     <string name="cilt_standard_ok">Estándar OK: %1$s</string>
     <string name="cilt_tools">Herramientas: %1$s</string>
     <string name="cilt_start">Iniciar</string>

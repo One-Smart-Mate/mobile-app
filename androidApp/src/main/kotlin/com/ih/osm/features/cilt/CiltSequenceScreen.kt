@@ -152,8 +152,13 @@ fun CiltSequenceScreen(
             }
 
             if (state.error != null) {
+                val errorMessage = when (state.error) {
+                    CiltError.START_FAILED -> stringResource(R.string.cilt_start_error)
+                    CiltError.COMPLETE_FAILED -> stringResource(R.string.cilt_complete_error)
+                    else -> stringResource(R.string.cilt_sequence_error)
+                }
                 Text(
-                    text = stringResource(R.string.cilt_sequence_error),
+                    text = errorMessage,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                 )
