@@ -46,6 +46,7 @@ import com.ih.osm.features.catalog.domain.manager.CatalogSyncManager
 import com.ih.osm.features.cards.CardListScreenRoute
 import com.ih.osm.features.carddetail.CardDetailScreenRoute
 import com.ih.osm.features.cilt.CiltScreenRoute
+import com.ih.osm.features.cilt.CiltExecutionDetailScreenRoute
 import com.ih.osm.features.cilt.CiltSequenceScreenRoute
 import com.ih.osm.features.cardsolution.CardSolutionScreenRoute
 import com.ih.osm.features.createcard.CreateCardScreenRoute
@@ -68,6 +69,7 @@ private sealed interface AppRoute : NavKey {
     @Serializable data class CardDetail(val uuid: String) : AppRoute
     @Serializable data object Cilt : AppRoute
     @Serializable data class CiltSequence(val sequenceId: Long, val executionId: Long) : AppRoute
+    @Serializable data class CiltExecutionDetail(val executionId: Long) : AppRoute
     @Serializable data class CardSolution(val uuid: String, val type: String) : AppRoute
 }
 
@@ -187,6 +189,9 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
                         onRunSequence = { sequenceId, executionId ->
                             backStack.add(AppRoute.CiltSequence(sequenceId, executionId))
                         },
+                        onViewExecution = { executionId ->
+                            backStack.add(AppRoute.CiltExecutionDetail(executionId))
+                        },
                     )
                 }
                 is AppRoute.CiltSequence -> NavEntry(route) {
@@ -195,6 +200,12 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
                         executionId = route.executionId,
                         onBack = { backStack.removeAt(backStack.lastIndex) },
                         onFinished = { backStack.removeAt(backStack.lastIndex) },
+                    )
+                }
+                is AppRoute.CiltExecutionDetail -> NavEntry(route) {
+                    CiltExecutionDetailScreenRoute(
+                        executionId = route.executionId,
+                        onBack = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
                 is AppRoute.CardSolution -> NavEntry(route) {

@@ -66,6 +66,15 @@ data class CiltExecution(
     val secuenceList: String,
     val ciltTypeName: String,
     val status: String,
+    val evidences: List<CiltEvidence> = emptyList(),
 ) {
     val isCompleted: Boolean get() = status.uppercase() != "A"
 }
+
+/** One evidence photo attached to a sequence execution. */
+data class CiltEvidence(
+    val id: Long,
+    val evidenceUrl: String,
+    val type: String?,
+    val createdAt: String?,
+)

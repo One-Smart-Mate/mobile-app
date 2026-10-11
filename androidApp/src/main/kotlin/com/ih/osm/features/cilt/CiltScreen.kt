@@ -1,6 +1,7 @@
 package com.ih.osm.features.cilt
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,17 +43,20 @@ import org.koin.compose.viewmodel.koinViewModel
 fun CiltScreenRoute(
     onBack: () -> Unit,
     onRunSequence: (sequenceId: Long, executionId: Long) -> Unit,
+    onViewExecution: (executionId: Long) -> Unit,
     viewModel: CiltViewModel = koinViewModel(),
 ) {
     val state by viewModel.getStateFlow().collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) {
-        if (!state.initialized) viewModel.process(CiltViewModel.Action.LoadRoutine)
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        viewModel.process(CiltViewModel.Action.LoadRoutine)
+        onPauseOrDispose { }
     }
     CiltScreen(
         state = state,
         onBack = onBack,
         onReload = { viewModel.process(CiltViewModel.Action.LoadRoutine) },
         onRunSequence = onRunSequence,
+        onViewExecution = onViewExecution,
     )
 }
 
@@ -62,6 +67,7 @@ fun CiltScreen(
     onBack: () -> Unit,
     onReload: () -> Unit,
     onRunSequence: (Long, Long) -> Unit,
+    onViewExecution: (Long) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -97,7 +103,7 @@ fun CiltScreen(
                             )
                         }
                         items(position.ciltMasters, key = { "m-${it.id}" }) { master ->
-                            CiltMasterCard(master = master, onRunSequence = onRunSequence)
+                            CiltMasterCard(master = master, onRunSequence = onRunSequence, onViewExecution = onViewExecution)
                         }
                     }
                 }
@@ -107,7 +113,7 @@ fun CiltScreen(
 }
 
 @Composable
-private fun CiltMasterCard(master: CiltMaster, onRunSequence: (Long, Long) -> Unit) {
+private fun CiltMasterCard(master: CiltMaster, onRunSequence: (Long, Long) -> Unit, onViewExecution: (Long) -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(master.ciltName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -120,7 +126,7 @@ private fun CiltMasterCard(master: CiltMaster, onRunSequence: (Long, Long) -> Un
             }
             master.sequences.forEach { sequence ->
                 sequence.executions.forEach { execution ->
-                    SequenceExecutionRow(sequence, execution, onRunSequence)
+                    SequenceExecutionRow(sequence, execution, onRunSequence, onViewExecution)
                 }
             }
         }
@@ -132,8 +138,15 @@ private fun SequenceExecutionRow(
     sequence: CiltSequence,
     execution: CiltExecution,
     onRunSequence: (Long, Long) -> Unit,
+    onViewExecution: (Long) -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        modifier = if (execution.isCompleted) {
+            Modifier.fillMaxWidth().clickable { onViewExecution(execution.id) }
+        } else {
+            Modifier.fillMaxWidth()
+        },
+    ) {
         androidx.compose.foundation.layout.Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -160,6 +173,12 @@ private fun SequenceExecutionRow(
                     Icon(Icons.Filled.PlayArrow, contentDescription = null)
                     Text(stringResource(R.string.cilt_run))
                 }
+            } else {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

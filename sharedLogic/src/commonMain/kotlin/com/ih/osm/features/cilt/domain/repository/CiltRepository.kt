@@ -32,4 +32,7 @@ interface CiltRepository {
         contentType: String,
         bytes: ByteArray,
     ): NetworkResult<Unit>
+
+    /** Fetches a single execution with its evidences (for consulting completed runs). */
+    suspend fun getExecution(executionId: Long): NetworkResult<CiltExecution>
 }

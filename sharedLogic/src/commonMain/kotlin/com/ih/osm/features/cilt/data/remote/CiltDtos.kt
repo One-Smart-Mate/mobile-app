@@ -1,6 +1,7 @@
 package com.ih.osm.features.cilt.data.remote
 
 import com.ih.osm.features.cilt.domain.model.CiltExecution
+import com.ih.osm.features.cilt.domain.model.CiltEvidence
 import com.ih.osm.features.cilt.domain.model.CiltMaster
 import com.ih.osm.features.cilt.domain.model.CiltPosition
 import com.ih.osm.features.cilt.domain.model.CiltRoutine
@@ -140,6 +141,7 @@ internal data class CiltExecutionDto(
     val secuenceList: String? = null,
     val ciltTypeName: String? = null,
     val status: String? = null,
+    val evidences: List<CiltEvidenceDto>? = null,
 ) {
     fun toDomain() = CiltExecution(
         id = id.requiredId("execution.id"),
@@ -154,6 +156,22 @@ internal data class CiltExecutionDto(
         secuenceList = secuenceList.orEmpty(),
         ciltTypeName = ciltTypeName.orEmpty(),
         status = status.orEmpty(),
+        evidences = evidences?.map { it.toDomain() } ?: emptyList(),
+    )
+}
+
+@Serializable
+internal data class CiltEvidenceDto(
+    val id: JsonElement,
+    val evidenceUrl: String? = null,
+    val type: String? = null,
+    val createdAt: String? = null,
+) {
+    fun toDomain() = CiltEvidence(
+        id = id.requiredId("evidence.id"),
+        evidenceUrl = evidenceUrl.orEmpty(),
+        type = type,
+        createdAt = createdAt,
     )
 }
 

@@ -389,6 +389,14 @@
     <string name="cilt_add_evidence">Agregar evidencia (foto)</string>
     <string name="cilt_add_evidence_count">Agregar evidencia (foto) · %1$d subida(s)</string>
     <string name="cilt_evidence_error">No se pudo subir la evidencia. Inténtalo de nuevo.</string>
+    <string name="cilt_execution_detail_title">Detalle de ejecución</string>
+    <string name="cilt_detail_start">Inicio</string>
+    <string name="cilt_detail_stop">Fin</string>
+    <string name="cilt_detail_initial_param">Parámetro inicial</string>
+    <string name="cilt_detail_final_param">Parámetro final</string>
+    <string name="cilt_detail_result">¿Resultado OK?</string>
+    <string name="cilt_detail_evidences">Evidencias</string>
+    <string name="cilt_detail_no_evidences">Sin evidencias registradas.</string>
     <string name="cilt_standard_ok">Estándar OK: %1$s</string>
     <string name="cilt_tools">Herramientas: %1$s</string>
     <string name="cilt_start">Iniciar</string>

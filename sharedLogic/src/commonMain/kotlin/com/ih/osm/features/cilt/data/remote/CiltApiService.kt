@@ -20,6 +20,11 @@ internal class CiltApiService(
             "/cilt-sequences/$sequenceId",
         ).unwrap()
 
+    suspend fun getExecution(executionId: Long): NetworkResult<CiltExecutionDto> =
+        networkClient.get<CiltApiResponse<CiltExecutionDto>>(
+            "/cilt-sequences-executions/$executionId",
+        ).unwrap()
+
     suspend fun uploadExecutionEvidence(
         siteId: Long,
         executionId: Long,

@@ -67,6 +67,11 @@ internal class CiltRepositoryImpl(
         api.uploadExecutionEvidence(siteId, executionId, type, fileName, contentType, bytes)
     }
 
+    override suspend fun getExecution(executionId: Long): NetworkResult<CiltExecution> = authenticated {
+        if (executionId <= 0) return@authenticated clientFailure("Invalid execution identifier.", 400)
+        api.getExecution(executionId).mapData { it.toDomain() }
+    }
+
     private fun nowUtc(): String = Clock.System.now().toString()
 
     private suspend fun <T> authenticated(read: suspend () -> NetworkResult<T>): NetworkResult<T> {
