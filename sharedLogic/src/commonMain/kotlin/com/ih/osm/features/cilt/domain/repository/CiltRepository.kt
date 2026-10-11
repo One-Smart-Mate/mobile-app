@@ -22,4 +22,14 @@ interface CiltRepository {
         finalParameter: String,
         parameterOk: Boolean,
     ): NetworkResult<CiltExecution>
+
+    /** Uploads one evidence photo for an execution (stored to R2 by the backend). */
+    suspend fun uploadEvidence(
+        siteId: Long,
+        executionId: Long,
+        type: String,
+        fileName: String,
+        contentType: String,
+        bytes: ByteArray,
+    ): NetworkResult<Unit>
 }

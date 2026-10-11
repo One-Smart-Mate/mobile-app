@@ -27,6 +27,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.ByteArrayOutputStream
+import android.graphics.Bitmap
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -65,6 +73,26 @@ fun CiltSequenceScreen(
     onAction: (CiltViewModel.Action) -> Unit,
 ) {
     val sequence = state.sequence
+    val context = LocalContext.current
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicturePreview(),
+    ) { bitmap ->
+        if (bitmap != null) {
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)
+            onAction(
+                CiltViewModel.Action.UploadEvidence(
+                    bytes = stream.toByteArray(),
+                    fileName = "evidence_${System.currentTimeMillis()}.jpg",
+                    contentType = "image/jpeg",
+                    type = if (state.started) "FINAL" else "INITIAL",
+                ),
+            )
+        }
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) cameraLauncher.launch(null) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -144,6 +172,25 @@ fun CiltSequenceScreen(
                         onAction(CiltViewModel.Action.ParameterOkChanged(false))
                     }
                 }
+                OutlinedButton(
+                    onClick = {
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.CAMERA,
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (hasPermission) cameraLauncher.launch(null)
+                        else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    },
+                    enabled = !state.isUploadingEvidence,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        if (state.evidenceCount > 0) {
+                            stringResource(R.string.cilt_add_evidence_count, state.evidenceCount)
+                        } else {
+                            stringResource(R.string.cilt_add_evidence)
+                        },
+                    )
+                }
                 Button(
                     onClick = { onAction(CiltViewModel.Action.CompleteExecution) },
                     enabled = !state.isCompleting,
@@ -155,6 +202,7 @@ fun CiltSequenceScreen(
                 val errorMessage = when (state.error) {
                     CiltError.START_FAILED -> stringResource(R.string.cilt_start_error)
                     CiltError.COMPLETE_FAILED -> stringResource(R.string.cilt_complete_error)
+                    CiltError.EVIDENCE_FAILED -> stringResource(R.string.cilt_evidence_error)
                     else -> stringResource(R.string.cilt_sequence_error)
                 }
                 Text(

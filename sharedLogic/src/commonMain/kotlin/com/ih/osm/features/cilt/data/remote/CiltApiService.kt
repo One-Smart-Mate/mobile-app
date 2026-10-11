@@ -2,6 +2,10 @@ package com.ih.osm.features.cilt.data.remote
 
 import com.ih.osm.core.network.NetworkClient
 import com.ih.osm.core.network.NetworkResult
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 
 internal class CiltApiService(
     private val networkClient: NetworkClient,
@@ -15,6 +19,38 @@ internal class CiltApiService(
         networkClient.get<CiltApiResponse<CiltSequenceDto>>(
             "/cilt-sequences/$sequenceId",
         ).unwrap()
+
+    suspend fun uploadExecutionEvidence(
+        siteId: Long,
+        executionId: Long,
+        type: String,
+        fileName: String,
+        contentType: String,
+        bytes: ByteArray,
+    ): NetworkResult<Unit> = when (
+        val result = networkClient.postContent<CiltApiResponse<kotlinx.serialization.json.JsonElement>>(
+            endpoint = "/cilt-sequences-executions/evidence/$siteId/upload",
+            body = MultiPartFormDataContent(
+                formData {
+                    append("executionId", executionId.toString())
+                    append("type", type)
+                    append(
+                        key = "file",
+                        value = bytes,
+                        headers = Headers.build {
+                            append(HttpHeaders.ContentType, contentType)
+                            append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                        },
+                    )
+                },
+            ),
+        ) {
+            headers.remove(HttpHeaders.ContentType)
+        }
+    ) {
+        is NetworkResult.Success -> NetworkResult.Success(Unit, result.statusCode)
+        is NetworkResult.Failure -> result
+    }
 
     suspend fun startExecution(
         request: StartSequenceExecutionRequest,

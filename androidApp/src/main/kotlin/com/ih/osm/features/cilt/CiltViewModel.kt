@@ -28,9 +28,11 @@ data class CiltUiState(
     val finalParameter: String = "",
     val parameterOk: Boolean = true,
     val completed: Boolean = false,
+    val isUploadingEvidence: Boolean = false,
+    val evidenceCount: Int = 0,
 )
 
-enum class CiltError { ROUTINE_FAILED, NO_CONNECTION, ACCESS_DENIED, SEQUENCE_FAILED, START_FAILED, COMPLETE_FAILED }
+enum class CiltError { ROUTINE_FAILED, NO_CONNECTION, ACCESS_DENIED, SEQUENCE_FAILED, START_FAILED, COMPLETE_FAILED, EVIDENCE_FAILED }
 
 class CiltViewModel(
     private val repository: CiltRepository,
@@ -41,6 +43,7 @@ class CiltViewModel(
         data class LoadSequence(val sequenceId: Long, val executionId: Long) : Action
         data object StartExecution : Action
         data object CompleteExecution : Action
+        data class UploadEvidence(val bytes: ByteArray, val fileName: String, val contentType: String, val type: String) : Action
         data class InitialParameterChanged(val value: String) : Action
         data class FinalParameterChanged(val value: String) : Action
         data class ParameterOkChanged(val value: Boolean) : Action
@@ -56,6 +59,7 @@ class CiltViewModel(
             is Action.LoadSequence -> loadSequence(action.sequenceId, action.executionId)
             Action.StartExecution -> startExecution()
             Action.CompleteExecution -> completeExecution()
+            is Action.UploadEvidence -> uploadEvidence(action.bytes, action.fileName, action.contentType, action.type)
             is Action.InitialParameterChanged -> setState { copy(initialParameter = action.value) }
             is Action.FinalParameterChanged -> setState { copy(finalParameter = action.value) }
             is Action.ParameterOkChanged -> setState { copy(parameterOk = action.value) }
@@ -119,6 +123,32 @@ class CiltViewModel(
                 setState { copy(error = CiltError.SEQUENCE_FAILED) }
             } finally {
                 setState { copy(isLoadingSequence = false) }
+            }
+        }
+    }
+
+    private fun uploadEvidence(bytes: ByteArray, fileName: String, contentType: String, type: String) {
+        val executionId = getStateValue().runExecutionId
+        val siteId = getStateValue().sequence?.siteId ?: 0
+        if (executionId <= 0 || siteId <= 0 || getStateValue().isUploadingEvidence) return
+        setState { copy(isUploadingEvidence = true, error = null) }
+        viewModelScope.launch {
+            try {
+                when (
+                    val result = withContext(Dispatchers.IO) {
+                        repository.uploadEvidence(siteId, executionId, type, fileName, contentType, bytes)
+                    }
+                ) {
+                    is NetworkResult.Success -> setState { copy(evidenceCount = evidenceCount + 1) }
+                    is NetworkResult.Failure ->
+                        setState { copy(error = result.error.toCiltError(CiltError.EVIDENCE_FAILED)) }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                setState { copy(error = CiltError.EVIDENCE_FAILED) }
+            } finally {
+                setState { copy(isUploadingEvidence = false) }
             }
         }
     }

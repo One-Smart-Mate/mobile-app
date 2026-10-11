@@ -386,6 +386,9 @@
     <string name="cilt_sequence_error">No se pudo cargar la secuencia</string>
     <string name="cilt_start_error">No se pudo iniciar la secuencia. Puede que ya esté iniciada o fuera de su horario programado.</string>
     <string name="cilt_complete_error">No se pudo completar la secuencia. Verifica tu conexión e inténtalo de nuevo.</string>
+    <string name="cilt_add_evidence">Agregar evidencia (foto)</string>
+    <string name="cilt_add_evidence_count">Agregar evidencia (foto) · %1$d subida(s)</string>
+    <string name="cilt_evidence_error">No se pudo subir la evidencia. Inténtalo de nuevo.</string>
     <string name="cilt_standard_ok">Estándar OK: %1$s</string>
     <string name="cilt_tools">Herramientas: %1$s</string>
     <string name="cilt_start">Iniciar</string>
