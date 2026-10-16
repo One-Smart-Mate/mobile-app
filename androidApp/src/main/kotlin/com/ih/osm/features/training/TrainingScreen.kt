@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,13 +47,19 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun TrainingScreenRoute(
     onBack: () -> Unit,
+    onOpenOpl: (Long, Long) -> Unit,
     viewModel: TrainingViewModel = koinViewModel(),
 ) {
     val state by viewModel.getStateFlow().collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
         viewModel.process(TrainingViewModel.Action.Initialize)
     }
-    TrainingScreen(state = state, onAction = viewModel::process, onBack = onBack)
+    TrainingScreen(
+        state = state,
+        onAction = viewModel::process,
+        onBack = onBack,
+        onOpenOpl = onOpenOpl,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,6 +68,7 @@ fun TrainingScreen(
     state: TrainingUiState,
     onAction: (TrainingViewModel.Action) -> Unit,
     onBack: () -> Unit,
+    onOpenOpl: (Long, Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -150,6 +158,13 @@ fun TrainingScreen(
                         TrainingCard(
                             record = record,
                             isMarking = state.markingOplId == record.oplId,
+                            isViewed = state.viewedOplIds.contains(record.oplId),
+                            onOpenOpl = {
+                                record.siteId?.let { site ->
+                                    onAction(TrainingViewModel.Action.MarkViewed(record.oplId))
+                                    onOpenOpl(site, record.oplId)
+                                }
+                            },
                             onMarkTaken = {
                                 onAction(TrainingViewModel.Action.MarkTaken(record.oplId))
                             },
@@ -165,6 +180,8 @@ fun TrainingScreen(
 private fun TrainingCard(
     record: TrainingRecord,
     isMarking: Boolean,
+    isViewed: Boolean,
+    onOpenOpl: () -> Unit,
     onMarkTaken: () -> Unit,
 ) {
     AnatomyCard(contentPadding = PaddingValues(16.dp)) {
@@ -191,14 +208,21 @@ private fun TrainingCard(
                         AnatomyTextProperties(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 )
             }
-            // The user can declare they took it when it is pending or expired.
+            // Always let the user open and read the course content.
+            AnatomyButton(
+                text = "Ver curso",
+                onClick = onOpenOpl,
+                leadingIcon = Icons.AutoMirrored.Outlined.MenuBook,
+            )
+            // "I took it" is only enabled once the user opened the course,
+            // and only when it is pending or expired.
             if (record.status == TrainingStatus.PENDING ||
                 record.status == TrainingStatus.EXPIRED
             ) {
                 AnatomyButton(
-                    text = "Ya lo tomé",
+                    text = if (isViewed) "Ya lo tomé" else "Primero abre el curso",
                     onClick = onMarkTaken,
-                    enabled = !isMarking,
+                    enabled = isViewed && !isMarking,
                     leadingIcon = Icons.Outlined.CheckCircle,
                 )
             }

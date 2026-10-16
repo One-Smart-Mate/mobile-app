@@ -200,6 +200,10 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
                 AppRoute.Training -> NavEntry(route) {
                     TrainingScreenRoute(
                         onBack = { backStack.removeAt(backStack.lastIndex) },
+                        onOpenOpl = { siteId, oplId ->
+                            val detail = AppRoute.OplDetail(siteId, oplId)
+                            if (backStack.lastOrNull() != detail) backStack.add(detail)
+                        },
                     )
                 }
                 is AppRoute.CiltSequence -> NavEntry(route) {

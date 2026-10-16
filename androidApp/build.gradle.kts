@@ -87,8 +87,8 @@ android {
         applicationId = "com.ih.osm"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 40
-        versionName = "2.7"
+        versionCode = 41
+        versionName = "2.8"
         buildConfigField("String", "DEV_API_BASE_URL", developmentApiBaseUrl.asBuildConfigString())
         buildConfigField("String", "PROD_API_BASE_URL", productionApiBaseUrl.asBuildConfigString())
     }

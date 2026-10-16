@@ -13,6 +13,7 @@ enum class TrainingStatus {
 data class TrainingRecord(
     val id: Long,
     val oplId: Long,
+    val siteId: Long? = null,
     val status: TrainingStatus,
     val selfCompletedAt: String? = null,
     val validatedAt: String? = null,

@@ -13,6 +13,7 @@ data class TrainingUiState(
     val initialized: Boolean = false,
     val isLoading: Boolean = false,
     val records: List<TrainingRecord> = emptyList(),
+    val viewedOplIds: Set<Long> = emptySet(),
     val markingOplId: Long? = null,
     val error: TrainingError? = null,
     val message: TrainingMessage? = null,
@@ -28,6 +29,7 @@ class TrainingViewModel(
     sealed interface Action {
         data object Initialize : Action
         data object Refresh : Action
+        data class MarkViewed(val oplId: Long) : Action
         data class MarkTaken(val oplId: Long) : Action
         data object DismissError : Action
         data object DismissMessage : Action
@@ -39,6 +41,7 @@ class TrainingViewModel(
         when (action) {
             Action.Initialize -> if (!getStateValue().initialized) load()
             Action.Refresh -> load()
+            is Action.MarkViewed -> setState { copy(viewedOplIds = viewedOplIds + action.oplId) }
             is Action.MarkTaken -> markTaken(action.oplId)
             Action.DismissError -> setState { copy(error = null) }
             Action.DismissMessage -> setState { copy(message = null) }

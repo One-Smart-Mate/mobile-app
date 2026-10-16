@@ -27,6 +27,7 @@ internal data class TrainingOplDto(
 internal data class TrainingRecordDto(
     val id: JsonElement,
     val oplId: JsonElement,
+    val siteId: JsonElement? = null,
     val status: String? = null,
     val selfCompletedAt: String? = null,
     val validatedAt: String? = null,
@@ -37,6 +38,7 @@ internal data class TrainingRecordDto(
         TrainingRecord(
             id = id.requiredId("id"),
             oplId = oplId.requiredId("oplId"),
+            siteId = siteId.optionalId("siteId"),
             status = when (status?.trim()?.uppercase()) {
                 "PENDING" -> TrainingStatus.PENDING
                 "SELF_COMPLETED" -> TrainingStatus.SELF_COMPLETED
@@ -60,6 +62,12 @@ internal data class SelfCompleteRequest(
 /** TypeORM can return bigint IDs as JSON strings or numbers. */
 private fun JsonElement?.requiredId(field: String): Long {
     if (this == null || this == JsonNull) throw SerializationException("Missing training identifier: $field")
+    return (this as? JsonPrimitive)?.contentOrNull?.toLongOrNull()?.takeIf { it > 0 }
+        ?: throw SerializationException("Invalid training identifier: $field")
+}
+
+private fun JsonElement?.optionalId(field: String): Long? {
+    if (this == null || this == JsonNull) return null
     return (this as? JsonPrimitive)?.contentOrNull?.toLongOrNull()?.takeIf { it > 0 }
         ?: throw SerializationException("Invalid training identifier: $field")
 }
