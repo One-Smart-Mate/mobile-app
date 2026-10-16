@@ -10,6 +10,7 @@ import com.ih.osm.features.catalog.di.catalogModule
 import com.ih.osm.features.card.di.cardModule
 import com.ih.osm.features.cilt.di.ciltModule
 import com.ih.osm.features.opl.di.oplModule
+import com.ih.osm.features.training.di.trainingModule
 import com.ih.osm.getPlatform
 import org.koin.dsl.module
 
@@ -34,5 +35,6 @@ fun sharedModules(config: AppConfig) = listOf(
     cardModule,
     oplModule,
     ciltModule,
+    trainingModule,
     networkModule(config),
 )
