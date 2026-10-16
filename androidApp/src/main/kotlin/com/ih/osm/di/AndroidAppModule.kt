@@ -26,6 +26,7 @@ import com.ih.osm.features.createcard.data.storage.AndroidEvidenceStorage
 import com.ih.osm.features.createcard.domain.storage.EvidenceStorage
 import com.ih.osm.features.home.HomeViewModel
 import com.ih.osm.features.opl.OplViewModel
+import com.ih.osm.features.training.TrainingViewModel
 import com.ih.osm.features.cilt.CiltViewModel
 import com.ih.osm.features.cilt.CiltExecutionDetailViewModel
 import com.ih.osm.features.opl.detail.OplDetailViewModel
@@ -76,6 +77,7 @@ val androidAppModule = module {
     viewModelOf(::CardSolutionViewModel)
     viewModelOf(::HomeViewModel)
     viewModelOf(::OplViewModel)
+    viewModelOf(::TrainingViewModel)
     single<OplMediaRepository> { AndroidOplMediaRepository(get(), get(), get(), get()) }
     viewModelOf(::OplDetailViewModel)
     viewModelOf(::CiltViewModel)

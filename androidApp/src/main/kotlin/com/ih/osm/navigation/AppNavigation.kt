@@ -52,6 +52,7 @@ import com.ih.osm.features.cardsolution.CardSolutionScreenRoute
 import com.ih.osm.features.createcard.CreateCardScreenRoute
 import com.ih.osm.features.home.HomeScreenRoute
 import com.ih.osm.features.opl.OplScreenRoute
+import com.ih.osm.features.training.TrainingScreenRoute
 import com.ih.osm.features.opl.detail.OplDetailScreenRoute
 import com.ih.osm.features.settings.SettingsScreenRoute
 import com.ih.osm.features.card.domain.solution.CardSolutionType
@@ -68,6 +69,7 @@ private sealed interface AppRoute : NavKey {
     @Serializable data class OplDetail(val siteId: Long, val oplId: Long) : AppRoute
     @Serializable data class CardDetail(val uuid: String) : AppRoute
     @Serializable data object Cilt : AppRoute
+    @Serializable data object Training : AppRoute
     @Serializable data class CiltSequence(val sequenceId: Long, val executionId: Long) : AppRoute
     @Serializable data class CiltExecutionDetail(val executionId: Long) : AppRoute
     @Serializable data class CardSolution(val uuid: String, val type: String) : AppRoute
@@ -144,6 +146,7 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
                         onCreateCard = { backStack.add(AppRoute.CreateCard(it)) },
                         onOpenOpl = { backStack.add(AppRoute.Opl(it)) },
                         onOpenCilt = { backStack.add(AppRoute.Cilt) },
+                        onOpenTraining = { backStack.add(AppRoute.Training) },
                         onOpenCard = { backStack.add(AppRoute.CardDetail(it)) },
                         onApplySolution = { uuid, type ->
                             backStack.add(AppRoute.CardSolution(uuid, type.name))
@@ -194,6 +197,11 @@ private fun AuthenticatedRoot(user: AuthenticatedUser, onExitRequested: () -> Un
                         },
                     )
                 }
+                AppRoute.Training -> NavEntry(route) {
+                    TrainingScreenRoute(
+                        onBack = { backStack.removeAt(backStack.lastIndex) },
+                    )
+                }
                 is AppRoute.CiltSequence -> NavEntry(route) {
                     CiltSequenceScreenRoute(
                         sequenceId = route.sequenceId,
@@ -228,6 +236,7 @@ private fun MainTabRoot(
     onCreateCard: (Long?) -> Unit,
     onOpenOpl: (Long) -> Unit,
     onOpenCilt: () -> Unit,
+    onOpenTraining: () -> Unit,
     onOpenCard: (String) -> Unit,
     onApplySolution: (String, CardSolutionType) -> Unit,
     catalogSyncManager: CatalogSyncManager = koinInject(),
@@ -274,6 +283,7 @@ private fun MainTabRoot(
                 onOpenNotes = { selectedTab = MainTab.CARDS },
                 onOpenOpl = onOpenOpl,
                 onOpenCilt = onOpenCilt,
+                onOpenTraining = onOpenTraining,
                 modifier = Modifier.padding(innerPadding),
             )
             MainTab.CARDS -> CardListScreenRoute(

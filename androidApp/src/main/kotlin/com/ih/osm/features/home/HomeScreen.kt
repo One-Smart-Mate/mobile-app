@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.ChecklistRtl
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SignalCellularAlt
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material.icons.outlined.WifiOff
@@ -80,6 +81,7 @@ fun HomeScreenRoute(
     onOpenNotes: () -> Unit,
     onOpenOpl: (Long) -> Unit,
     onOpenCilt: () -> Unit = {},
+    onOpenTraining: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
@@ -105,6 +107,7 @@ fun HomeScreenRoute(
         onOpenNotes = onOpenNotes,
         onOpenOpl = { selectedSite?.let { onOpenOpl(it.id) } },
         onOpenCilt = onOpenCilt,
+        onOpenTraining = onOpenTraining,
         pendingCardCount = state.pendingCount,
         isCardSyncing = state.isSyncing,
         cardSyncCompleted = state.completed,
@@ -126,6 +129,7 @@ fun HomeScreen(
     onOpenNotes: () -> Unit,
     onOpenOpl: () -> Unit,
     onOpenCilt: () -> Unit = {},
+    onOpenTraining: () -> Unit = {},
     pendingCardCount: Long,
     isCardSyncing: Boolean,
     cardSyncCompleted: Int,
@@ -182,6 +186,7 @@ fun HomeScreen(
                 onOpenNotes = onOpenNotes,
                 onOpenOpl = onOpenOpl,
                 onOpenCilt = onOpenCilt,
+                onOpenTraining = onOpenTraining,
                 oplEnabled = selectedSite != null,
             )
             Spacer(Modifier.height(16.dp))
@@ -423,6 +428,7 @@ private fun QuickActionsGrid(
     onOpenNotes: () -> Unit,
     onOpenOpl: () -> Unit,
     onOpenCilt: () -> Unit,
+    onOpenTraining: () -> Unit,
     oplEnabled: Boolean,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -458,6 +464,17 @@ private fun QuickActionsGrid(
                 title = stringResource(R.string.cilt_title),
                 icon = Icons.Outlined.ChecklistRtl,
                 onClick = onOpenCilt,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            QuickActionCard(
+                title = "Capacitaciones",
+                icon = Icons.Outlined.School,
+                onClick = onOpenTraining,
                 modifier = Modifier.weight(1f),
             )
         }
